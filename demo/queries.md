@@ -38,7 +38,12 @@ demo so a question about either doesn't catch you flat.
 
 ## 1 — Allergy check with a real positive, plus overlapping entities
 
-**Patient:** Hyo54 Coral377 Krajcik437 (`0e207639-9926-7286-10cb-304b27c5dc10`) — 76-year-old female, 751 facts.
+**Patient:** Hyo54 Coral377 Krajcik437 (`0e207639-9926-7286-10cb-304b27c5dc10`) — female, born 1950-07-01, **died 1982-12-21 aged 32**, 751 facts.
+
+The brief headline reads `32y`, not `76y`: `PatientSummary.age_years` correctly
+reports age *at death* for a deceased patient. An earlier draft of this file
+said "76-year-old", which is what she would be today had she lived — don't
+repeat that live, and expect her record to end in 1982.
 
 **Query:** `is she allergic to aspirin, and is she on albuterol or budesonide`
 
@@ -74,15 +79,18 @@ resolves cleanly (aspirin x2, allergies, glucose — no UNRESOLVED spans),
 but this patient — a healthy child with no chronic disease workup — simply
 has none of the facts asked about. All three brief sections render their
 explicit empty note (`"No allergy records on file."` etc.) instead of
-silently vanishing, and the missingness box lists 5 of 6 checklist items as
-`absent`. This is the "not present" vs. "not retrieved" distinction from
-the spec, visible in one screen: nothing failed, there's just nothing
-there.
+silently vanishing, and the missingness box lists 5 of 6 checklist items —
+**4 `absent` plus CBC `stale`**, not 5 `absent` as an earlier draft of this
+file claimed. She has 8 CBC facts, most recent 2025-04-12, outside the
+90-day window; that is a different missingness reason from the other four,
+and it happens to make this patient demonstrate both reasons at once. This
+is the "not present" vs. "not retrieved" distinction from the spec, visible
+in one screen: nothing failed, there's just nothing there.
 
 **Expect:** headline `"...12y female — 0 facts retrieved; 5 item(s) not on
 file."`; all three sections (Allergies/Medications/Labs) empty with their
-notes; 5 missingness items — renal function, electrolytes, CBC, allergy
-documentation, cardiac history. Current-medications is *not* flagged: she
+notes; 5 missingness items — renal function, electrolytes, allergy
+documentation and cardiac history `absent`, CBC `stale`. Current-medications is *not* flagged: she
 has one MEDICATION fact on file (a pediatric fluoride gel), which is enough
 to satisfy that checklist item's category-only presence check even though
 it's clinically unrelated to what the query asked about — worth pointing

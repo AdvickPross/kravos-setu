@@ -597,3 +597,132 @@ behind the same interface so the frontend does not change," and rendering
 narrative hits is a UI decision beyond what this step asked for. The field
 exists on the wire now; surfacing it is future work, not scope creep on
 this pass.
+
+## 2026-08-21 — The gold evaluation set
+
+Corpus restored first: `facts.jsonl` (718 MB) was dropped back into the repo,
+`scripts/split_facts.py` regenerated `facts_by_patient/` — **1,083,231 facts
+across 952 patients, matching the assertion exactly** — and all four
+rehearsed demo queries reproduce end to end. Before this the tree ran but
+every query returned an empty brief, because `patients.jsonl` is tracked and
+the facts are not.
+
+**Built:** `scripts/build_eval_set.py`, `data/eval_set.jsonl` (97 queries,
+15 archetypes), `scripts/run_eval.py`, `eval/report.md`, `tests/test_eval.py`
+(19 tests). Suite went 180 → 199, all green. This closes the item the build
+prompt flagged as blocking every quality claim.
+
+**Gold is derived on a path that never touches the code being scored.** For
+each query the clinical intent is hand-specified as `(categories, codes,
+window)` clauses read off the question; nothing in the gold comes from
+`parse_query()` or `retrieve()`. Scoring gold produced by the pipeline under
+test would return 1.0 by construction and measure nothing, so
+`tests/test_eval.py::test_gold_is_not_derived_from_the_pipeline` enforces
+this **structurally, by walking the builder's AST** for banned imports and
+calls — a substring check was tried first and failed, because the builder's
+own comments discuss `parse_query` at length precisely to explain why it
+isn't used.
+
+`get_patient_facts()` *is* shared by both sides. That is deliberate and not
+circular: the filter is identical on both sides, already has its own unit
+tests, and is not what this set evaluates. The contested half is the mapping
+from question text to codes — re-implementing the filter would add a bug
+surface for no epistemic gain.
+
+**Two-tier relevance.** `required` drives recall; `allowed` is neither
+rewarded nor penalised. Needed because `penicillin` resolves to an ALLERGY
+substance *and* MEDICATION products at one span, so "is he allergic to
+penicillin" legitimately surfaces "prescribed penicillin V in 2017". Scoring
+that as a false positive would score a judgement call as a bug. The rule is
+applied blanket-wise to every drug allergen via `ALLERGEN_MEDICATION_CODES`,
+never per query, so it cannot become a way to quietly delete individual
+failures. It was added *after* seeing first results — worth stating plainly —
+but it moved only precision and abstention; **recall did not shift** (0.828
+before and after), which is the check that it didn't paper over real misses.
+
+### Results
+
+`precision 0.940 · recall 0.833 · F1 0.883` over 66 scored queries, plus
+31 abstention cases, 31/31 clean. Median latency 1.2 ms, p95 12.1 ms.
+
+**Read recall, not precision.** Retrieval is a strict `category` + `code IN
+(...)` filter, so it can only return facts whose codes the parser already
+produced; a false positive needs the parser to resolve a span to a
+confidently *wrong* code set, which is far rarer than resolving it to
+nothing. High precision says the vocabulary isn't mismapped, not that
+retrieval is good. This caveat is printed in `eval/report.md` itself.
+
+An early draft scored precision 1.000 — because three `lab_date_window`
+entries had picked patients whose labs fell outside the window, resolving to
+**empty gold** and being silently excluded from scoring as free passes,
+flattering that archetype to a fake recall of 1.000. `Builder.add()` now
+refuses any entry with non-empty `required` clauses but empty resolved gold,
+and the windowed archetype walks candidate patients until one qualifies.
+Precision fell to 0.940 immediately, which is the honest number.
+
+### What the set found
+
+Three defects, none of which the 47 probe queries in `tests/queries.md` had
+surfaced in months of use:
+
+**1. `most recent X` silently returns nothing.** `retrieval/ner.py`'s bare
+`recent` cue applies a 6-month *recency filter*, but "most recent X" is a
+sort-and-take-newest instruction. `most recent hemoglobin` sets a window of
+2026-02-22 → 2026-08-21; the patient's two results are from 2025-08-08 and
+2020-08-07, so the query returns **zero facts when a year-old result exists**.
+`latest hemoglobin` and `what was her last hemoglobin` correctly set no
+window, so the behaviour is inconsistent within one intent family. Seven
+queries, the largest single block of misses. For a pre-op tool this is the
+exact failure mode the product claims to prevent.
+
+**2. A concept's own name is never indexed as a surface form.** One root
+cause behind six broken concepts. `Lexicon._load_synonyms()` indexes only the
+`surface_forms` column, so a row named `hypertension` whose forms are
+`htn|high bp|...` leaves the word "hypertension" unindexed. Every author
+listed the alternatives and assumed the canonical name was implied. It fails
+two ways, both silent:
+
+| concept | effect | consequence |
+|---|---|---|
+| `hypertension`, `nt-probnp` | no match at all | zero recall |
+| `blood glucose`, `hemoglobin`, `leukocytes` | falls through to the raw lexicon display, which is **wider** | picks up the **urine dipstick** codes |
+| `myocardial infarction` | falls through **narrower** | 1 of 4 declared codes |
+
+The widening case is the clinically dangerous one: a "blood glucose" trend
+silently mixes `25428-4`/`5792-7` (Glucose in Urine by Test strip) into blood
+readings, and "hemoglobin" and "leukocytes" absorb their urine-strip
+counterparts the same way. `demo/queries.md` had *worried* about exactly this
+("glucose resolves to 4 LOINC codes... can silently mix unrelated tests") and
+hand-checked one patient who happened to be clean; the eval set found the
+general case. Note `fasting glucose` resolves correctly — the precise
+phrasings work and the obvious generic one degrades.
+
+`demo/queries.md` diagnosed the `hypertension` case as a one-off "lexicon gap"
+in a footnote. It is not one-off; it is one line in `lexicon.py`.
+
+**3. Minor lexicon gaps:** `peanuts` (plural — corpus has "Peanut
+(substance)"), `eggs` (corpus display normalises to "eggs (edible)"), `bee
+sting` (corpus has "Bee venom").
+
+### Corrections to `demo/queries.md`
+
+Both verified against the restored corpus, both were the doc drifting rather
+than code being wrong:
+
+- Patient #1 is **32, not 76** — born 1950-07-01, died 1982-12-21.
+  `age_years` correctly reports age at death; 76 is what she would be today
+  had she lived. Her record ends in 1982.
+- Patient #2's CBC is **`stale`, not `absent`** — 8 CBC facts, most recent
+  2025-04-12, outside the 90-day window. The box shows 4 `absent` + 1 `stale`,
+  so she demonstrates both missingness reasons rather than one.
+
+### Not done, deliberately
+
+None of the three defects is fixed. Two of them live in `retrieval/`, which
+the build prompt marks `[DONE — do not modify]`; that instruction was about
+not rebuilding it during the backend pass rather than a ban on bug fixes, but
+it is still not a call to make unilaterally. Fixes are one line in
+`lexicon.py` (index the concept name), one cue change in `ner.py` (stop
+treating "most recent" as a window), and three surface forms. Rerunning
+`scripts/run_eval.py` afterwards gives a measured before/after for the first
+time — which is the point of having built this.
