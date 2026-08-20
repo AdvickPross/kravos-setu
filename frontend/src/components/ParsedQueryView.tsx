@@ -1,19 +1,20 @@
 import { Fragment, type ReactNode } from "react";
 
 import type { MatchQuality, ParsedQuery, ResolvedEntity } from "@/lib/api";
+import { categoryNoun } from "@/lib/format";
+import { Eyebrow, Panel, Tag } from "./ui";
 
-// Match-quality colour coding, applied consistently to the highlighted span
-// and the legend below it. Rank drives which colour wins when two entities
-// share a span (aspirin -> ALLERGY substance + MEDICATION product).
+/**
+ * Shows what the parser actually understood, because an honest "I did not
+ * resolve this" is the point of the NER layer and is worth nothing if the UI
+ * hides it. Colour is match quality, consistently between the highlighted
+ * span and the legend.
+ */
 const QUALITY_STYLES: Record<MatchQuality, string> = {
-  exact:
-    "bg-emerald-100 text-emerald-900 ring-emerald-300 dark:bg-emerald-950 dark:text-emerald-200 dark:ring-emerald-800",
-  synonym:
-    "bg-sky-100 text-sky-900 ring-sky-300 dark:bg-sky-950 dark:text-sky-200 dark:ring-sky-800",
-  fuzzy:
-    "bg-amber-100 text-amber-900 ring-amber-300 dark:bg-amber-950 dark:text-amber-200 dark:ring-amber-800",
-  unresolved:
-    "bg-rose-100 text-rose-900 ring-rose-300 dark:bg-rose-950 dark:text-rose-200 dark:ring-rose-800",
+  exact: "bg-active-bg text-active ring-active-line",
+  synonym: "bg-accent-bg text-accent ring-accent-line",
+  fuzzy: "bg-warn-bg text-warn ring-warn-line",
+  unresolved: "bg-danger-bg text-danger ring-danger-line",
 };
 
 const QUALITY_RANK: Record<MatchQuality, number> = {
@@ -41,46 +42,51 @@ function groupByOffsets(entities: ResolvedEntity[]): Group[] {
   for (const entity of entities) {
     const key = `${entity.start}-${entity.end}`;
     const existing = byRange.get(key);
-    if (existing) {
-      existing.entities.push(entity);
-    } else {
-      byRange.set(key, { start: entity.start, end: entity.end, entities: [entity] });
-    }
+    if (existing) existing.entities.push(entity);
+    else byRange.set(key, { start: entity.start, end: entity.end, entities: [entity] });
   }
   return [...byRange.values()].sort((a, b) => a.start - b.start);
 }
 
 function worstQuality(entities: ResolvedEntity[]): MatchQuality {
   return entities.reduce<MatchQuality>(
-    (worst, entity) => (QUALITY_RANK[entity.quality] > QUALITY_RANK[worst] ? entity.quality : worst),
+    (worst, e) => (QUALITY_RANK[e.quality] > QUALITY_RANK[worst] ? e.quality : worst),
     entities[0].quality,
   );
 }
 
+/** A category cue resolves to a category with no codes -- that empty list is
+ *  what makes retrieval drop the code filter and return the whole list. */
+function isCategoryEntity(entity: ResolvedEntity): boolean {
+  return Boolean(entity.category) && (entity.codes?.length ?? 0) === 0 && entity.quality !== "unresolved";
+}
+
+function describe(entity: ResolvedEntity): string {
+  const bits = [entity.category ?? "no category", QUALITY_LABELS[entity.quality]];
+  if (isCategoryEntity(entity)) bits.push("whole category");
+  else if (entity.codes?.length) bits.push(`${entity.codes.length} code(s)`);
+  if (entity.negated) bits.push("negated");
+  if (entity.display) bits.push(entity.display);
+  return bits.join(" · ");
+}
+
 export function ParsedQueryView({ parsed }: { parsed: ParsedQuery }) {
   const text = parsed.raw;
-  const groups = groupByOffsets(parsed.entities ?? []);
+  const entities = parsed.entities ?? [];
+  const groups = groupByOffsets(entities);
 
   const nodes: ReactNode[] = [];
   let cursor = 0;
   groups.forEach((group, index) => {
     if (group.start > cursor) {
-      nodes.push(<Fragment key={`text-${index}`}>{text.slice(cursor, group.start)}</Fragment>);
+      nodes.push(<Fragment key={`t-${index}`}>{text.slice(cursor, group.start)}</Fragment>);
     }
     const quality = worstQuality(group.entities);
-    const negated = group.entities.some((entity) => entity.negated);
-    const title = group.entities
-      .map((entity) => {
-        const bits = [entity.category ?? "unknown category", QUALITY_LABELS[entity.quality]];
-        if (entity.negated) bits.push("negated");
-        if (entity.display) bits.push(entity.display);
-        return bits.join(" · ");
-      })
-      .join("\n");
+    const negated = group.entities.some((e) => e.negated);
     nodes.push(
       <mark
-        key={`entity-${index}`}
-        title={title}
+        key={`e-${index}`}
+        title={group.entities.map(describe).join("\n")}
         className={`rounded px-1 py-0.5 ring-1 ${QUALITY_STYLES[quality]} ${
           negated ? "line-through decoration-2" : ""
         }`}
@@ -90,21 +96,68 @@ export function ParsedQueryView({ parsed }: { parsed: ParsedQuery }) {
     );
     cursor = group.end;
   });
-  if (cursor < text.length) {
-    nodes.push(<Fragment key="text-end">{text.slice(cursor)}</Fragment>);
-  }
+  if (cursor < text.length) nodes.push(<Fragment key="t-end">{text.slice(cursor)}</Fragment>);
+
+  const unresolved = entities.filter((e) => e.quality === "unresolved");
+  const negated = entities.filter((e) => e.negated);
+  const categoryEntities = entities.filter(isCategoryEntity);
+  const window =
+    parsed.date_from || parsed.date_to
+      ? `${parsed.date_from ?? "…"} → ${parsed.date_to ?? "…"}`
+      : null;
 
   return (
-    <div className="space-y-2">
-      <p className="text-lg leading-relaxed">{nodes}</p>
-      <div className="flex flex-wrap items-center gap-2 text-xs">
-        {(Object.keys(QUALITY_LABELS) as MatchQuality[]).map((quality) => (
-          <span key={quality} className={`rounded px-1.5 py-0.5 ring-1 ${QUALITY_STYLES[quality]}`}>
-            {QUALITY_LABELS[quality]}
-          </span>
-        ))}
-        <span className="text-zinc-500 line-through decoration-2">Negated</span>
+    <Panel className="px-4 py-3">
+      <Eyebrow>Understood as</Eyebrow>
+
+      <p className="mt-1.5 text-base leading-relaxed text-ink">{nodes}</p>
+
+      <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+        {(Object.keys(QUALITY_LABELS) as MatchQuality[])
+          .filter((q) => entities.some((e) => e.quality === q))
+          .map((q) => (
+            <span
+              key={q}
+              className={`rounded px-1.5 py-px text-[10px] font-medium ring-1 ${QUALITY_STYLES[q]}`}
+            >
+              {QUALITY_LABELS[q]}
+            </span>
+          ))}
+        {window && <Tag tone="accent" title="Date filter applied to retrieval">{window}</Tag>}
       </div>
-    </div>
+
+      {/* Each note below states a consequence, not a status. The parse view is
+          only useful if it explains what the result will look like. */}
+      <div className="mt-2 space-y-1 text-[11px] leading-relaxed">
+        {categoryEntities.length > 0 && (
+          <p className="text-ink-muted">
+            Asked for a whole list, so{" "}
+            <strong className="font-medium text-ink">
+              every {categoryEntities.map((e) => categoryNoun(e.category)).join(" and ")} record
+            </strong>{" "}
+            on file was retrieved, not just a matching code.
+          </p>
+        )}
+
+        {negated.length > 0 && (
+          <p className="text-ink-muted">
+            {negated.map((e) => `"${e.span}"`).join(", ")} read as negated. Matching records
+            are still shown —{" "}
+            <strong className="font-medium text-ink">
+              a record that contradicts the question is the point
+            </strong>
+            , not something to hide.
+          </p>
+        )}
+
+        {unresolved.length > 0 && (
+          <p className="text-danger">
+            Not resolved to any coded concept:{" "}
+            {unresolved.map((e) => `"${e.span}"`).join(", ")}. Nothing was retrieved for
+            these rather than a plausible guess being made.
+          </p>
+        )}
+      </div>
+    </Panel>
   );
 }

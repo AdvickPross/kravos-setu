@@ -12,6 +12,7 @@ export type EntityFacts = components["schemas"]["EntityFacts"];
 export type Fact = components["schemas"]["Fact"];
 export type MissingItem = components["schemas"]["MissingItem"];
 export type StageTimings = components["schemas"]["StageTimings"];
+export type NarrativeMatch = components["schemas"]["NarrativeMatch"];
 export type QueryResponse = components["schemas"]["QueryResponse"];
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";

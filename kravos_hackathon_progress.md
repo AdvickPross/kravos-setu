@@ -886,3 +886,69 @@ person reads the caveat before the figure. Archetypes worth adding: queries
 mixing several categories at once, misspelled drug names, questions whose
 answer is a trend rather than a list, and the narrative REPORT path, which no
 archetype touches yet.
+
+## 2026-08-21 — Frontend rebuild
+
+`npm install` run for the first time in this clone (458 packages). Verified
+against the live API in headless Chromium across five scenarios, light and
+dark, with zero console errors — not assumed from the code.
+
+**A design system rather than ad-hoc Tailwind.** `globals.css` now defines
+tokens for four roles that carry clinical meaning — `danger` (allergies),
+`warn` (missingness), `active` (live status), `muted` (historical status) —
+plus surfaces and text. Everything outside those roles stays neutral, so that
+when something *is* coloured it means something. Full light/dark parity;
+previously dark mode was two variables and per-component `dark:` guesses.
+
+**New:** `ui.tsx` (Panel/Eyebrow/StatusPill/Tag/Skeleton), `PatientHeader`,
+`Sparkline`, `NarrativeMatches`.
+
+### What changed, and why each one
+
+- **Death is stated, not implied.** `age_years` reports age *at death*, so the
+  demo patient born 1950 who died in 1982 renders as "32y". Without a badge
+  that reads as a living 32-year-old and every date below looks stale for no
+  visible reason. Now: `Deceased 1982-12-21` in danger tone, and "32y at
+  death". The picker marks deceased patients with †.
+- **Relative ages.** "last seen 1981-11-07 (44 y ago)" — Synthea timelines run
+  deep enough that a bare ISO date makes a 1978 result look much like a 2025
+  one at a glance, which is the distinction a pre-op reader needs fastest.
+- **Repeated labels collapse into a trend.** Twelve rows each reading "Glucose
+  [Mass/volume] in Blood" is a wall; one label with a sparkline, unit, count
+  and twelve aligned readings is a trend. Grouping is on *consecutive* lines
+  only, so it never reorders — the backend's most-recent-first ordering is the
+  clinically meaningful one. Medications correctly do **not** group here,
+  because ibuprofen and lisinopril interleave by date and that chronology is
+  the answer.
+- **The parse view explains consequences, not status.** It now says what the
+  result will look like: that a category cue retrieved the whole list, that a
+  negated span still shows its records ("a record that contradicts the
+  question is the point"), and which spans resolved to nothing.
+- **Allergy criticality is labelled.** `Fact.value` holds
+  `AllergyIntolerance.criticality` for ALLERGY rows, and rendering it as a
+  bare "low" beside an allergen invited it to be read as a measurement. Now
+  "criticality low", and `high` would render in danger tone — it never occurs
+  in this corpus (880/880 are `low`), but real data must not be able to hide
+  one.
+- **Missingness splits its two reasons** in the header ("3 never recorded · 1
+  out of date") and states its own limits: absence means nothing matching is
+  recorded, not that the patient is free of the condition.
+- **Two fields that were on the wire but never rendered:** `Brief.prose` (the
+  LLM pass wrote it and the UI dropped it — now shown, labelled, above the
+  grounded template it never replaces) and `narrative_matches` (labelled
+  unstructured, with its score, since these are note passages and not coded
+  facts).
+- **Latency reads "not run"** rather than a missing entry for stages that did
+  not execute; reporting the disabled vector and LLM stages as instant would
+  misstate which code paths produced the answer.
+- Skeletons instead of "Retrieving…", `/` focuses the query box, example
+  queries as one-click chips, `aria-expanded` on provenance toggles, tabular
+  figures wherever numbers are compared down a column.
+
+**Also fixed:** `scripts/export_openapi.py` lacked the `sys.path` insert every
+other script carries, so `python scripts/export_openapi.py` failed with
+`ModuleNotFoundError: No module named 'backend'` — `pytest.ini`'s
+`pythonpath = .` applies to pytest only. Regenerating afterwards confirmed the
+API contract is **unchanged** by all of this session's NER work; the only
+diff was FastAPI's own `ValidationError` shape, a library-version artifact,
+so `openapi.json` was left as committed.

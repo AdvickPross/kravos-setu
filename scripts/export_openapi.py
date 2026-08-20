@@ -12,11 +12,17 @@ never drift silently.
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
-from backend.main import app
-
 REPO_ROOT = Path(__file__).resolve().parent.parent
+# Same guard the other scripts carry. Without it `python scripts/export_openapi.py`
+# from the repo root fails on `import backend`: pytest.ini's `pythonpath = .`
+# applies to pytest only, not to a plain script run.
+sys.path.insert(0, str(REPO_ROOT))
+
+from backend.main import app  # noqa: E402
+
 DEFAULT_OUT_PATH = REPO_ROOT / "openapi.json"
 
 
