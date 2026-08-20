@@ -279,12 +279,28 @@ class QueryNER:
             date_to = date_to or today
             mark(match)
 
-        # bare "recent" / "recently"
+        # Bare "recent" / "recently" is a soft recency window. But "most
+        # recent" is not a window at all -- it is superlative, meaning "the
+        # newest one on file", and the answer is the latest result whether it
+        # is a week or a decade old. Treating it as a 6-month filter made
+        # "most recent hemoglobin" return *nothing* for a patient whose last
+        # result was 12 months ago, which is the worst possible failure for a
+        # pre-op tool: silence that reads as "no result exists". Measured by
+        # the gold eval set, which lost 7 queries to this alone.
+        #
+        # "latest" and "last" already set no window, so this also removes an
+        # inconsistency inside one intent family: "latest hemoglobin",
+        # "last hemoglobin" and "most recent hemoglobin" now agree.
+        superlative = re.compile(r"\b(?:most|the)\s+recent(?:ly)?\b")
+        for match in superlative.finditer(joined):
+            mark(match)  # consume the tokens so they cannot resolve as entities
+
         if date_from is None and (match := re.search(r"\brecent(?:ly)?\b", joined)):
-            candidate = today - timedelta(days=30 * recent_months)
-            date_from = candidate
-            date_to = today
-            mark(match)
+            if not superlative.search(joined):
+                candidate = today - timedelta(days=30 * recent_months)
+                date_from = candidate
+                date_to = today
+                mark(match)
 
         # "before surgery" / "pre-op": an upper bound, not a window
         for cue in self._dates.get("upper_bound_cues", ()):

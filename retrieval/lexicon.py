@@ -108,17 +108,41 @@ class Lexicon:
                 for form in normalized.forms:
                     self._add(form, entry, MatchQuality.EXACT)
 
-                seen_display[normalized.full].add((entry.code_system, entry.code))
+                # Every indexed form, not just `full`. Keying this on `full`
+                # alone reported zero collisions forever: two rows only share
+                # a `full` display if their raw displays are identical, which
+                # they never are. The collisions that matter happen on the
+                # *derived* forms -- "Hemoglobin [Mass/volume] in Blood" and
+                # "Hemoglobin ... in Urine by Test strip" both reduce to
+                # "hemoglobin" once normalize_loinc() strips the specimen, so
+                # one word reaches a blood analyte and a urine dipstick.
+                # That is exactly what this diagnostic was written to catch
+                # and exactly what it was silently missing.
+                for form in normalized.forms:
+                    seen_display[form].add((entry.code_system, entry.code))
 
         # "log any case where two entries normalize identically but have
         # different codes" -- in this corpus the casing variants
         # (medroxyPROGESTERone / medroxyprogesterone) all share one code, so
         # anything reported here is a genuine collision worth looking at.
+        # Most of these are intended and documented: `acetaminophen` reaching
+        # 10 RxNorm products is the ingredient rollup working, and multi-code
+        # lab analytes are established behaviour. The subset worth a human
+        # look is cross-specimen -- one word reaching a blood analyte and a
+        # urine dipstick -- which this cannot tell apart on its own, so the
+        # full list is recorded for inspection and only a summary is warned.
+        # Per-collision warnings would put ~100 lines in the log every time
+        # the lexicon loads, which is how a diagnostic gets muted for good.
         for display, codes in sorted(seen_display.items()):
             if len(codes) > 1:
                 message = f"{display!r} normalizes from {len(codes)} distinct codes: {sorted(c for _, c in codes)}"
                 self.duplicate_displays.append(message)
-                log.warning("display collision: %s", message)
+                log.debug("display collision: %s", message)
+        if self.duplicate_displays:
+            log.warning(
+                "%d surface forms reach more than one code; see Lexicon.duplicate_displays",
+                len(self.duplicate_displays),
+            )
 
     def _load_synonyms(self) -> None:
         with self.synonyms_path.open(encoding="utf-8", newline="") as handle:
@@ -131,6 +155,21 @@ class Lexicon:
                 code_system = (row.get("code_system") or "").strip() or None
                 codes = [c.strip() for c in (row.get("codes") or "").split("|") if c.strip()]
                 forms = [f.strip() for f in (row.get("surface_forms") or "").split("|") if f.strip()]
+
+                # The concept's own name is a surface form. Every author of
+                # synonyms.csv listed only the *alternatives* and assumed the
+                # canonical name was implied -- it wasn't, and six concepts
+                # were silently broken by the omission (measured by the gold
+                # eval set, not guessed): `hypertension` and `nt-probnp`
+                # matched nothing at all, while `blood glucose`, `hemoglobin`
+                # and `leukocytes` fell through to the raw lexicon display and
+                # picked up their urine-dipstick codes. Adding it here rather
+                # than in the CSV makes the whole file safe by construction,
+                # so the next concept row cannot reintroduce the bug.
+                # _add() dedupes on code identity, so a row that already
+                # repeats its own name costs nothing.
+                if concept not in forms:
+                    forms.append(concept)
 
                 for code in codes:
                     known = self._by_code.get((code_system, code))

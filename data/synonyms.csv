@@ -74,3 +74,13 @@ warfarin,warfarin|coumadin,MEDICATION,http://www.nlm.nih.gov/research/umls/rxnor
 enoxaparin,enoxaparin|lovenox|clexane|lmwh,MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,854235|854252|854255
 clopidogrel,clopidogrel|plavix|clopilet,MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,309362|749196
 nitroglycerin,gtn|ntg|nitroglycerine|glyceryl trinitrate|sorbitrate,MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,198039|705129
+# Food and insect allergens whose corpus display does not match how anyone
+# asks about them: SNOMED stores "Peanut (substance)" and "Bee venom
+# (substance)", while a clinician types "peanuts" or "bee sting". "Eggs
+# (edible)" normalises to "eggs (edible)", so even the plural misses. Found
+# by the gold eval set (data/eval_set.jsonl), not guessed -- these were three
+# of its allergy_positive misses. Plurals matter here because the question is
+# almost always phrased that way.
+peanut,peanut|peanuts|groundnut|groundnuts,ALLERGY,http://snomed.info/sct,762952008
+eggs,egg|eggs|egg white|hens egg,ALLERGY,http://snomed.info/sct,102263004
+bee venom,bee sting|bee stings|bee|wasp sting|insect sting|insect venom,ALLERGY,http://snomed.info/sct,288328004

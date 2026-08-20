@@ -6,7 +6,7 @@ debugging instrument, and the gold eval set is a separate artifact.
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 
 import pytest
 
@@ -197,3 +197,107 @@ def test_empty_query(ner: QueryNER) -> None:
 def test_query_is_echoed_verbatim(ner: QueryNER) -> None:
     query = "  Any drug ALLERGIES?  "
     assert QueryNER(lexicon=ner.lexicon).parse(query, today=TODAY).raw == query
+
+
+
+# --------------------------------------------------------------------------
+# "most recent" is superlative, not a recency window
+# --------------------------------------------------------------------------
+
+
+def test_most_recent_sets_no_date_window(ner: QueryNER) -> None:
+    """"Most recent X" means the newest X on file, whenever it happened.
+
+    Treating it as a 6-month filter made the query return nothing at all for
+    a patient whose last result was a year old -- silence that reads as "no
+    result exists", which is the worst failure mode this product has. Found
+    by the gold eval set, which lost 7 queries to it.
+    """
+    parsed = ner.parse("most recent hemoglobin", today=TODAY)
+    assert parsed.date_from is None
+    assert parsed.date_to is None
+
+
+def test_the_most_recent_also_sets_no_window(ner: QueryNER) -> None:
+    assert ner.parse("the most recent glucose", today=TODAY).date_from is None
+
+
+def test_latest_last_and_most_recent_agree(ner: QueryNER) -> None:
+    """One intent family, one behaviour. These disagreed before."""
+    windows = {
+        (p.date_from, p.date_to)
+        for p in (
+            ner.parse(q, today=TODAY)
+            for q in ("latest hemoglobin", "what was her last hemoglobin", "most recent hemoglobin")
+        )
+    }
+    assert windows == {(None, None)}
+
+
+def test_bare_recent_still_sets_a_window(ner: QueryNER) -> None:
+    """The soft recency cue is intact -- only the superlative was wrong."""
+    parsed = ner.parse("recent hemoglobin", today=TODAY)
+    assert parsed.date_from == TODAY - timedelta(days=180)
+    assert parsed.date_to == TODAY
+
+
+def test_recently_still_sets_a_window(ner: QueryNER) -> None:
+    parsed = ner.parse("recently prescribed metformin", today=TODAY)
+    assert parsed.date_from == TODAY - timedelta(days=180)
+
+
+def test_explicit_windows_are_untouched_by_the_superlative_fix(ner: QueryNER) -> None:
+    parsed = ner.parse("glucose over the last year", today=TODAY)
+    assert parsed.date_from == TODAY - timedelta(days=365)
+
+
+# --------------------------------------------------------------------------
+# a concept's own name resolves to that concept
+# --------------------------------------------------------------------------
+
+
+def _codes(ner: QueryNER, query: str, category: str | None = None) -> set[str]:
+    return {
+        code
+        for e in entities(ner, query)
+        for code in e.codes
+        if category is None or e.category == category
+    }
+
+
+def test_concept_name_resolves_even_when_absent_from_surface_forms(ner: QueryNER) -> None:
+    """`hypertension` lists htn|high bp|... and not its own name. Every author
+    listed the alternatives and assumed the canonical name was implied."""
+    assert "59621000" in _codes(ner, "any history of hypertension")
+
+
+def test_blood_glucose_does_not_reach_urine_dipstick_codes(ner: QueryNER) -> None:
+    """The clinically dangerous form of the same bug: "blood glucose" fell
+    through to the bare `glucose` lexicon match, which spans all four glucose
+    codes -- two of them urine test strips. A blood glucose trend must not
+    silently mix in urine readings."""
+    codes = _codes(ner, "most recent blood glucose", category="LAB")
+    assert codes == {"2339-0", "2345-7"}
+
+
+def test_bare_glucose_still_spans_its_documented_code_set(ner: QueryNER) -> None:
+    """Multi-code resolution is deliberate and stays. Only the *curated*
+    concept narrows; the bare analyte is unchanged."""
+    assert _codes(ner, "glucose", category="LAB") == {"2339-0", "2345-7", "25428-4", "5792-7"}
+
+
+def test_myocardial_infarction_reaches_its_whole_code_set(ner: QueryNER) -> None:
+    """Fall-through in the narrowing direction: the name matched one raw
+    lexicon display and returned 1 of the concept's 4 codes."""
+    codes = _codes(ner, "has he been diagnosed with myocardial infarction")
+    assert {"22298006", "399211009", "401303003", "401314000"} <= codes
+
+
+def test_allergen_plurals_resolve(ner: QueryNER) -> None:
+    """SNOMED stores "Peanut (substance)"; nobody types the singular."""
+    for query, code in (
+        ("is she allergic to peanuts", "762952008"),
+        ("is she allergic to eggs", "102263004"),
+        ("any bee sting allergy documented", "288328004"),
+    ):
+        assert code in _codes(ner, query), query

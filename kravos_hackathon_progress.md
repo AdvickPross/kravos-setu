@@ -726,3 +726,89 @@ it is still not a call to make unilaterally. Fixes are one line in
 treating "most recent" as a window), and three surface forms. Rerunning
 `scripts/run_eval.py` afterwards gives a measured before/after for the first
 time — which is the point of having built this.
+
+## 2026-08-21 — Fixing what the eval set found, measured
+
+First use of the gold set as an instrument rather than an artifact. Gold was
+left **byte-identical** throughout (`git diff --quiet data/eval_set.jsonl`
+verified after the fixes), so this is a real before/after against a frozen
+target, not a moved goalpost.
+
+| | before | after |
+|---|---|---|
+| precision | 0.940 | **1.000** |
+| recall | 0.833 | **0.998** |
+| F1 | 0.883 | **0.999** |
+| exact queries | 50/66 | **65/66** |
+| clean abstentions | 31/31 | 31/31 |
+
+Suite 199 → 211.
+
+**Fixed 1 — concept names are now indexed as surface forms** (`lexicon.py`).
+One line, six concepts. Done in the loader rather than by editing
+`synonyms.csv` so the whole file is safe by construction and the next row
+cannot reintroduce it. `hypertension` and `nt-probnp` now resolve at all;
+`blood glucose` stops absorbing the two urine-dipstick codes; `myocardial
+infarction` reaches all 4 of its codes instead of 1.
+
+**Fixed 2 — "most recent X" no longer applies a recency window** (`ner.py`).
+It is superlative, not a filter. `latest`, `last` and `most recent` now agree;
+bare `recent`/`recently` keeps its 6-month window, and explicit windows are
+untouched. Seven queries recovered.
+
+**Fixed 3 — allergen plurals** (`synonyms.csv`): `peanuts`, `eggs`, `bee
+sting`. SNOMED stores "Peanut (substance)"; nobody types the singular.
+
+**Fixed 4 — the collision diagnostic was blind.** It keyed on
+`normalized.full`, which two rows share only if their raw displays are
+byte-identical, which never happens; it reported 0 collisions forever. It
+keys on every indexed form now and reports 98. `test_display_collisions_are_
+reported_not_swallowed` had asserted `== []` with the comment "Today there
+are none" — passing by agreeing with the blind spot rather than by the corpus
+being clean. Rewritten, plus a new test that the cross-specimen ones stay
+visible. Per-collision logging moved to DEBUG with one summary WARNING; ~100
+lines per load is how a diagnostic gets muted permanently.
+
+Most of the 98 are intended (`acetaminophen` → 10 RxNorm products is the
+ingredient rollup working). The subset worth judgement is cross-specimen
+LOINC — `glucose`, `hemoglobin`, `leukocytes`, `ketones`, `protein` each
+reach a blood analyte *and* a urine dipstick, because `normalize_loinc()`
+strips the specimen phrase from both displays. Deliberately **not** changed:
+multi-code resolution is documented as intended, and narrowing bare analytes
+is a design decision, not a bug fix. `test_bare_glucose_still_spans_its_
+documented_code_set` pins the current behaviour so any future change is
+explicit.
+
+### Open, and the most serious thing found so far
+
+**A bare category question does not retrieve the category.** For a patient
+with 9 allergy facts including **Penicillin V** and **Aspirin**, every one of
+`does she have any allergies` / `any allergies` / `allergy list` / `is she
+allergic to anything` returns exactly one fact: the generic "Allergic
+disposition (finding)". The brief then renders
+
+```
+Allergies
+  - Allergic disposition (finding) — low — active 2011-09-30
+```
+
+which reads as a complete, answered, low-criticality section. The penicillin
+allergy is simply absent, with no empty note and no not-retrieved signal.
+
+`data_layer.get_patient_facts()` promises that ALLERGY retrieval ignores
+`limit` and returns the complete set. That rule is real but never engages:
+the query resolved to `codes=['609328004']`, so the code filter removes the
+other eight facts long before the safety rule is consulted.
+
+The plumbing already supports the fix — `retrieve()` passes
+`codes=entity.codes or None`, and `get_patient_facts()` treats `None` as no
+code filter, so an entity carrying `category=ALLERGY` with empty `codes`
+would retrieve the whole category and engage the safety rule. What's missing
+is the vocabulary notion: "allergies", "allergy list", "problem list",
+"medication list" are **category cues**, not concepts that resolve to one
+marker code. That is a new entity kind, not a bug fix, so it is not being
+added unilaterally.
+
+The eval set does not currently cover bare category questions — its allergy
+archetypes all name a substance. Adding that archetype is what would put a
+number on this.

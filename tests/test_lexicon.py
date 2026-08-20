@@ -85,9 +85,35 @@ def test_stoplisted_form_is_not_indexed(lexicon: Lexicon) -> None:
 
 
 def test_display_collisions_are_reported_not_swallowed(lexicon: Lexicon) -> None:
-    """Two entries normalizing identically with *different* codes would be a
-    genuine finding. Today there are none -- the casing variants share a code."""
-    assert lexicon.duplicate_displays == []
+    """Two entries normalizing identically with *different* codes is a genuine
+    finding, and the diagnostic must actually surface it.
+
+    This previously asserted the list was empty, on the belief that no
+    collisions existed. They did -- ~98 of them -- and the diagnostic was
+    keyed on `normalized.full`, which two rows share only if their raw
+    displays are byte-identical, which never happens. So the check reported
+    zero forever and the test passed by agreeing with the blind spot rather
+    than by the corpus being clean.
+    """
+    assert lexicon.duplicate_displays, "collision diagnostic reported nothing -- it is blind again"
+
+
+def test_cross_specimen_collisions_are_visible(lexicon: Lexicon) -> None:
+    """The collisions that matter clinically: one word reaching a blood
+    analyte and a urine dipstick, because normalize_loinc() strips the
+    specimen phrase from both displays.
+
+    Not asserted as *wrong* -- multi-code resolution is deliberate here, and
+    `data/synonyms.csv` carries curated blood-only concepts for the ones that
+    matter. Asserted as *visible*, so the trade-off stays a decision someone
+    made rather than one nobody could see.
+    """
+    hemoglobin_codes = {h.entry.code for h in lexicon.lookup("hemoglobin")}
+    assert {"718-7", "5794-3"} <= hemoglobin_codes
+
+    reported = "\n".join(lexicon.duplicate_displays)
+    for form in ("hemoglobin", "leukocytes", "glucose"):
+        assert f"'{form}' normalizes from" in reported
 
 
 def test_paths_are_constructor_arguments(tmp_path) -> None:
