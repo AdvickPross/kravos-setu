@@ -1,0 +1,1123 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Kravos Setu API",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/patients": {
+      "get": {
+        "summary": "Api List Patients",
+        "description": "List patients, optionally filtered by a case-insensitive name substring.",
+        "operationId": "api_list_patients_api_patients_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PatientSummary"
+                  },
+                  "title": "Response Api List Patients Api Patients Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/patients/{patient_id}": {
+      "get": {
+        "summary": "Api Get Patient",
+        "operationId": "api_get_patient_api_patients__patient_id__get",
+        "parameters": [
+          {
+            "name": "patient_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Patient Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientSummary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/query": {
+      "post": {
+        "summary": "Api Query",
+        "operationId": "api_query_api_query_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QueryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Brief": {
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "title": "Patient Id"
+          },
+          "headline": {
+            "type": "string",
+            "title": "Headline"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/components/schemas/BriefSection"
+            },
+            "type": "array",
+            "title": "Sections"
+          },
+          "missing": {
+            "items": {
+              "$ref": "#/components/schemas/MissingItem"
+            },
+            "type": "array",
+            "title": "Missing"
+          },
+          "source": {
+            "$ref": "#/components/schemas/BriefSource",
+            "default": "template"
+          },
+          "prose": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prose"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "patient_id",
+          "headline"
+        ],
+        "title": "Brief",
+        "description": "The rendered answer.\n\n`sections` is always the deterministic template output. The optional LLM\npolish pass writes `prose` and flips `source`; it never edits or replaces\n`sections`, so the grounded version survives a bad rewrite and the demo\nworks with the flag off."
+      },
+      "BriefLine": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "fact_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Fact Ids"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "BriefLine",
+        "description": "One rendered line, carrying the fact ids that justify it.\n\nProvenance is not optional: the UI resolves these back to source\nresources on click."
+      },
+      "BriefSection": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/BriefLine"
+            },
+            "type": "array",
+            "title": "Lines"
+          },
+          "empty_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Empty Note"
+          },
+          "coverage_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coverage Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title"
+        ],
+        "title": "BriefSection",
+        "description": "A titled group of lines.\n\n`empty_note` carries the explicit negative -- \"No allergy records on\nfile.\" -- so an empty section still says something."
+      },
+      "BriefSource": {
+        "type": "string",
+        "enum": [
+          "template",
+          "llm_polished"
+        ],
+        "title": "BriefSource"
+      },
+      "EntityFacts": {
+        "properties": {
+          "entity": {
+            "$ref": "#/components/schemas/ResolvedEntity"
+          },
+          "facts": {
+            "items": {
+              "$ref": "#/components/schemas/Fact"
+            },
+            "type": "array",
+            "title": "Facts"
+          },
+          "outcome": {
+            "$ref": "#/components/schemas/RetrievalOutcome",
+            "default": "not_retrieved"
+          },
+          "negated_in_query": {
+            "type": "boolean",
+            "title": "Negated In Query",
+            "default": false
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated",
+            "default": false
+          },
+          "limit_applied": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Limit Applied"
+          },
+          "coverage_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coverage Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "entity"
+        ],
+        "title": "EntityFacts",
+        "description": "Facts retrieved for one resolved entity.\n\nKept per-entity rather than merged into one pile because entities can\nshare a span: `aspirin` resolves to both an ALLERGY substance and four\nMEDICATION products, and those are two different clinical answers."
+      },
+      "Fact": {
+        "properties": {
+          "fact_id": {
+            "type": "string",
+            "title": "Fact Id"
+          },
+          "patient_id": {
+            "type": "string",
+            "title": "Patient Id"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "safety_class": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Safety Class"
+          },
+          "text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text"
+          },
+          "code_system": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code System"
+          },
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "display": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          },
+          "date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "source_resource_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Resource Type"
+          },
+          "source_resource_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Resource Id"
+          },
+          "encounter_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Encounter Id"
+          },
+          "also_in": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Also In"
+          }
+        },
+        "type": "object",
+        "required": [
+          "fact_id",
+          "patient_id"
+        ],
+        "title": "Fact",
+        "description": "One row of facts.jsonl, mirroring the ingestion schema exactly.\n\nProvenance fields (`source_resource_type`, `source_resource_id`,\n`encounter_id`, `also_in`) are part of the record, not decoration: the UI\nshows them on click and the brief cites `fact_id` for every line."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "MatchQuality": {
+        "type": "string",
+        "enum": [
+          "exact",
+          "synonym",
+          "fuzzy",
+          "unresolved"
+        ],
+        "title": "MatchQuality",
+        "description": "How an entity span was resolved to codes.\n\nThe downstream router branches on this, so an honest ``UNRESOLVED``\nis more useful than a plausible-looking wrong code."
+      },
+      "MissingItem": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "reason": {
+            "$ref": "#/components/schemas/MissingReason",
+            "default": "absent"
+          },
+          "categories": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Categories"
+          },
+          "codes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Codes"
+          },
+          "window_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Window Days"
+          },
+          "last_seen": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Seen"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label"
+        ],
+        "title": "MissingItem",
+        "description": "Something a pre-op assessment expects to see that is not on file.\n\nA set difference over coded facts, not a model. The product\ndifferentiator is naming what is absent, so this is a first-class result\nfield rather than a footnote."
+      },
+      "MissingReason": {
+        "type": "string",
+        "enum": [
+          "absent",
+          "stale"
+        ],
+        "title": "MissingReason"
+      },
+      "NarrativeMatch": {
+        "properties": {
+          "fact_id": {
+            "type": "string",
+            "title": "Fact Id"
+          },
+          "encounter_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Encounter Id"
+          },
+          "date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date"
+          },
+          "section": {
+            "type": "string",
+            "title": "Section"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "score": {
+            "type": "number",
+            "title": "Score"
+          }
+        },
+        "type": "object",
+        "required": [
+          "fact_id",
+          "section",
+          "text",
+          "score"
+        ],
+        "title": "NarrativeMatch",
+        "description": "One hit from the REPORT-note vector-search fallback.\n\nStage 2 only, and a fallback only: ``retrieve()`` attempts this path\nsolely when nothing in the query resolved to a code at all. Never a\nreplacement for coded retrieval -- REPORT is the ~5% of the corpus with\nno code to filter on, everything else stays on the structured path."
+      },
+      "ParsedQuery": {
+        "properties": {
+          "raw": {
+            "type": "string",
+            "title": "Raw"
+          },
+          "entities": {
+            "items": {
+              "$ref": "#/components/schemas/ResolvedEntity"
+            },
+            "type": "array",
+            "title": "Entities"
+          },
+          "date_from": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date From"
+          },
+          "date_to": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date To"
+          }
+        },
+        "type": "object",
+        "required": [
+          "raw"
+        ],
+        "title": "ParsedQuery",
+        "description": "The parsed form of a doctor's natural-language question."
+      },
+      "PatientSummary": {
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "title": "Patient Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "birth_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Birth Date"
+          },
+          "gender": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gender"
+          },
+          "deceased": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deceased"
+          },
+          "_n_facts": {
+            "type": "integer",
+            "title": "N Facts",
+            "default": 0
+          },
+          "_source_file": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "patient_id"
+        ],
+        "title": "PatientSummary",
+        "description": "One row of patients.jsonl. The underscore-prefixed source keys are\naliased to clean names; both spellings are accepted on input."
+      },
+      "QueryRequest": {
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "title": "Patient Id"
+          },
+          "query": {
+            "type": "string",
+            "title": "Query"
+          }
+        },
+        "type": "object",
+        "required": [
+          "patient_id",
+          "query"
+        ],
+        "title": "QueryRequest"
+      },
+      "QueryResponse": {
+        "properties": {
+          "patient": {
+            "$ref": "#/components/schemas/PatientSummary"
+          },
+          "query": {
+            "type": "string",
+            "title": "Query"
+          },
+          "parsed": {
+            "$ref": "#/components/schemas/ParsedQuery"
+          },
+          "brief": {
+            "$ref": "#/components/schemas/Brief"
+          },
+          "result": {
+            "$ref": "#/components/schemas/RetrievalResult"
+          },
+          "timings": {
+            "$ref": "#/components/schemas/StageTimings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "patient",
+          "query",
+          "parsed",
+          "brief",
+          "result"
+        ],
+        "title": "QueryResponse",
+        "description": "What POST /api/query returns.\n\n`parsed` is included so the UI can render the question with its resolved\nentities highlighted by match quality -- the NER work is visible rather\nthan invisible."
+      },
+      "ResolvedEntity": {
+        "properties": {
+          "span": {
+            "type": "string",
+            "title": "Span"
+          },
+          "start": {
+            "type": "integer",
+            "title": "Start"
+          },
+          "end": {
+            "type": "integer",
+            "title": "End"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "code_system": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code System"
+          },
+          "codes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Codes"
+          },
+          "display": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/MatchQuality"
+          },
+          "negated": {
+            "type": "boolean",
+            "title": "Negated",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "span",
+          "start",
+          "end",
+          "quality"
+        ],
+        "title": "ResolvedEntity",
+        "description": "One span of the query, resolved (or not) to corpus codes."
+      },
+      "RetrievalOutcome": {
+        "type": "string",
+        "enum": [
+          "found",
+          "none_on_file",
+          "not_retrieved"
+        ],
+        "title": "RetrievalOutcome",
+        "description": "Why an entity's fact list looks the way it does.\n\nThe distinction this enum exists for: an empty `FOUND_NONE` means the\npatient genuinely has nothing on file, which is a clinical finding.\n`NOT_RETRIEVED` means we never asked, which is not."
+      },
+      "RetrievalResult": {
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "title": "Patient Id"
+          },
+          "query": {
+            "type": "string",
+            "title": "Query"
+          },
+          "entities": {
+            "items": {
+              "$ref": "#/components/schemas/EntityFacts"
+            },
+            "type": "array",
+            "title": "Entities"
+          },
+          "unresolved_spans": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Unresolved Spans"
+          },
+          "date_from": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date From"
+          },
+          "date_to": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date To"
+          },
+          "missing": {
+            "items": {
+              "$ref": "#/components/schemas/MissingItem"
+            },
+            "type": "array",
+            "title": "Missing"
+          },
+          "narrative_matches": {
+            "items": {
+              "$ref": "#/components/schemas/NarrativeMatch"
+            },
+            "type": "array",
+            "title": "Narrative Matches"
+          },
+          "timings": {
+            "$ref": "#/components/schemas/StageTimings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "patient_id",
+          "query"
+        ],
+        "title": "RetrievalResult",
+        "description": "Everything the retrieval stage found, and everything it did not."
+      },
+      "StageTimings": {
+        "properties": {
+          "parse_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parse Ms"
+          },
+          "retrieve_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retrieve Ms"
+          },
+          "brief_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brief Ms"
+          },
+          "vector_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vector Ms"
+          },
+          "llm_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Llm Ms"
+          },
+          "total_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Ms"
+          }
+        },
+        "type": "object",
+        "title": "StageTimings",
+        "description": "Per-stage latency as structured fields, not log lines.\n\nPopulated as the request moves through the pipeline; a stage that did not\nrun stays None. `vector_ms` is reserved for stage 2 and stays None until\nthe Pinecone path exists."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

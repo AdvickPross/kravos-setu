@@ -1,0 +1,47 @@
+# 30 hand-written probe queries for the query-side NER.
+# Source of truth for tests/queries.md -- regenerate that file with:
+#   pwsh> python scripts/run_probes.py
+# This is a debugging instrument, not an evaluation set. The gold eval set
+# (80-100 queries with gold fact IDs) is a separate artifact.
+
+# --- medication reconciliation ---
+what meds is she on right now
+HTN and T2DM meds?
+is he on warfarin or clopidogrel before surgery
+does she take metformin and what dose
+stopped aspirin before the procedure?
+any beta blockers or ACE inhibitors on the list
+on paracetamol and salbutamol?
+
+# --- allergy checks ---
+any drug allergies before I prescribe amoxicillin
+is he allergic to penicillin
+any patient with no known allergies
+NKDA documented?
+amoxicilin allergy
+sulfa allergy or reaction to cotrimoxazole
+
+# --- lab trends ---
+hba1c trend over the last 2 years
+glucose over the last year
+latest creatinine and eGFR
+K+ and Na levels since 2019
+hb and hct before surgery
+LFT and RFT results this year
+lipid profile - LDL and HDL
+INR and platelet count
+what was the last troponin
+
+# --- vitals ---
+BP and heart rate readings in 2024
+SpO2 and respiratory rate recent
+BMI and weight trend
+
+# --- symptom / condition recall ---
+no history of MI but has CKD stage 3
+does he have COPD or asthma
+SOB on exertion and wheezing
+
+# --- briefs and deliberately unresolvable ---
+give me a full pre-op brief for this patient
+does the patient have a PICC line and when was the last dressing change

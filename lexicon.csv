@@ -1,0 +1,1171 @@
+category,code_system,code,display
+ALLERGY,http://snomed.info/sct,102263004,Eggs (edible) (substance)
+ALLERGY,http://snomed.info/sct,111088007,Latex (substance)
+ALLERGY,http://snomed.info/sct,256277009,Grass pollen (substance)
+ALLERGY,http://snomed.info/sct,256355007,Glycine max (substance)
+ALLERGY,http://snomed.info/sct,260147004,House dust mite (organism)
+ALLERGY,http://snomed.info/sct,264287008,Animal dander (substance)
+ALLERGY,http://snomed.info/sct,288328004,Bee venom (substance)
+ALLERGY,http://snomed.info/sct,3718001,Cow's milk (substance)
+ALLERGY,http://snomed.info/sct,412071004,Wheat (substance)
+ALLERGY,http://snomed.info/sct,442571000124108,Tree nut (substance)
+ALLERGY,http://snomed.info/sct,609328004,Allergic disposition (finding)
+ALLERGY,http://snomed.info/sct,735029006,Shellfish (substance)
+ALLERGY,http://snomed.info/sct,735971005,Fish (substance)
+ALLERGY,http://snomed.info/sct,762952008,Peanut (substance)
+ALLERGY,http://snomed.info/sct,782576004,Tree pollen (substance)
+ALLERGY,http://snomed.info/sct,84489001,Mold (organism)
+ALLERGY,http://www.nlm.nih.gov/research/umls/rxnorm,10831,Sulfamethoxazole / Trimethoprim
+ALLERGY,http://www.nlm.nih.gov/research/umls/rxnorm,1191,Aspirin
+ALLERGY,http://www.nlm.nih.gov/research/umls/rxnorm,25037,cefdinir
+ALLERGY,http://www.nlm.nih.gov/research/umls/rxnorm,29046,Lisinopril
+ALLERGY,http://www.nlm.nih.gov/research/umls/rxnorm,5640,Ibuprofen
+ALLERGY,http://www.nlm.nih.gov/research/umls/rxnorm,7984,Penicillin V
+CONDITION,http://snomed.info/sct,10509002,Acute bronchitis (disorder)
+CONDITION,http://snomed.info/sct,105531004,Housing unsatisfactory (finding)
+CONDITION,http://snomed.info/sct,108631000119101,History of autologous bone marrow transplant (situation)
+CONDITION,http://snomed.info/sct,10939881000119105,Unhealthy alcohol drinking behavior (finding)
+CONDITION,http://snomed.info/sct,109570002,Primary dental caries (disorder)
+CONDITION,http://snomed.info/sct,109838007,Overlapping malignant neoplasm of colon (disorder)
+CONDITION,http://snomed.info/sct,109989006,Multiple myeloma (disorder)
+CONDITION,http://snomed.info/sct,110030002,Concussion injury of brain (disorder)
+CONDITION,http://snomed.info/sct,110359009,Intellectual disability (disorder)
+CONDITION,http://snomed.info/sct,1121000119107,Chronic neck pain (finding)
+CONDITION,http://snomed.info/sct,1149222004,Overdose (disorder)
+CONDITION,http://snomed.info/sct,11625007,Torus mandibularis (disorder)
+CONDITION,http://snomed.info/sct,1163220007,Pressure injury stage II (disorder)
+CONDITION,http://snomed.info/sct,1187604002,Serving in military service (finding)
+CONDITION,http://snomed.info/sct,1231000119100,History of aortic valve replacement (situation)
+CONDITION,http://snomed.info/sct,124171000119105,Chronic intractable migraine without aura (disorder)
+CONDITION,http://snomed.info/sct,1255252008,Resorption of alveolar process due to dental trauma (disorder)
+CONDITION,http://snomed.info/sct,125601008,Injury of knee (disorder)
+CONDITION,http://snomed.info/sct,125605004,Fracture of bone (disorder)
+CONDITION,http://snomed.info/sct,126906006,Neoplasm of prostate (disorder)
+CONDITION,http://snomed.info/sct,127013003,Disorder of kidney due to diabetes mellitus (disorder)
+CONDITION,http://snomed.info/sct,127294003,Traumatic or nontraumatic brain injury (disorder)
+CONDITION,http://snomed.info/sct,128188000,Cerebral palsy (disorder)
+CONDITION,http://snomed.info/sct,128613002,Seizure disorder (disorder)
+CONDITION,http://snomed.info/sct,1290882004,History of seizure (situation)
+CONDITION,http://snomed.info/sct,132281000119108,Acute deep venous thrombosis (disorder)
+CONDITION,http://snomed.info/sct,1501000119109,Proliferative diabetic retinopathy due to type II diabetes mellitus
+CONDITION,http://snomed.info/sct,153351000119102,History of peripheral stem cell transplant (situation)
+CONDITION,http://snomed.info/sct,1551000119108,Nonproliferative diabetic retinopathy due to type II diabetes mellitus
+CONDITION,http://snomed.info/sct,156073000,Complete miscarriage (disorder)
+CONDITION,http://snomed.info/sct,157141000119108,Proteinuria due to type 2 diabetes mellitus (disorder)
+CONDITION,http://snomed.info/sct,15724005,Fracture of vertebral column without spinal cord injury (disorder)
+CONDITION,http://snomed.info/sct,15802004,Dystonia (disorder)
+CONDITION,http://snomed.info/sct,160903007,Full-time employment (finding)
+CONDITION,http://snomed.info/sct,160904001,Part-time employment (finding)
+CONDITION,http://snomed.info/sct,160968000,Risk activity involvement (finding)
+CONDITION,http://snomed.info/sct,16114001,Fracture of ankle (disorder)
+CONDITION,http://snomed.info/sct,161665007,History of renal transplant (situation)
+CONDITION,http://snomed.info/sct,161679004,History of artificial joint (situation)
+CONDITION,http://snomed.info/sct,161744009,Past pregnancy history of miscarriage (situation)
+CONDITION,http://snomed.info/sct,162573006,Suspected lung cancer (situation)
+CONDITION,http://snomed.info/sct,162864005,Body mass index 30+ - obesity (finding)
+CONDITION,http://snomed.info/sct,1734006,Fracture of vertebral column with spinal cord injury (disorder)
+CONDITION,http://snomed.info/sct,183996000,Sterilization requested (situation)
+CONDITION,http://snomed.info/sct,185086009,Chronic obstructive bronchitis (disorder)
+CONDITION,http://snomed.info/sct,18718003,Gingival disease (disorder)
+CONDITION,http://snomed.info/sct,19169002,Miscarriage in first trimester (disorder)
+CONDITION,http://snomed.info/sct,192127007,Child attention deficit disorder (disorder)
+CONDITION,http://snomed.info/sct,195662009,Acute viral pharyngitis (disorder)
+CONDITION,http://snomed.info/sct,195967001,Asthma (disorder)
+CONDITION,http://snomed.info/sct,196416002,Impacted molars (disorder)
+CONDITION,http://snomed.info/sct,197927001,Recurrent urinary tract infection (disorder)
+CONDITION,http://snomed.info/sct,198992004,Eclampsia in pregnancy (disorder)
+CONDITION,http://snomed.info/sct,201834006,"Localized, primary osteoarthritis of the hand (disorder)"
+CONDITION,http://snomed.info/sct,203082005,Fibromyalgia (disorder)
+CONDITION,http://snomed.info/sct,203646004,Adolescent idiopathic scoliosis (disorder)
+CONDITION,http://snomed.info/sct,204949001,Renal dysplasia (disorder)
+CONDITION,http://snomed.info/sct,213150003,Kidney transplant failure and rejection (disorder)
+CONDITION,http://snomed.info/sct,22253000,Pain (finding)
+CONDITION,http://snomed.info/sct,22298006,Myocardial infarction (disorder)
+CONDITION,http://snomed.info/sct,224295006,Only received primary school education (finding)
+CONDITION,http://snomed.info/sct,224299000,Received higher education (finding)
+CONDITION,http://snomed.info/sct,230265002,Familial Alzheimer's disease of early onset (disorder)
+CONDITION,http://snomed.info/sct,230690007,Cerebrovascular accident (disorder)
+CONDITION,http://snomed.info/sct,230745008,Hydrocephalus (disorder)
+CONDITION,http://snomed.info/sct,232353008,Perennial allergic rhinitis with seasonal variation (disorder)
+CONDITION,http://snomed.info/sct,233604007,Pneumonia (disorder)
+CONDITION,http://snomed.info/sct,233678006,Childhood asthma (disorder)
+CONDITION,http://snomed.info/sct,235595009,Gastroesophageal reflux disease (disorder)
+CONDITION,http://snomed.info/sct,235919008,Gallbladder calculus (disorder)
+CONDITION,http://snomed.info/sct,236077008,Protracted diarrhea (finding)
+CONDITION,http://snomed.info/sct,237602007,Metabolic syndrome X (disorder)
+CONDITION,http://snomed.info/sct,239720000,Tear of meniscus of knee (disorder)
+CONDITION,http://snomed.info/sct,239872002,Osteoarthritis of hip (disorder)
+CONDITION,http://snomed.info/sct,239873007,Osteoarthritis of knee (disorder)
+CONDITION,http://snomed.info/sct,24079001,Atopic dermatitis (disorder)
+CONDITION,http://snomed.info/sct,241929008,Acute allergic reaction (disorder)
+CONDITION,http://snomed.info/sct,248595008,Sputum finding (finding)
+CONDITION,http://snomed.info/sct,249497008,Vomiting symptom (finding)
+CONDITION,http://snomed.info/sct,25064002,Headache (finding)
+CONDITION,http://snomed.info/sct,254632001,Small cell carcinoma of lung (disorder)
+CONDITION,http://snomed.info/sct,254637007,Non-small cell lung cancer (disorder)
+CONDITION,http://snomed.info/sct,254837009,Malignant neoplasm of breast (disorder)
+CONDITION,http://snomed.info/sct,262521009,Traumatic injury of spinal cord and/or vertebral column (disorder)
+CONDITION,http://snomed.info/sct,262574004,Bullet wound (disorder)
+CONDITION,http://snomed.info/sct,263102004,Fracture subluxation of wrist (disorder)
+CONDITION,http://snomed.info/sct,263172003,Fracture of mandible (disorder)
+CONDITION,http://snomed.info/sct,266934004,Transport problem (finding)
+CONDITION,http://snomed.info/sct,266948004,Has a criminal record (finding)
+CONDITION,http://snomed.info/sct,267020005,History of tubal ligation (situation)
+CONDITION,http://snomed.info/sct,267036007,Dyspnea (finding)
+CONDITION,http://snomed.info/sct,267060006,Diarrhea symptom (finding)
+CONDITION,http://snomed.info/sct,267102003,Sore throat (finding)
+CONDITION,http://snomed.info/sct,267253006,Fetus with chromosomal abnormality (disorder)
+CONDITION,http://snomed.info/sct,26929004,Alzheimer's disease (disorder)
+CONDITION,http://snomed.info/sct,271737000,Anemia (disorder)
+CONDITION,http://snomed.info/sct,271825005,Respiratory distress (finding)
+CONDITION,http://snomed.info/sct,274531002,Abnormal findings diagnostic imaging heart+coronary circulat (finding)
+CONDITION,http://snomed.info/sct,278558000,Dental filling lost (finding)
+CONDITION,http://snomed.info/sct,278588009,Fractured dental filling (finding)
+CONDITION,http://snomed.info/sct,278598003,Leaking dental filling (finding)
+CONDITION,http://snomed.info/sct,278602001,Loose dental filling (finding)
+CONDITION,http://snomed.info/sct,278860009,Chronic low back pain (finding)
+CONDITION,http://snomed.info/sct,27942005,Shock (disorder)
+CONDITION,http://snomed.info/sct,283371005,Laceration of forearm (disorder)
+CONDITION,http://snomed.info/sct,283385000,Laceration of thigh (disorder)
+CONDITION,http://snomed.info/sct,283545005,Gunshot wound (disorder)
+CONDITION,http://snomed.info/sct,284549007,Laceration of hand (disorder)
+CONDITION,http://snomed.info/sct,284551006,Laceration of foot (disorder)
+CONDITION,http://snomed.info/sct,298382003,Scoliosis deformity of spine (disorder)
+CONDITION,http://snomed.info/sct,302297009,Congenital deformity of foot (disorder)
+CONDITION,http://snomed.info/sct,302870006,Hypertriglyceridemia (disorder)
+CONDITION,http://snomed.info/sct,307426000,Acute infective cystitis (disorder)
+CONDITION,http://snomed.info/sct,307731004,Injury of tendon of the rotator cuff of shoulder (disorder)
+CONDITION,http://snomed.info/sct,30832001,Rupture of patellar tendon (disorder)
+CONDITION,http://snomed.info/sct,312157006,Infectious mediastinitis (disorder)
+CONDITION,http://snomed.info/sct,312608009,Laceration - injury (disorder)
+CONDITION,http://snomed.info/sct,314529007,Medication review due (situation)
+CONDITION,http://snomed.info/sct,315268008,Suspected prostate cancer (situation)
+CONDITION,http://snomed.info/sct,32911000,Homeless (finding)
+CONDITION,http://snomed.info/sct,33737001,Fracture of rib (disorder)
+CONDITION,http://snomed.info/sct,359817006,Closed fracture of hip (disorder)
+CONDITION,http://snomed.info/sct,35999006,Blighted ovum (disorder)
+CONDITION,http://snomed.info/sct,361055000,Misuses drugs (finding)
+CONDITION,http://snomed.info/sct,363406005,Malignant neoplasm of colon (disorder)
+CONDITION,http://snomed.info/sct,367498001,Seasonal allergic rhinitis (disorder)
+CONDITION,http://snomed.info/sct,368581000119106,Neuropathy due to type 2 diabetes mellitus (disorder)
+CONDITION,http://snomed.info/sct,36923009,"Major depression, single episode (disorder)"
+CONDITION,http://snomed.info/sct,36955009,Loss of taste (finding)
+CONDITION,http://snomed.info/sct,36971009,Sinusitis (disorder)
+CONDITION,http://snomed.info/sct,370143000,Major depressive disorder (disorder)
+CONDITION,http://snomed.info/sct,370247008,Facial laceration (disorder)
+CONDITION,http://snomed.info/sct,37320007,Loss of teeth (disorder)
+CONDITION,http://snomed.info/sct,37849005,Congenital uterine anomaly (disorder)
+CONDITION,http://snomed.info/sct,384709000,Sprain (morphologic abnormality)
+CONDITION,http://snomed.info/sct,386661006,Fever (finding)
+CONDITION,http://snomed.info/sct,389087006,Hypoxemia (disorder)
+CONDITION,http://snomed.info/sct,398152000,Poor muscle tone (finding)
+CONDITION,http://snomed.info/sct,398254007,Pre-eclampsia (disorder)
+CONDITION,http://snomed.info/sct,39848009,Whiplash injury to neck (disorder)
+CONDITION,http://snomed.info/sct,39898005,Sleep disorder (disorder)
+CONDITION,http://snomed.info/sct,399211009,History of myocardial infarction (situation)
+CONDITION,http://snomed.info/sct,399261000,History of coronary artery bypass grafting (situation)
+CONDITION,http://snomed.info/sct,40055000,Chronic sinusitis (disorder)
+CONDITION,http://snomed.info/sct,401303003,Acute ST segment elevation myocardial infarction (disorder)
+CONDITION,http://snomed.info/sct,401314000,Acute non-ST segment elevation myocardial infarction (disorder)
+CONDITION,http://snomed.info/sct,40275004,Contact dermatitis (disorder)
+CONDITION,http://snomed.info/sct,403190006,Epidermal burn of skin (disorder)
+CONDITION,http://snomed.info/sct,403191005,Partial thickness burn (disorder)
+CONDITION,http://snomed.info/sct,403192003,Full thickness burn (disorder)
+CONDITION,http://snomed.info/sct,408512008,Body mass index 40+ - severely obese (finding)
+CONDITION,http://snomed.info/sct,414545008,Ischemic heart disease (disorder)
+CONDITION,http://snomed.info/sct,414667000,Meningomyelocele (disorder)
+CONDITION,http://snomed.info/sct,422587007,Nausea (finding)
+CONDITION,http://snomed.info/sct,422650009,Social isolation (finding)
+CONDITION,http://snomed.info/sct,423315002,Limited social contact (finding)
+CONDITION,http://snomed.info/sct,424132000,"Non-small cell carcinoma of lung, TNM stage 1 (disorder)"
+CONDITION,http://snomed.info/sct,424393004,Reports of violence in the environment (finding)
+CONDITION,http://snomed.info/sct,427419006,Transformed migraine (disorder)
+CONDITION,http://snomed.info/sct,427898007,Infection of tooth (disorder)
+CONDITION,http://snomed.info/sct,428251008,History of appendectomy (situation)
+CONDITION,http://snomed.info/sct,431855005,Chronic kidney disease stage 1 (disorder)
+CONDITION,http://snomed.info/sct,431856006,Chronic kidney disease stage 2 (disorder)
+CONDITION,http://snomed.info/sct,431857002,Chronic kidney disease stage 4 (disorder)
+CONDITION,http://snomed.info/sct,433144002,Chronic kidney disease stage 3 (disorder)
+CONDITION,http://snomed.info/sct,43724002,Chill (finding)
+CONDITION,http://snomed.info/sct,43878008,Streptococcal sore throat (disorder)
+CONDITION,http://snomed.info/sct,44054006,Diabetes mellitus type 2 (disorder)
+CONDITION,http://snomed.info/sct,443165006,Osteoporotic fracture of bone (disorder)
+CONDITION,http://snomed.info/sct,444448004,Injury of medial collateral ligament of knee (disorder)
+CONDITION,http://snomed.info/sct,444470001,Injury of anterior cruciate ligament (disorder)
+CONDITION,http://snomed.info/sct,44465007,Sprain of ankle (disorder)
+CONDITION,http://snomed.info/sct,444814009,Viral sinusitis (disorder)
+CONDITION,http://snomed.info/sct,446096008,Perennial allergic rhinitis (disorder)
+CONDITION,http://snomed.info/sct,446654005,Refugee (person)
+CONDITION,http://snomed.info/sct,449868002,Smokes tobacco daily (finding)
+CONDITION,http://snomed.info/sct,45816000,Pyelonephritis (disorder)
+CONDITION,http://snomed.info/sct,46177005,End-stage renal disease (disorder)
+CONDITION,http://snomed.info/sct,46752004,Torus palatinus (disorder)
+CONDITION,http://snomed.info/sct,47200007,High risk pregnancy (finding)
+CONDITION,http://snomed.info/sct,473461003,Educated to high school level (finding)
+CONDITION,http://snomed.info/sct,47505003,Posttraumatic stress disorder (disorder)
+CONDITION,http://snomed.info/sct,48333001,Burn injury (morphologic abnormality)
+CONDITION,http://snomed.info/sct,48724000,Mitral valve regurgitation (disorder)
+CONDITION,http://snomed.info/sct,49436004,Atrial fibrillation (disorder)
+CONDITION,http://snomed.info/sct,49727002,Cough (finding)
+CONDITION,http://snomed.info/sct,55822004,Hyperlipidemia (disorder)
+CONDITION,http://snomed.info/sct,56018004,Wheezing (finding)
+CONDITION,http://snomed.info/sct,5602001,Opioid abuse
+CONDITION,http://snomed.info/sct,56786000,Pulmonic valve stenosis (disorder)
+CONDITION,http://snomed.info/sct,57676002,Joint pain
+CONDITION,http://snomed.info/sct,58150001,Fracture of clavicle (disorder)
+CONDITION,http://snomed.info/sct,59621000,Essential hypertension (disorder)
+CONDITION,http://snomed.info/sct,60234000,Aortic valve regurgitation (disorder)
+CONDITION,http://snomed.info/sct,60573004,Aortic valve stenosis (disorder)
+CONDITION,http://snomed.info/sct,6072007,Bleeding from anus (disorder)
+CONDITION,http://snomed.info/sct,609496007,Complication occurring during pregnancy (disorder)
+CONDITION,http://snomed.info/sct,61804006,Alveolitis of jaw (disorder)
+CONDITION,http://snomed.info/sct,62106007,Concussion with no loss of consciousness (disorder)
+CONDITION,http://snomed.info/sct,62564004,Concussion with loss of consciousness (disorder)
+CONDITION,http://snomed.info/sct,64859006,Osteoporosis (disorder)
+CONDITION,http://snomed.info/sct,6525002,Dependent drug abuse (disorder)
+CONDITION,http://snomed.info/sct,65275009,Acute cholecystitis (disorder)
+CONDITION,http://snomed.info/sct,65363002,Otitis media (disorder)
+CONDITION,http://snomed.info/sct,65710008,Acute respiratory failure (disorder)
+CONDITION,http://snomed.info/sct,65966004,Fracture of forearm (disorder)
+CONDITION,http://snomed.info/sct,66383009,Gingivitis (disorder)
+CONDITION,http://snomed.info/sct,67782005,Acute respiratory distress syndrome (disorder)
+CONDITION,http://snomed.info/sct,67787004,Tongue tie (disorder)
+CONDITION,http://snomed.info/sct,67811000119102,"Primary small cell malignant neoplasm of lung, TNM stage 1 (disorder)"
+CONDITION,http://snomed.info/sct,68235000,Nasal congestion (finding)
+CONDITION,http://snomed.info/sct,68496003,Polyp of colon (disorder)
+CONDITION,http://snomed.info/sct,68566005,Urinary tract infectious disease (disorder)
+CONDITION,http://snomed.info/sct,68962001,Muscle pain (finding)
+CONDITION,http://snomed.info/sct,698306007,Awaiting transplantation of kidney (situation)
+CONDITION,http://snomed.info/sct,69896004,Rheumatoid arthritis (disorder)
+CONDITION,http://snomed.info/sct,706870000,Acute pulmonary embolism (disorder)
+CONDITION,http://snomed.info/sct,706893006,Victim of intimate partner abuse (finding)
+CONDITION,http://snomed.info/sct,70704007,Sprain of wrist (disorder)
+CONDITION,http://snomed.info/sct,713197008,Recurrent rectal polyp (disorder)
+CONDITION,http://snomed.info/sct,713458007,Lack of access to transportation (finding)
+CONDITION,http://snomed.info/sct,714628002,Prediabetes (finding)
+CONDITION,http://snomed.info/sct,7200002,Alcoholism (disorder)
+CONDITION,http://snomed.info/sct,72892002,Normal pregnancy (finding)
+CONDITION,http://snomed.info/sct,73430006,Sleep apnea (disorder)
+CONDITION,http://snomed.info/sct,73438004,Unemployed (finding)
+CONDITION,http://snomed.info/sct,73595000,Stress (finding)
+CONDITION,http://snomed.info/sct,741062008,Not in labor force (finding)
+CONDITION,http://snomed.info/sct,74400008,Appendicitis (disorder)
+CONDITION,http://snomed.info/sct,75498004,Acute bacterial sinusitis (disorder)
+CONDITION,http://snomed.info/sct,76571007,Septic shock (disorder)
+CONDITION,http://snomed.info/sct,770349000,Sepsis caused by virus (disorder)
+CONDITION,http://snomed.info/sct,78275009,Obstructive sleep apnea syndrome (disorder)
+CONDITION,http://snomed.info/sct,79586000,Tubal pregnancy (disorder)
+CONDITION,http://snomed.info/sct,80394007,Hyperglycemia (disorder)
+CONDITION,http://snomed.info/sct,80583007,Severe anxiety (panic) (finding)
+CONDITION,http://snomed.info/sct,81629009,Traumatic dislocation of temporomandibular joint (disorder)
+CONDITION,http://snomed.info/sct,82423001,Chronic pain (finding)
+CONDITION,http://snomed.info/sct,83664006,Idiopathic atrophic hypothyroidism (disorder)
+CONDITION,http://snomed.info/sct,840539006,Disease caused by severe acute respiratory syndrome coronavirus 2 (disorder)
+CONDITION,http://snomed.info/sct,840544004,Suspected disease caused by Severe acute respiratory coronavirus 2 (situation)
+CONDITION,http://snomed.info/sct,84229001,Fatigue (finding)
+CONDITION,http://snomed.info/sct,84757009,Epilepsy (disorder)
+CONDITION,http://snomed.info/sct,85116003,Miscarriage in second trimester (disorder)
+CONDITION,http://snomed.info/sct,86406008,Human immunodeficiency virus infection (disorder)
+CONDITION,http://snomed.info/sct,87433001,Pulmonary emphysema (disorder)
+CONDITION,http://snomed.info/sct,876882001,Died in hospice (finding)
+CONDITION,http://snomed.info/sct,88805009,Chronic congestive heart failure (disorder)
+CONDITION,http://snomed.info/sct,90460009,Injury of neck (disorder)
+CONDITION,http://snomed.info/sct,90560007,Gout
+CONDITION,http://snomed.info/sct,90781000119102,Microalbuminuria due to type 2 diabetes mellitus (disorder)
+CONDITION,http://snomed.info/sct,91302008,Sepsis (disorder)
+CONDITION,http://snomed.info/sct,91434003,Pulmonic valve regurgitation (disorder)
+CONDITION,http://snomed.info/sct,92691004,Carcinoma in situ of prostate (disorder)
+CONDITION,http://snomed.info/sct,93143009,"Leukemia, disease (disorder)"
+CONDITION,http://snomed.info/sct,93761005,Primary malignant neoplasm of colon (disorder)
+CONDITION,http://snomed.info/sct,94260004,Metastatic malignant neoplasm to colon (disorder)
+CONDITION,http://snomed.info/sct,94503003,Metastatic malignant neoplasm to prostate (disorder)
+CONDITION,http://snomed.info/sct,95417003,Primary fibromyalgia syndrome (disorder)
+CONDITION,http://snomed.info/sct,97331000119101,Macular edema and retinopathy due to type 2 diabetes mellitus (disorder)
+IMMUNIZATION,http://hl7.org/fhir/sid/cvx,03,MMR
+IMMUNIZATION,http://hl7.org/fhir/sid/cvx,08,"Hep B, adolescent or pediatric"
+IMMUNIZATION,http://hl7.org/fhir/sid/cvx,10,IPV
+IMMUNIZATION,http://hl7.org/fhir/sid/cvx,113,"Td (adult), 5 Lf tetanus toxoid, preservative free, adsorbed"
+IMMUNIZATION,http://hl7.org/fhir/sid/cvx,114,meningococcal MCV4P
+IMMUNIZATION,http://hl7.org/fhir/sid/cvx,114,"meningococcal polysaccharide (groups A, C, Y and W-135) diphtheria toxoid conjugate vaccine (MCV4P)"
+IMMUNIZATION,http://hl7.org/fhir/sid/cvx,115,Tdap
+IMMUNIZATION,http://hl7.org/fhir/sid/cvx,115,"tetanus toxoid, reduced diphtheria toxoid, and acellular pertussis vaccine, adsorbed"
+IMMUNIZATION,http://hl7.org/fhir/sid/cvx,119,"rotavirus, monovalent"
+IMMUNIZATION,http://hl7.org/fhir/sid/cvx,121,"zoster vaccine, live"
+IMMUNIZATION,http://hl7.org/fhir/sid/cvx,133,Pneumococcal conjugate PCV 13
+IMMUNIZATION,http://hl7.org/fhir/sid/cvx,140,"Influenza, split virus, trivalent, PF"
+IMMUNIZATION,http://hl7.org/fhir/sid/cvx,187,zoster vaccine recombinant
+IMMUNIZATION,http://hl7.org/fhir/sid/cvx,20,DTaP
+IMMUNIZATION,http://hl7.org/fhir/sid/cvx,207,"COVID-19, mRNA, LNP-S, PF, 100 mcg/0.5mL dose or 50 mcg/0.25mL dose"
+IMMUNIZATION,http://hl7.org/fhir/sid/cvx,208,"COVID-19, mRNA, LNP-S, PF, 30 mcg/0.3 mL dose"
+IMMUNIZATION,http://hl7.org/fhir/sid/cvx,21,varicella
+IMMUNIZATION,http://hl7.org/fhir/sid/cvx,212,"COVID-19 vaccine, vector-nr, rS-Ad26, PF, 0.5 mL"
+IMMUNIZATION,http://hl7.org/fhir/sid/cvx,33,"pneumococcal polysaccharide vaccine, 23 valent"
+IMMUNIZATION,http://hl7.org/fhir/sid/cvx,43,"Hep B, adult"
+IMMUNIZATION,http://hl7.org/fhir/sid/cvx,49,Hib (PRP-OMP)
+IMMUNIZATION,http://hl7.org/fhir/sid/cvx,52,"Hep A, adult"
+IMMUNIZATION,http://hl7.org/fhir/sid/cvx,62,"HPV, quadrivalent"
+IMMUNIZATION,http://hl7.org/fhir/sid/cvx,83,"Hep A, ped/adol, 2 dose"
+LAB,http://loinc.org,10230-1,Left ventricular Ejection fraction
+LAB,http://loinc.org,10480-2,Estrogen+Progesterone receptor Ag [Presence] in Tissue by Immune stain
+LAB,http://loinc.org,10834-0,Globulin [Mass/volume] in Serum by calculation
+LAB,http://loinc.org,13945-1,Erythrocytes [#/area] in Urine sediment by Microscopy high power field
+LAB,http://loinc.org,14627-4,Bicarbonate [Moles/volume] in Venous blood
+LAB,http://loinc.org,14804-9,Lactate dehydrogenase [Enzymatic activity/volume] in Serum or Plasma by Lactate to pyruvate reaction
+LAB,http://loinc.org,14959-1,Microalbumin/Creatinine [Mass Ratio] in Urine
+LAB,http://loinc.org,1742-6,Alanine aminotransferase [Enzymatic activity/volume] in Serum or Plasma
+LAB,http://loinc.org,1751-7,Albumin [Mass/volume] in Serum or Plasma
+LAB,http://loinc.org,17861-6,Calcium [Mass/volume] in Serum or Plasma
+LAB,http://loinc.org,18262-6,Cholesterol in LDL [Mass/volume] in Serum or Plasma by Direct assay
+LAB,http://loinc.org,18752-6,Exercise stress test study
+LAB,http://loinc.org,19123-9,Magnesium [Mass/volume] in Serum or Plasma
+LAB,http://loinc.org,1920-8,Aspartate aminotransferase [Enzymatic activity/volume] in Serum or Plasma
+LAB,http://loinc.org,1960-4,Bicarbonate [Moles/volume] in Arterial blood
+LAB,http://loinc.org,1975-2,Bilirubin.total [Mass/volume] in Serum or Plasma
+LAB,http://loinc.org,1988-5,C reactive protein [Mass/volume] in Serum or Plasma
+LAB,http://loinc.org,19926-5,FEV1/FVC
+LAB,http://loinc.org,19994-3,Oxygen/Total gas setting [Volume Fraction] Ventilator
+LAB,http://loinc.org,2019-8,Carbon dioxide [Partial pressure] in Arterial blood
+LAB,http://loinc.org,2021-4,Carbon dioxide [Partial pressure] in Venous blood
+LAB,http://loinc.org,2027-1,"Carbon dioxide, total [Moles/volume] in Venous blood"
+LAB,http://loinc.org,2028-9,"Carbon dioxide, total [Moles/volume] in Serum or Plasma"
+LAB,http://loinc.org,20447-9,HIV 1 RNA [#/volume] (viral load) in Serum or Plasma by NAA with probe detection
+LAB,http://loinc.org,20454-5,Protein [Presence] in Urine by Test strip
+LAB,http://loinc.org,20505-4,Bilirubin.total [Mass/volume] in Urine by Test strip
+LAB,http://loinc.org,20565-8,"Carbon dioxide, total [Moles/volume] in Blood"
+LAB,http://loinc.org,20570-8,Hematocrit [Volume Fraction] of Blood by calculation
+LAB,http://loinc.org,2069-3,Chloride [Moles/volume] in Blood
+LAB,http://loinc.org,2075-0,Chloride [Moles/volume] in Serum or Plasma
+LAB,http://loinc.org,2085-9,Cholesterol in HDL [Mass/volume] in Serum or Plasma
+LAB,http://loinc.org,2093-3,Cholesterol [Mass/volume] in Serum or Plasma
+LAB,http://loinc.org,2106-3,Choriogonadotropin [Presence] in Urine
+LAB,http://loinc.org,21377-7,Magnesium [Mass/volume] in Blood
+LAB,http://loinc.org,2157-6,Creatine kinase [Enzymatic activity/volume] in Serum or Plasma
+LAB,http://loinc.org,2160-0,Creatinine [Mass/volume] in Serum or Plasma
+LAB,http://loinc.org,21905-5,Primary tumor.clinical [Class] Cancer
+LAB,http://loinc.org,21906-3,Regional lymph nodes.clinical [Class] Cancer
+LAB,http://loinc.org,21907-1,Distant metastases.clinical [Class] Cancer
+LAB,http://loinc.org,21908-9,Stage group.clinical Cancer
+LAB,http://loinc.org,21924-6,Tumor marker Cancer
+LAB,http://loinc.org,2276-4,Ferritin [Mass/volume] in Serum or Plasma
+LAB,http://loinc.org,2339-0,Glucose [Mass/volume] in Blood
+LAB,http://loinc.org,2345-7,Glucose [Mass/volume] in Serum or Plasma
+LAB,http://loinc.org,24124-0,Casts [Presence] in Urine sediment by Light microscopy
+LAB,http://loinc.org,24467-3,CD3+CD4+ (T4 helper) cells [#/volume] in Blood
+LAB,http://loinc.org,2498-4,Iron [Mass/volume] in Serum or Plasma
+LAB,http://loinc.org,2500-7,Iron binding capacity [Mass/volume] in Serum or Plasma
+LAB,http://loinc.org,2502-3,Iron saturation [Mass Fraction] in Serum or Plasma
+LAB,http://loinc.org,2514-8,Ketones [Presence] in Urine by Test strip
+LAB,http://loinc.org,25428-4,Glucose [Presence] in Urine by Test strip
+LAB,http://loinc.org,2571-8,Triglyceride [Mass/volume] in Serum or Plasma
+LAB,http://loinc.org,26453-1,Erythrocytes [#/volume] in Blood
+LAB,http://loinc.org,26464-8,Leukocytes [#/volume] in Blood
+LAB,http://loinc.org,26515-7,Platelets [#/volume] in Blood
+LAB,http://loinc.org,2703-7,Oxygen [Partial pressure] in Arterial blood
+LAB,http://loinc.org,2705-2,Oxygen [Partial pressure] in Venous blood
+LAB,http://loinc.org,2744-1,pH of Arterial blood
+LAB,http://loinc.org,2746-6,pH of Venous blood
+LAB,http://loinc.org,2777-1,Phosphate [Mass/volume] in Serum or Plasma
+LAB,http://loinc.org,2823-3,Potassium [Moles/volume] in Serum or Plasma
+LAB,http://loinc.org,28245-9,Abuse Status [OMAHA]
+LAB,http://loinc.org,2857-1,Prostate specific Ag [Mass/volume] in Serum or Plasma
+LAB,http://loinc.org,2885-2,Protein [Mass/volume] in Serum or Plasma
+LAB,http://loinc.org,2947-0,Sodium [Moles/volume] in Blood
+LAB,http://loinc.org,2951-2,Sodium [Moles/volume] in Serum or Plasma
+LAB,http://loinc.org,29554-3,Procedure Narrative
+LAB,http://loinc.org,3016-3,Thyrotropin [Units/volume] in Serum or Plasma
+LAB,http://loinc.org,3024-7,Thyroxine (T4) free [Mass/volume] in Serum or Plasma
+LAB,http://loinc.org,30385-9,Erythrocyte [DistWidth] in Blood
+LAB,http://loinc.org,30428-7,MCV [Entitic mean volume] in Red Blood Cells
+LAB,http://loinc.org,3094-0,Urea nitrogen [Mass/volume] in Serum or Plasma
+LAB,http://loinc.org,3173-2,aPTT in Blood by Coagulation assay
+LAB,http://loinc.org,3184-9,Activated clotting time (ACT) of Blood by Coagulation assay
+LAB,http://loinc.org,32167-9,Clarity of Urine
+LAB,http://loinc.org,32207-3,Platelet distribution width [Entitic volume] in Blood by Automated count
+LAB,http://loinc.org,32465-7,Physical findings of Prostate
+LAB,http://loinc.org,32623-1,Platelet [Entitic mean volume] in Blood by Automated count
+LAB,http://loinc.org,32624-9,Race
+LAB,http://loinc.org,32693-4,Lactate [Moles/volume] in Blood
+LAB,http://loinc.org,33037-3,Anion gap in Serum or Plasma by calculation
+LAB,http://loinc.org,33728-7,Size.maximum dimension in Tumor
+LAB,http://loinc.org,33756-8,Polyp size greatest dimension
+LAB,http://loinc.org,33762-6,Natriuretic peptide.B prohormone N-Terminal [Mass/volume] in Serum or Plasma
+LAB,http://loinc.org,33914-3,Glomerular filtration rate [Volume Rate/Area] in Serum or Plasma by Creatinine-based formula (MDRD)/1.73 sq M
+LAB,http://loinc.org,33959-8,Procalcitonin [Mass/volume] in Serum or Plasma
+LAB,http://loinc.org,34533-0,Odor of Urine
+LAB,http://loinc.org,38208-5,Pain severity - Reported
+LAB,http://loinc.org,38265-5,DXA Radius and Ulna [T-score] Bone density
+LAB,http://loinc.org,38483-4,Creatinine [Mass/volume] in Blood
+LAB,http://loinc.org,42719-5,Bilirubin.total [Mass/volume] in Blood
+LAB,http://loinc.org,44261-6,Patient Health Questionnaire 9 item (PHQ-9) total score [Reported]
+LAB,http://loinc.org,44667-4,Site of distant metastasis in Breast tumor
+LAB,http://loinc.org,44963-7,Capillary refill [Time] of Nail bed
+LAB,http://loinc.org,4544-3,Hematocrit [Volume Fraction] of Blood by Automated count
+LAB,http://loinc.org,4548-4,Hemoglobin A1c/Hemoglobin.total in Blood
+LAB,http://loinc.org,46240-8,History of Hospitalizations+Outpatient visits Narrative
+LAB,http://loinc.org,46288-7,US Guidance for biopsy of Prostate
+LAB,http://loinc.org,48065-7,Fibrin D-dimer FEU [Mass/volume] in Platelet poor plasma
+LAB,http://loinc.org,49765-1,Calcium [Mass/volume] in Blood
+LAB,http://loinc.org,54899-0,Preferred language
+LAB,http://loinc.org,55277-8,HIV status
+LAB,http://loinc.org,55758-7,Patient Health Questionnaire 2 item (PHQ-2) total score [Reported]
+LAB,http://loinc.org,56051-6,Hispanic or Latino
+LAB,http://loinc.org,56799-0,Address
+LAB,http://loinc.org,5767-9,Appearance of Urine
+LAB,http://loinc.org,5769-5,Bacteria [#/area] in Urine sediment by Microscopy high power field
+LAB,http://loinc.org,5770-3,Bilirubin.total [Presence] in Urine by Test strip
+LAB,http://loinc.org,5778-6,Color of Urine
+LAB,http://loinc.org,5787-7,Epithelial cells [#/area] in Urine sediment by Microscopy high power field
+LAB,http://loinc.org,57905-2,Hemoglobin.gastrointestinal.lower [Presence] in Stool by Immunoassay --1st specimen
+LAB,http://loinc.org,5792-7,Glucose [Mass/volume] in Urine by Test strip
+LAB,http://loinc.org,5794-3,Hemoglobin [Presence] in Urine by Test strip
+LAB,http://loinc.org,5797-6,Ketones [Mass/volume] in Urine by Test strip
+LAB,http://loinc.org,5799-2,Leukocyte esterase [Presence] in Urine by Test strip
+LAB,http://loinc.org,5802-4,Nitrite [Presence] in Urine by Test strip
+LAB,http://loinc.org,5803-2,pH of Urine by Test strip
+LAB,http://loinc.org,5804-0,Protein [Mass/volume] in Urine by Test strip
+LAB,http://loinc.org,5811-5,Specific gravity of Urine by Test strip
+LAB,http://loinc.org,5821-4,Leukocytes [#/area] in Urine sediment by Microscopy high power field
+LAB,http://loinc.org,5902-2,Prothrombin time (PT)
+LAB,http://loinc.org,5905-5,Monocytes/Leukocytes in Blood by Automated count
+LAB,http://loinc.org,59460-6,Fall risk total [Morse Fall Scale]
+LAB,http://loinc.org,59461-4,Fall risk level [Morse Fall Scale]
+LAB,http://loinc.org,59557-9,Treatment status Cancer
+LAB,http://loinc.org,6075-6,Cladosporium herbarum IgE Ab [Units/volume] in Serum
+LAB,http://loinc.org,6082-2,Codfish IgE Ab [Units/volume] in Serum
+LAB,http://loinc.org,6085-5,Common Ragweed IgE Ab [Units/volume] in Serum
+LAB,http://loinc.org,6095-4,American house dust mite IgE Ab [Units/volume] in Serum
+LAB,http://loinc.org,6106-9,Egg white IgE Ab [Units/volume] in Serum
+LAB,http://loinc.org,6158-0,Latex IgE Ab [Units/volume] in Serum
+LAB,http://loinc.org,6189-5,White oak IgE Ab [Units/volume] in Serum
+LAB,http://loinc.org,6206-7,Peanut IgE Ab [Units/volume] in Serum
+LAB,http://loinc.org,6246-3,Shrimp IgE Ab [Units/volume] in Serum
+LAB,http://loinc.org,6248-9,Soybean IgE Ab [Units/volume] in Serum
+LAB,http://loinc.org,6273-7,Walnut IgE Ab [Units/volume] in Serum
+LAB,http://loinc.org,6276-0,Wheat IgE Ab [Units/volume] in Serum
+LAB,http://loinc.org,6298-4,Potassium [Moles/volume] in Blood
+LAB,http://loinc.org,6299-2,Urea Nitrogen [Mass/volume] in Blood
+LAB,http://loinc.org,6299-2,Urea nitrogen [Mass/volume] in Blood
+LAB,http://loinc.org,630-4,Bacteria identified in Urine by Culture
+LAB,http://loinc.org,6301-6,INR in Platelet poor plasma by Coagulation assay
+LAB,http://loinc.org,63512-8,How many people are living or staying at this address [#]
+LAB,http://loinc.org,63513-6,Are you covered by health insurance or some other kind of health care plan [PhenX]
+LAB,http://loinc.org,63586-2,"What was your best estimate of the total income of all family members from all sources, before taxes, in last year [PhenX]"
+LAB,http://loinc.org,65750-2,Drugs of abuse 5 panel - Urine by Screen method
+LAB,http://loinc.org,66519-0,Percentage area affected by eczema Head and Neck [PhenX]
+LAB,http://loinc.org,66524-0,Percentage area affected by eczema Upper extremity - bilateral [PhenX]
+LAB,http://loinc.org,66529-9,Percentage area affected by eczema Trunk [PhenX]
+LAB,http://loinc.org,66534-9,Percentage area affected by eczema Lower extremity - bilateral [PhenX]
+LAB,http://loinc.org,6690-2,Leukocytes [#/volume] in Blood by Automated count
+LAB,http://loinc.org,6768-6,Alkaline phosphatase [Enzymatic activity/volume] in Serum or Plasma
+LAB,http://loinc.org,67875-5,Employment status - current
+LAB,http://loinc.org,6833-8,Cat dander IgE Ab [Units/volume] in Serum
+LAB,http://loinc.org,6844-5,Honey bee IgE Ab [Units/volume] in Serum
+LAB,http://loinc.org,69453-9,Cause of Death [US Standard Certificate of Death]
+LAB,http://loinc.org,70274-6,Generalized anxiety disorder 7 item (GAD-7) total score [Reported.PHQ]
+LAB,http://loinc.org,704-7,Basophils [#/volume] in Blood by Automated count
+LAB,http://loinc.org,706-2,Basophils/Leukocytes in Blood by Automated count
+LAB,http://loinc.org,711-2,Eosinophils [#/volume] in Blood by Automated count
+LAB,http://loinc.org,713-8,Eosinophils/Leukocytes in Blood by Automated count
+LAB,http://loinc.org,71490-7,Left eye Diabetic retinopathy severity level by Ophthalmoscopy
+LAB,http://loinc.org,71491-5,Right eye Diabetic retinopathy severity level by Ophthalmoscopy
+LAB,http://loinc.org,718-7,Hemoglobin [Mass/volume] in Blood
+LAB,http://loinc.org,71802-3,Housing status
+LAB,http://loinc.org,71970-8,PROMIS-10 Global Mental Health (GMH) score
+LAB,http://loinc.org,71972-4,PROMIS-10 Global Physical Health (GPH) score
+LAB,http://loinc.org,72106-8,Total score [MMSE]
+LAB,http://loinc.org,72166-2,Tobacco smoking status
+LAB,http://loinc.org,7258-7,Cow milk IgE Ab [Units/volume] in Serum
+LAB,http://loinc.org,731-0,Lymphocytes [#/volume] in Blood by Automated count
+LAB,http://loinc.org,736-9,Lymphocytes/Leukocytes in Blood by Automated count
+LAB,http://loinc.org,742-7,Monocytes [#/volume] in Blood by Automated count
+LAB,http://loinc.org,751-8,Neutrophils [#/volume] in Blood by Automated count
+LAB,http://loinc.org,75325-1,Symptom
+LAB,http://loinc.org,75443-2,Mental health Outpatient Note
+LAB,http://loinc.org,75626-2,Total score [AUDIT-C]
+LAB,http://loinc.org,75636-1,Emergency severity index [ESI]
+LAB,http://loinc.org,75893-8,Pain severity in the past week - 0-10 numeric rating [Reported]
+LAB,http://loinc.org,76437-3,Primary insurance
+LAB,http://loinc.org,76501-6,"Within the last year, have you been afraid of your partner or ex-partner"
+LAB,http://loinc.org,76504-0,Total score [HARK]
+LAB,http://loinc.org,76690-7,Sexual orientation
+LAB,http://loinc.org,770-8,Neutrophils/Leukocytes in Blood by Automated count
+LAB,http://loinc.org,777-3,Platelets [#/volume] in Blood by Automated count
+LAB,http://loinc.org,785-6,MCH [Entitic mass] by Automated count
+LAB,http://loinc.org,786-4,MCHC [Entitic Mass/volume] in Red Blood Cells by Automated count
+LAB,http://loinc.org,787-2,MCV [Entitic mean volume] in Red Blood Cells by Automated count
+LAB,http://loinc.org,788-0,Erythrocyte [DistWidth] in Blood by Automated count
+LAB,http://loinc.org,789-8,Erythrocytes [#/volume] in Blood by Automated count
+LAB,http://loinc.org,79818-1,Study observation Right retina by OCT
+LAB,http://loinc.org,79819-9,Study observation Left retina by OCT
+LAB,http://loinc.org,80271-0,Physical findings of Abdomen by Palpation
+LAB,http://loinc.org,80382-5,Influenza virus A Ag [Presence] in Upper respiratory specimen by Rapid immunoassay
+LAB,http://loinc.org,80383-3,Influenza virus B Ag [Presence] in Upper respiratory specimen by Rapid immunoassay
+LAB,http://loinc.org,8247-9,Mucus [Presence] in Urine sediment by Light microscopy
+LAB,http://loinc.org,82589-3,Highest level of education
+LAB,http://loinc.org,82667-7,Total score [DAST-10]
+LAB,http://loinc.org,82810-3,Pregnancy status
+LAB,http://loinc.org,84215-3,Mental health Telehealth Note
+LAB,http://loinc.org,85318-4,ERBB2 gene duplication [Presence] in Breast cancer specimen by FISH
+LAB,http://loinc.org,85319-2,HER2 [Presence] in Breast cancer specimen by Immune stain
+LAB,http://loinc.org,85337-4,Estrogen receptor Ag [Presence] in Breast cancer specimen by Immune stain
+LAB,http://loinc.org,85339-0,Progesterone receptor Ag [Presence] in Breast cancer specimen by Immune stain
+LAB,http://loinc.org,85343-2,Lymph nodes with macrometastases [#] in Cancer specimen by Light microscopy
+LAB,http://loinc.org,85344-0,Lymph nodes with micrometastases [#] in Cancer specimen by Light microscopy
+LAB,http://loinc.org,85352-3,Lymph nodes with isolated tumor cells [#] in Cancer specimen by Light microscopy
+LAB,http://loinc.org,88020-3,Functional capacity NYHA
+LAB,http://loinc.org,88021-1,Objective assessment of cardiovascular disease NYHA
+LAB,http://loinc.org,88040-1,Response to cancer treatment
+LAB,http://loinc.org,88262-1,Gram positive blood culture panel by Probe in Positive blood culture
+LAB,http://loinc.org,89204-2,Patient Health Questionnaire-9: Modified for Teens total score [Reported.PHQ.Teen]
+LAB,http://loinc.org,89579-7,Troponin I.cardiac [Mass/volume] in Serum or Plasma by High sensitivity method
+LAB,http://loinc.org,91145-3,What number best describes how pain has interfered with your enjoyment of life during the past week
+LAB,http://loinc.org,91146-1,What number best describes how pain has interfered with your general activity during the past week
+LAB,http://loinc.org,92130-4,Rhinovirus RNA [Presence] in Respiratory system specimen by NAA with probe detection
+LAB,http://loinc.org,92131-2,Respiratory syncytial virus RNA [Presence] in Respiratory system specimen by NAA with probe detection
+LAB,http://loinc.org,92134-6,Human metapneumovirus RNA [Presence] in Respiratory system specimen by NAA with probe detection
+LAB,http://loinc.org,92138-7,Parainfluenza virus 3 RNA [Presence] in Respiratory system specimen by NAA with probe detection
+LAB,http://loinc.org,92139-5,Parainfluenza virus 2 RNA [Presence] in Respiratory system specimen by NAA with probe detection
+LAB,http://loinc.org,92140-3,Parainfluenza virus 1 RNA [Presence] in Respiratory system specimen by NAA with probe detection
+LAB,http://loinc.org,92141-1,Influenza virus B RNA [Presence] in Respiratory system specimen by NAA with probe detection
+LAB,http://loinc.org,92142-9,Influenza virus A RNA [Presence] in Respiratory system specimen by NAA with probe detection
+LAB,http://loinc.org,93026-3,Do you feel physically and emotionally safe where you currently live [PRAPARE]
+LAB,http://loinc.org,93027-1,Are you a refugee
+LAB,http://loinc.org,93028-9,"Have you spent more than 2 nights in a row in a jail, prison, detention center, or juvenile correctional facility in past 1 year [PRAPARE]"
+LAB,http://loinc.org,93029-7,How often do you see or talk to people that you care about and feel close to [PRAPARE]
+LAB,http://loinc.org,93030-5,"Has lack of transportation kept you from medical appointments, meetings, work, or from getting things needed for daily living"
+LAB,http://loinc.org,93031-3,Have you or any family members you live with been unable to get any of the following when it was really needed in past 1 year [PRAPARE]
+LAB,http://loinc.org,93033-9,Are you worried about losing your housing [PRAPARE]
+LAB,http://loinc.org,93034-7,Discharged from the U.S. Armed Forces
+LAB,http://loinc.org,93035-4,Has season or migrant farm work been your or your family's main source of income at any point in past 2 years [PRAPARE]
+LAB,http://loinc.org,93038-8,Stress level
+LAB,http://loinc.org,94040-3,Adenovirus A+B+C+D+E DNA [Presence] in Respiratory system specimen by NAA with probe detection
+LAB,http://loinc.org,94531-1,SARS-CoV-2 (COVID-19) RNA panel - Respiratory system specimen by NAA with probe detection
+LAB,http://loinc.org,99999-1,Opioids are often taken in larger amounts or over a longer period than was intended
+LAB,http://loinc.org,99999-10,"Tolerance,as defined by either of the following: a) Need for markedly increased amounts of opioids to achieve intoxication or desired effect b) Markedly diminished effect with continued use of the same amount of opioid"
+LAB,http://loinc.org,99999-11,"Withdrawal,* as manifested by either of the following: a) Characteristic opioid withdrawal syndrome b) Same (or a closely related) substance is taken to relieve or avoid withdrawal symptoms"
+LAB,http://loinc.org,99999-2,There is a persistent desire or unsuccessful efforts to cut down or control opioid use
+LAB,http://loinc.org,99999-3,"A great deal of time is spent in activities necessary to obtain the opioid, use the opioid, or recover from its effects"
+LAB,http://loinc.org,99999-4,Craving or a strong desire to use opioids
+LAB,http://loinc.org,99999-5,"Recurrent opioid use resulting in a failure to fulfill major role obligations at work, school, or home"
+LAB,http://loinc.org,99999-6,Continued opioid use despite having persistent or recurrent social or interpersonal problems caused or exacerbated by the effects of opioids
+LAB,http://loinc.org,99999-7,"Important social, occupational, or recreational activities are given up or reduced because of opioid use"
+LAB,http://loinc.org,99999-8,Recurrent opioid use in situations in which it is physically hazardous
+LAB,http://loinc.org,99999-9,Continued use despite knowledge of having a persistent or recurrent physical or psychological problem that is likely to have been caused or exacerbated by opioids.
+LAB,http://loinc.org,X9999-1,Operative Status Value
+LAB,http://loinc.org,X9999-2,Priority Level
+LAB,http://snomed.info/sct,271605009,Position of body and posture (observable entity)
+LAB,http://snomed.info/sct,285285000,Cobb angle (observable entity)
+LAB,http://snomed.info/sct,413077008,LogMAR visual acuity left eye (observable entity)
+LAB,http://snomed.info/sct,413078003,LogMAR visual acuity right eye (observable entity)
+LAB,http://snomed.info/sct,870537001,Risser sign (finding)
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1000126,1 ML medroxyPROGESTERone acetate 150 MG/ML Injection
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1000126,1 ML medroxyprogesterone acetate 150 MG/ML Injection
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1014676,cetirizine hydrochloride 5 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1014678,cetirizine hydrochloride 10 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1043400,Acetaminophen 21.7 MG/ML / Dextromethorphan Hydrobromide 1 MG/ML / doxylamine succinate 0.417 MG/ML Oral Solution
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1049221,Acetaminophen 325 MG / Oxycodone Hydrochloride 5 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1049221,Acetaminophen 325 MG / oxyCODONE Hydrochloride 5 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1049504,Abuse-Deterrent 12 HR Oxycodone Hydrochloride 10 MG Extended Release Oral Tablet [Oxycontin]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1049625,Acetaminophen 325 MG / Oxycodone Hydrochloride 10 MG Oral Tablet [Percocet]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1049630,diphenhydrAMINE Hydrochloride 25 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,105078,Penicillin G 375 MG/ML Injectable Solution
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,105585,Methotrexate 2.5 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,106258,Hydrocortisone 10 MG/ML Topical Cream
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,106892,"insulin isophane, human 70 UNT/ML / insulin, regular, human 30 UNT/ML Injectable Suspension [Humulin]"
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,108515,1 ML tacrolimus 5 MG/ML Injection [Prograf]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1091392,Methylphenidate Hydrochloride 20 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1100184,Donepezil hydrochloride 23 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1116635,ticagrelor 90 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1191013,proparacaine hydrochloride 5 MG/ML Ophthalmic Solution
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1234995,Rocuronium bromide 10 MG/ML Injectable Solution
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1359133,{5 (ethinyl estradiol 0.02 MG / norethindrone acetate 1 MG Oral Tablet) / 7 (ethinyl estradiol 0.03 MG / norethindrone acetate 1 MG Oral Tablet) / 9 (ethinyl estradiol 0.035 MG / norethindrone acetate 1 MG Oral Tablet) / 7 (ferrous fumarate 75 MG Oral Tablet) } Pack [Estrostep Fe 28 Day]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1359269,darunavir 800 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1361048,"heparin sodium, porcine 100 UNT/ML Injectable Solution"
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1361226,"heparin sodium, porcine 1000 UNT/ML Injectable Solution"
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1363309,Chlorpheniramine Maleate 4 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1366343,Levonorgestrel 0.00354 MG/HR Drug Implant
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1367439,21 DAY ethinyl estradiol 0.000625 MG/HR / etonogestrel 0.005 MG/HR Vaginal System [NuvaRing]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,141918,Terfenadine 60 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1431987,24 HR tacrolimus 5 MG Extended Release Oral Capsule [Astagraf]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1534809,168 HR Ethinyl Estradiol 0.00146 MG/HR / norelgestromin 0.00625 MG/HR Transdermal System
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1535362,sodium fluoride 0.0272 MG/MG Oral Gel
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1599803,24 HR Donepezil hydrochloride 10 MG / Memantine hydrochloride 28 MG Extended Release Oral Capsule
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1601380,palbociclib 100 MG Oral Capsule
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1605257,levonorgestrel 0.000813 MG/HR Intrauterine System [Liletta]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1648755,"nitrofurantoin, macrocrystals 25 MG / nitrofurantoin, monohydrate 75 MG Oral Capsule"
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1648756,"nitrofurantoin, macrocrystals 25 MG / nitrofurantoin, monohydrate 75 MG [Macrobid]"
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1649987,doxycycline hyclate 100 MG
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1650142,Doxycycline Monohydrate 100 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1656356,sacubitril 97 MG / valsartan 103 MG Oral Tablet [Entresto]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1657066,4 ML bevacizumab 25 MG/ML Injection
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1659131,piperacillin 2000 MG / tazobactam 250 MG Injection
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1659149,Piperacillin 4000 MG / tazobactam 500 MG Injection
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1659263,"1 ML heparin sodium, porcine 5000 UNT/ML Injection"
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1664463,24 HR tacrolimus 1 MG Extended Release Oral Tablet [Envarsus]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1664986,Aztreonam 2000 MG Injection
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1665060,cefazolin 2000 MG Injection
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1719286,10 ML Furosemide 10 MG/ML Injection
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1723208,10 ML Alfentanil 0.5 MG/ML Injection
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1728805,2 ML morphine sulfate 1 MG/ML Injection
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1729584,remifentanil 2 MG Injection
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1732136,1 ML Morphine Sulfate 5 MG/ML Injection
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1732186,100 ML Epirubicin Hydrochloride 2 MG/ML Injection
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1734919,Cyclophosphamide 1000 MG Injection
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1735006,10 ML Fentanyl 0.05 MG/ML Injection
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1736776,10 ML oxaliplatin 5 MG/ML Injection
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1736854,Cisplatin 50 MG Injection
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1737449,10 ML Pamidronate Disodium 3 MG/ML Injection
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1737466,100 ML tirofiban 0.05 MG/ML Injection
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1740467,2 ML Ondansetron 2 MG/ML Injection
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1747691,emtricitabine 200 MG / tenofovir alafenamide 25 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1796676,25 ML protamine sulfate (USP) 10 MG/ML Injection
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1803932,Leucovorin 100 MG Injection
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1804799,Alteplase 100 MG Injection
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1807510,150 ML vancomycin 5 MG/ML Injection
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1808217,100 ML Propofol 10 MG/ML Injection
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1809104,5 ML SUFentanil 0.05 MG/ML Injection
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1856546,levonorgestrel 0.000729 MG/HR Intrauterine System [Kyleena]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1860154,Abuse-Deterrent 12 HR Oxycodone Hydrochloride 15 MG Extended Release Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1860480,1 ML DOCEtaxel 20 MG/ML Injection
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1860491,12 HR Hydrocodone Bitartrate 10 MG Extended Release Oral Capsule
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1870230,NDA020800 0.3 ML Epinephrine 1 MG/ML Auto-Injector
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1873983,ribociclib 200 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1946840,abemaciclib 100 MG Oral Tablet [Verzenio]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,197319,Allopurinol 100 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,197378,Astemizole 10 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,197379,atenolol 100 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,197380,atenolol 25 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,197381,atenolol 50 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,197454,cephalexin 500 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,197511,ciprofloxacin 250 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,197541,Colchicine 0.6 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,197591,Diazepam 5 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,197604,Digoxin 0.125 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,197884,lisinopril 40 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,197885,hydrochlorothiazide 12.5 MG / lisinopril 10 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,197887,hydrochlorothiazide 25 MG / lisinopril 20 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,197903,lovastatin 10 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,197904,lovastatin 20 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,197905,lovastatin 40 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,198014,Naproxen 500 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,198031,24 HR nicotine 0.292 MG/HR Transdermal System
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,198039,nitroglycerin 0.4 MG Sublingual Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,198188,ramipril 2.5 MG Oral Capsule
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,198211,simvastatin 40 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,198240,Tamoxifen 10 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,198335,sulfamethoxazole 800 MG / trimethoprim 160 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,198405,Ibuprofen 100 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,198440,Acetaminophen 500 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,199224,anastrozole 1 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1997015,50 ML bivalirudin 5 MG/ML Injection
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1998774,Breath-Actuated 120 ACTUAT beclomethasone dipropionate 0.04 MG/ACTUAT Metered Dose Inhaler [Qvar]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,200031,carvedilol 6.25 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,200033,carvedilol 25 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,200064,letrozole 2.5 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,200096,irbesartan 300 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,2001499,Vitamin B12 5 MG/ML Injectable Solution
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,200243,sevoflurane 1000 MG/ML Inhalation Solution
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,200284,hydrochlorothiazide 12.5 MG / valsartan 80 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,200285,hydrochlorothiazide 12.5 MG / valsartan 160 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,204892,clonazePAM 0.25 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,205923,1 ML Epoetin Alfa 4000 UNT/ML Injection [Epogen]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,206905,Ibuprofen 400 MG Oral Tablet [Ibu]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,209387,Acetaminophen 325 MG Oral Tablet [Tylenol]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,2119714,5 ML hyaluronidase-oysk 2000 UNT/ML / trastuzumab-oysk 120 MG/ML Injection
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,212033,aspirin 325 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,2123111,NDA020503 200 ACTUAT Albuterol 0.09 MG/ACTUAT Metered Dose Inhaler
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,212446,azithromycin 250 MG Oral Tablet [Zithromax]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,226719,etoposide 100 MG Injection [Etopophos]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,235389,Mestranol / Norethynodrel
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,238100,Lorazepam 2 MG/ML Injectable Solution
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,241834,"cycloSPORINE, modified 100 MG Oral Capsule"
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,242969,4 ML norepinephrine 1 MG/ML Injection
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,243670,Aspirin 81 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,243670,aspirin 81 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,245134,72 HR Fentanyl 0.025 MG/HR Transdermal System
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,245314,Albuterol 5 MG/ML Inhalation Solution
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,245314,albuterol 5 MG/ML Inhalation Solution
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,2563431,aspirin 81 MG Oral Capsule [Vazalore]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,259255,atorvastatin 80 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,261962,ramipril 10 MG Oral Capsule
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,308136,amLODIPine 2.5 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,308182,Amoxicillin 250 MG Oral Capsule
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,308192,Amoxicillin 500 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,308971,carbamazepine 20 MG/ML Oral Suspension [Tegretol]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,309078,cefpodoxime 200 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,309097,Cefuroxime 250 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,309309,ciprofloxacin 500 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,309362,Clopidogrel 75 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,310325,ferrous sulfate 325 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,310385,FLUoxetine 20 MG Oral Capsule
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,310436,Galantamine 4 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,310798,Hydrochlorothiazide 25 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,310965,Ibuprofen 200 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,311034,"insulin, regular, human 100 UNT/ML Injectable Solution"
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,311353,lisinopril 2.5 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,311354,lisinopril 5 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,311372,Loratadine 10 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,311700,Midazolam 1 MG/ML Injectable Solution
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,312617,predniSONE 5 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,312749,quinapril 20 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,312938,Sertraline 100 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,312961,Simvastatin 20 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,312961,simvastatin 20 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,313002,Sodium Chloride 9 MG/ML Injectable Solution
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,313521,tropicamide 5 MG/ML Ophthalmic Solution
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,313782,Acetaminophen 325 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,313820,Acetaminophen 160 MG Chewable Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,313988,Furosemide 40 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,314076,lisinopril 10 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,314077,lisinopril 20 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,314203,quinapril 40 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,314231,Simvastatin 10 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,317150,ritonavir 100 MG Oral Capsule
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,349094,budesonide 0.125 MG/ML Inhalation Suspension
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,349201,valsartan 160 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,349353,hydrochlorothiazide 25 MG / valsartan 160 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,349483,valsartan 40 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,351109,budesonide 0.25 MG/ML Inhalation Suspension
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,351136,albuterol 0.417 MG/ML Inhalation Solution
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,351137,albuterol 0.21 MG/ML Inhalation Solution
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,351266,buprenorphine 2 MG / naloxone 0.5 MG Sublingual Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,389221,Etonogestrel 68 MG Drug Implant
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,477045,Chlorpheniramine Maleate 2 MG/ML Oral Solution
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,483438,pregabalin 100 MG Oral Capsule
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,542347,isoflurane 999 MG/ML Inhalation Solution
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,562251,Amoxicillin 250 MG / Clavulanate 125 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,562366,desflurane 1000 MG/ML Inhalation Solution
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,562508,amoxicillin 875 MG / clavulanate 125 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,583214,PACLitaxel 100 MG Injection
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,583214,Paclitaxel 100 MG Injection
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,596926,duloxetine 20 MG Delayed Release Oral Capsule
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,608139,atomoxetine 100 MG Oral Capsule
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,616830,budesonide 0.125 MG/ML Inhalation Suspension [Pulmicort]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,617296,amoxicillin 500 MG / clavulanate 125 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,617310,atorvastatin 20 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,617311,atorvastatin 40 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,617312,atorvastatin 10 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,617320,atorvastatin 40 MG Oral Tablet [Lipitor]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,630208,albuterol 0.83 MG/ML Inhalation Solution
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,643066,efavirenz 600 MG / emtricitabine 200 MG / tenofovir disoproxil fumarate 300 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,665078,Loratadine 5 MG Chewable Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,705129,Nitroglycerin 0.4 MG/ACTUAT Mucosal Spray
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,745752,NDA021457 200 ACTUAT albuterol 0.09 MG/ACTUAT Metered Dose Inhaler [ProAir]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,748856,{24 (drospirenone 3 MG / ethinyl estradiol 0.02 MG Oral Tablet) / 4 (inert ingredients 1 MG Oral Tablet) } Pack [Yaz 28 Day]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,748879,{21 (ethinyl estradiol 0.03 MG / levonorgestrel 0.15 MG Oral Tablet) / 7 (inert ingredients 1 MG Oral Tablet) } Pack [Levora 0.15/30 28 Day]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,748962,{28 (norethindrone 0.35 MG Oral Tablet) } Pack [Camila 28 Day]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,749196,clopidogrel 300 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,749762,{7 (ethinyl estradiol 0.01 MG Oral Tablet) / 84 (ethinyl estradiol 0.03 MG / levonorgestrel 0.15 MG Oral Tablet) } Pack [Seasonique]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,749785,{7 (ethinyl estradiol 0.035 MG / norgestimate 0.18 MG Oral Tablet) / 7 (ethinyl estradiol 0.035 MG / norgestimate 0.215 MG Oral Tablet) / 7 (ethinyl estradiol 0.035 MG / norgestimate 0.25 MG Oral Tablet) / 7 (inert ingredients 1 MG Oral Tablet) } Pack [Ortho Tri-Cyclen 28 Day]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,749882,{7 (inert ingredients 1 MG Oral Tablet) / 21 (mestranol 0.05 MG / norethindrone 1 MG Oral Tablet) } Pack [Norinyl 1+50 28 Day]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,751905,{7 (ethinyl estradiol 0.035 MG / norgestimate 0.18 MG Oral Tablet) / 7 (ethinyl estradiol 0.035 MG / norgestimate 0.215 MG Oral Tablet) / 7 (ethinyl estradiol 0.035 MG / norgestimate 0.25 MG Oral Tablet) / 7 (inert ingredients 1 MG Oral Tablet) } Pack [Trinessa 28 Day]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,752899,0.25 ML Leuprolide Acetate 30 MG/ML Prefilled Syringe
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,757594,{28 (norethindrone 0.35 MG Oral Tablet) } Pack [Jolivette 28 Day]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,789980,Ampicillin 100 MG/ML Injectable Solution
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,807283,levonorgestrel 0.000833 MG/HR Intrauterine System [Mirena]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,808917,fosfomycin 3000 MG Granules for Oral Solution
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,827075,nebivolol 20 MG Oral Tablet [Bystolic]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,831533,{28 (norethindrone 0.35 MG Oral Tablet) } Pack [Errin 28 Day]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,833135,Milnacipran hydrochloride 100 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,834061,Penicillin V Potassium 250 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,834102,Penicillin V Potassium 500 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,835603,tramadol hydrochloride 50 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,849574,Naproxen sodium 220 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,854235,0.4 ML Enoxaparin sodium 100 MG/ML Prefilled Syringe
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,854252,1 ML Enoxaparin sodium 150 MG/ML Prefilled Syringe
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,854255,enoxaparin sodium 100 MG/ML Injectable Solution
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,854905,bisoprolol fumarate 5 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,855332,Warfarin Sodium 5 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,855332,warfarin sodium 5 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,855812,prasugrel 10 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,856448,propranolol hydrochloride 10 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,856987,Acetaminophen 300 MG / HYDROcodone Bitartrate 5 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,856987,Acetaminophen 300 MG / Hydrocodone Bitartrate 5 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,857005,Acetaminophen 325 MG / HYDROcodone Bitartrate 7.5 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,859088,NDA020983 200 ACTUAT albuterol 0.09 MG/ACTUAT Metered Dose Inhaler [Ventolin]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,859747,rosuvastatin calcium 10 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,859751,rosuvastatin calcium 20 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,860975,24 HR Metformin hydrochloride 500 MG Extended Release Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,861356,0.8 ML fondaparinux sodium 12.5 MG/ML Prefilled Syringe
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,861467,Meperidine Hydrochloride 50 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,866412,24 HR metoprolol succinate 100 MG Extended Release Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,866427,24 HR metoprolol succinate 25 MG Extended Release Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,866436,24 HR metoprolol succinate 50 MG Extended Release Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,866514,metoprolol tartrate 50 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,866924,metoprolol tartrate 25 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,895996,120 ACTUAT fluticasone propionate 0.044 MG/ACTUAT Metered Dose Inhaler [Flovent]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,896001,120 ACTUAT fluticasone propionate 0.11 MG/ACTUAT Metered Dose Inhaler [Flovent]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,896209,60 ACTUAT Fluticasone propionate 0.25 MG/ACTUAT / salmeterol 0.05 MG/ACTUAT Dry Powder Inhaler
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,896762,labetalol hydrochloride 200 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,897122,3 ML liraglutide 6 MG/ML Pen Injector
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,897685,verapamil hydrochloride 80 MG Oral Tablet [Calan]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,904419,Alendronic acid 10 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,966222,Levothyroxine Sodium 0.075 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,978950,{5 (dienogest 2 MG / estradiol valerate 2 MG Oral Tablet) / 17 (dienogest 3 MG / estradiol valerate 2 MG Oral Tablet) / 2 (estradiol valerate 1 MG Oral Tablet) / 2 (estradiol valerate 3 MG Oral Tablet) / 2 (inert ingredients 1 MG Oral Tablet) } Pack [Natazia 28 Day]
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,979471,hydrochlorothiazide 25 MG / losartan potassium 100 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,979480,losartan potassium 100 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,979485,losartan potassium 25 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,979492,losartan potassium 50 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,993770,Acetaminophen 300 MG / Codeine Phosphate 15 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,996740,Memantine hydrochloride 2 MG/ML Oral Solution
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,997223,Donepezil hydrochloride 10 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,997488,Fexofenadine hydrochloride 30 MG Oral Tablet
+MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,997501,Fexofenadine hydrochloride 60 MG Oral Tablet
+PROCEDURE,http://snomed.info/sct,1004045004,Intravitreal injection of anti-vascular endothelial growth factor (procedure)
+PROCEDURE,http://snomed.info/sct,103697008,Patient referral for dental care (procedure)
+PROCEDURE,http://snomed.info/sct,103746007,Heparin therapy (procedure)
+PROCEDURE,http://snomed.info/sct,103750000,Sleep apnea assessment (procedure)
+PROCEDURE,http://snomed.info/sct,10383002,Counseling for termination of pregnancy (procedure)
+PROCEDURE,http://snomed.info/sct,104091002,"Hemogram, automated, with red blood cells, white blood cells, hemoglobin, hematocrit, indices, platelet count, and manual white blood cell differential (procedure)"
+PROCEDURE,http://snomed.info/sct,104326007,Measurement of Varicella-zoster virus antibody (procedure)
+PROCEDURE,http://snomed.info/sct,104375008,"Hepatitis C antibody, confirmatory test (procedure)"
+PROCEDURE,http://snomed.info/sct,104435004,Screening for occult blood in feces (procedure)
+PROCEDURE,http://snomed.info/sct,105376000,Transesophageal echocardiography (procedure)
+PROCEDURE,http://snomed.info/sct,110467000,Pre-surgery testing (procedure)
+PROCEDURE,http://snomed.info/sct,112001000119100,Positive screening for depression on Patient Health Questionnaire 9 (finding)
+PROCEDURE,http://snomed.info/sct,112011000119102,Negative screening for depression on Patient Health Questionnaire 9 (finding)
+PROCEDURE,http://snomed.info/sct,112790001,Nasal sinus endoscopy (procedure)
+PROCEDURE,http://snomed.info/sct,112798008,Insertion of endotracheal tube (procedure)
+PROCEDURE,http://snomed.info/sct,113120007,Interstitial brachytherapy (procedure)
+PROCEDURE,http://snomed.info/sct,11466000,Cesarean section (procedure)
+PROCEDURE,http://snomed.info/sct,116861002,Transfusion of fresh frozen plasma (procedure)
+PROCEDURE,http://snomed.info/sct,117010004,Urine culture (procedure)
+PROCEDURE,http://snomed.info/sct,117015009,Throat culture (procedure)
+PROCEDURE,http://snomed.info/sct,118001005,Streptococcus pneumoniae group B antigen assay (procedure)
+PROCEDURE,http://snomed.info/sct,122460008,Reexploration procedure (procedure)
+PROCEDURE,http://snomed.info/sct,122548005,Biopsy of breast (procedure)
+PROCEDURE,http://snomed.info/sct,122856003,Oral examination (procedure)
+PROCEDURE,http://snomed.info/sct,122869004,Measurement procedure (procedure)
+PROCEDURE,http://snomed.info/sct,1256042007,Restoration of tooth with coverage of all cusps using dental filling material (procedure)
+PROCEDURE,http://snomed.info/sct,1259293006,Application of composite dental filling material to dentin of tooth following fracture of tooth (procedure)
+PROCEDURE,http://snomed.info/sct,1260009003,Removal of supragingival plaque and calculus from all teeth using dental instrument (procedure)
+PROCEDURE,http://snomed.info/sct,1260010008,Removal of subgingival plaque and calculus from all teeth using dental instrument (procedure)
+PROCEDURE,http://snomed.info/sct,1263416007,Removal of intrauterine contraceptive device (procedure)
+PROCEDURE,http://snomed.info/sct,1269321004,Fitting of denture (procedure)
+PROCEDURE,http://snomed.info/sct,12719002,Platelet transfusion (procedure)
+PROCEDURE,http://snomed.info/sct,127783003,Spirometry (procedure)
+PROCEDURE,http://snomed.info/sct,1290407002,Plain X-ray of knee region (procedure)
+PROCEDURE,http://snomed.info/sct,1290459008,Plain X-ray of ankle region (procedure)
+PROCEDURE,http://snomed.info/sct,1290789000,Plain X-ray of mandible (procedure)
+PROCEDURE,http://snomed.info/sct,1290953004,Plain X-ray of spine and pelvis (procedure)
+PROCEDURE,http://snomed.info/sct,133899007,Postoperative care (regime/therapy)
+PROCEDURE,http://snomed.info/sct,133900002,Intraoperative care (regime/therapy)
+PROCEDURE,http://snomed.info/sct,14736009,History and physical examination with evaluation and management of patient (procedure)
+PROCEDURE,http://snomed.info/sct,14768001,Peripheral blood smear interpretation (procedure)
+PROCEDURE,http://snomed.info/sct,15081005,Pulmonary rehabilitation (regime/therapy)
+PROCEDURE,http://snomed.info/sct,15220000,Laboratory test (procedure)
+PROCEDURE,http://snomed.info/sct,1571000087109,Ultrasonography of bilateral breasts (procedure)
+PROCEDURE,http://snomed.info/sct,162676008,Brief general examination (procedure)
+PROCEDURE,http://snomed.info/sct,16335031000119103,High resolution computed tomography of chest without contrast (procedure)
+PROCEDURE,http://snomed.info/sct,165197003,Diagnostic assessment (procedure)
+PROCEDURE,http://snomed.info/sct,165355002,Patient informed - test result (situation)
+PROCEDURE,http://snomed.info/sct,165829005,Gonorrhea infection titer test (procedure)
+PROCEDURE,http://snomed.info/sct,167995008,Sputum microscopy (procedure)
+PROCEDURE,http://snomed.info/sct,16830007,Visual acuity testing (procedure)
+PROCEDURE,http://snomed.info/sct,168594001,Plain X-ray of clavicle (procedure)
+PROCEDURE,http://snomed.info/sct,169230002,Ultrasound scan for fetal viability (procedure)
+PROCEDURE,http://snomed.info/sct,169553002,Implantation of subcutaneous contraceptive (procedure)
+PROCEDURE,http://snomed.info/sct,169673001,Antenatal RhD antibody screening (procedure)
+PROCEDURE,http://snomed.info/sct,170245002,Child examination: school screening (procedure)
+PROCEDURE,http://snomed.info/sct,171207006,Depression screening (procedure)
+PROCEDURE,http://snomed.info/sct,171231001,Asthma screening (procedure)
+PROCEDURE,http://snomed.info/sct,173291009,Simple extraction of tooth (procedure)
+PROCEDURE,http://snomed.info/sct,179632003,Closed reduction of dislocation of temporomandibular joint (procedure)
+PROCEDURE,http://snomed.info/sct,180178009,Continuous subcutaneous infusion of insulin (procedure)
+PROCEDURE,http://snomed.info/sct,180207008,Intravenous blood transfusion of packed cells (procedure)
+PROCEDURE,http://snomed.info/sct,180256009,Subcutaneous immunotherapy (procedure)
+PROCEDURE,http://snomed.info/sct,180325003,Direct current cardioversion (procedure)
+PROCEDURE,http://snomed.info/sct,18286008,Catheter ablation of tissue of heart (procedure)
+PROCEDURE,http://snomed.info/sct,183444007,Referral for further care (procedure)
+PROCEDURE,http://snomed.info/sct,183450002,Admission to burn unit (procedure)
+PROCEDURE,http://snomed.info/sct,183519002,Referral to cardiology service (procedure)
+PROCEDURE,http://snomed.info/sct,183830008,Referral for X-ray (procedure)
+PROCEDURE,http://snomed.info/sct,183856001,Referral to hypertension clinic (procedure)
+PROCEDURE,http://snomed.info/sct,183976008,Operative procedure planned (situation)
+PROCEDURE,http://snomed.info/sct,185087000,Notifications (procedure)
+PROCEDURE,http://snomed.info/sct,18946005,Epidural anesthesia (procedure)
+PROCEDURE,http://snomed.info/sct,200619008,Comprehensive interview and evaluation (procedure)
+PROCEDURE,http://snomed.info/sct,223470000,Discussion about signs and symptoms (procedure)
+PROCEDURE,http://snomed.info/sct,223484005,Discussion about treatment (procedure)
+PROCEDURE,http://snomed.info/sct,223487003,Discussion about options (procedure)
+PROCEDURE,http://snomed.info/sct,223495004,Preparation of patient for procedure (regime/therapy)
+PROCEDURE,http://snomed.info/sct,225158009,Auscultation of the fetal heart (procedure)
+PROCEDURE,http://snomed.info/sct,22523008,Vasectomy (procedure)
+PROCEDURE,http://snomed.info/sct,225337009,Suicide risk assessment (procedure)
+PROCEDURE,http://snomed.info/sct,225338004,Risk assessment (procedure)
+PROCEDURE,http://snomed.info/sct,225362009,Dental care (regime/therapy)
+PROCEDURE,http://snomed.info/sct,225386006,Pre-discharge assessment (procedure)
+PROCEDURE,http://snomed.info/sct,225953001,Evaluating response to treatment (procedure)
+PROCEDURE,http://snomed.info/sct,228557008,Cognitive and behavioral therapy (regime/therapy)
+PROCEDURE,http://snomed.info/sct,229064008,Movement therapy (regime/therapy)
+PROCEDURE,http://snomed.info/sct,229095001,Exercise class (regime/therapy)
+PROCEDURE,http://snomed.info/sct,23183008,Excision of lingual torus (procedure)
+PROCEDURE,http://snomed.info/sct,232717009,Coronary artery bypass grafting (procedure)
+PROCEDURE,http://snomed.info/sct,233553003,Vascular cannula removal (procedure)
+PROCEDURE,http://snomed.info/sct,23426006,Measurement of respiratory function (procedure)
+PROCEDURE,http://snomed.info/sct,234262008,Excision of axillary lymph node (procedure)
+PROCEDURE,http://snomed.info/sct,234687006,Grafting of periodontal bone defect (procedure)
+PROCEDURE,http://snomed.info/sct,234745004,Take oral or dental impression (procedure)
+PROCEDURE,http://snomed.info/sct,236931002,Methotrexate injection into tubal pregnancy (procedure)
+PROCEDURE,http://snomed.info/sct,236974004,Instrumental delivery (procedure)
+PROCEDURE,http://snomed.info/sct,237001001,Augmentation of labor (procedure)
+PROCEDURE,http://snomed.info/sct,23745001,Documentation procedure (procedure)
+PROCEDURE,http://snomed.info/sct,23933004,Excision of lingual frenum (procedure)
+PROCEDURE,http://snomed.info/sct,241046008,Dental plain X-ray bitewing (procedure)
+PROCEDURE,http://snomed.info/sct,241055006,Mammogram - symptomatic (procedure)
+PROCEDURE,http://snomed.info/sct,241615005,Magnetic resonance imaging of breast (procedure)
+PROCEDURE,http://snomed.info/sct,243063003,Postoperative procedure education (procedure)
+PROCEDURE,http://snomed.info/sct,243085009,Oral health education (procedure)
+PROCEDURE,http://snomed.info/sct,243150007,Assist control ventilation (regime/therapy)
+PROCEDURE,http://snomed.info/sct,243174005,Weaning from mechanically assisted ventilation (regime/therapy)
+PROCEDURE,http://snomed.info/sct,24623002,Screening mammography (procedure)
+PROCEDURE,http://snomed.info/sct,24832002,Closed reduction of mandibular fracture (procedure)
+PROCEDURE,http://snomed.info/sct,252160004,Standard pregnancy test (procedure)
+PROCEDURE,http://snomed.info/sct,252480006,Simple walk test (procedure)
+PROCEDURE,http://snomed.info/sct,252482003,Stair-climbing test (procedure)
+PROCEDURE,http://snomed.info/sct,252832004,Intraocular pressure test (procedure)
+PROCEDURE,http://snomed.info/sct,25656009,"Physical examination, complete (procedure)"
+PROCEDURE,http://snomed.info/sct,261352009,Face mask (physical object)
+PROCEDURE,http://snomed.info/sct,26212005,Replacement of aortic valve (procedure)
+PROCEDURE,http://snomed.info/sct,265764009,Renal dialysis (procedure)
+PROCEDURE,http://snomed.info/sct,26604007,Complete blood count (procedure)
+PROCEDURE,http://snomed.info/sct,266753000,Referral for laboratory tests (procedure)
+PROCEDURE,http://snomed.info/sct,268400002,12 lead electrocardiogram (procedure)
+PROCEDURE,http://snomed.info/sct,268533009,Sterilization education (procedure)
+PROCEDURE,http://snomed.info/sct,268556000,Urine screening for glucose (procedure)
+PROCEDURE,http://snomed.info/sct,269828009,Syphilis infectious titer test (procedure)
+PROCEDURE,http://snomed.info/sct,269911007,Sputum examination (procedure)
+PROCEDURE,http://snomed.info/sct,271280005,Removal of endotracheal tube (procedure)
+PROCEDURE,http://snomed.info/sct,271442007,Fetal anatomy study (procedure)
+PROCEDURE,http://snomed.info/sct,274031008,Rectal polypectomy (procedure)
+PROCEDURE,http://snomed.info/sct,274474001,Bone immobilization (procedure)
+PROCEDURE,http://snomed.info/sct,274788003,Examination of gingivae (procedure)
+PROCEDURE,http://snomed.info/sct,274804006,Evaluation of uterine fundal height (procedure)
+PROCEDURE,http://snomed.info/sct,275833003,Alpha-fetoprotein test - antenatal (procedure)
+PROCEDURE,http://snomed.info/sct,28163009,"Skin test for tuberculosis, Tine test (procedure)"
+PROCEDURE,http://snomed.info/sct,281789004,Antibiotic therapy (procedure)
+PROCEDURE,http://snomed.info/sct,284053004,Tooth socket procedure (procedure)
+PROCEDURE,http://snomed.info/sct,287664005,Ligation of bilateral fallopian tubes (procedure)
+PROCEDURE,http://snomed.info/sct,288086009,Suture open wound (procedure)
+PROCEDURE,http://snomed.info/sct,290045001,Kitchen practice (regime/therapy)
+PROCEDURE,http://snomed.info/sct,29303009,Electrocardiographic procedure (procedure)
+PROCEDURE,http://snomed.info/sct,301807007,Removal of subcutaneous contraceptive (procedure)
+PROCEDURE,http://snomed.info/sct,301882004,Placement of aortic cross clamp (procedure)
+PROCEDURE,http://snomed.info/sct,301884003,Removal of aortic cross clamp (procedure)
+PROCEDURE,http://snomed.info/sct,302761001,Walking exercise test (procedure)
+PROCEDURE,http://snomed.info/sct,305340004,Admission to long stay hospital (procedure)
+PROCEDURE,http://snomed.info/sct,305342007,Admission to ward (procedure)
+PROCEDURE,http://snomed.info/sct,305351004,Admission to intensive care unit (procedure)
+PROCEDURE,http://snomed.info/sct,305428000,Admission to orthopedic department (procedure)
+PROCEDURE,http://snomed.info/sct,305433001,Admission to trauma surgery department (procedure)
+PROCEDURE,http://snomed.info/sct,306185001,Referral to cardiac surgery service (procedure)
+PROCEDURE,http://snomed.info/sct,306206005,Referral to service (procedure)
+PROCEDURE,http://snomed.info/sct,306316000,Referral to transplant surgeon (procedure)
+PROCEDURE,http://snomed.info/sct,306706006,Discharge to ward (procedure)
+PROCEDURE,http://snomed.info/sct,308283009,Discharge from hospital (procedure)
+PROCEDURE,http://snomed.info/sct,308481009,Referral to orthopedic surgeon (procedure)
+PROCEDURE,http://snomed.info/sct,310417005,Certification procedure (procedure)
+PROCEDURE,http://snomed.info/sct,310861008,Chlamydia antigen test (procedure)
+PROCEDURE,http://snomed.info/sct,311555007,Speech and language therapy regime (regime/therapy)
+PROCEDURE,http://snomed.info/sct,311791003,Information gathering (procedure)
+PROCEDURE,http://snomed.info/sct,31208007,Medical induction of labor (procedure)
+PROCEDURE,http://snomed.info/sct,312384001,Multidisciplinary assessment (procedure)
+PROCEDURE,http://snomed.info/sct,312681000,Bone density scan (procedure)
+PROCEDURE,http://snomed.info/sct,312853008,Medical records review (procedure)
+PROCEDURE,http://snomed.info/sct,313191000,Injection of epinephrine (procedure)
+PROCEDURE,http://snomed.info/sct,313660005,Absolute CD4 count procedure (procedure)
+PROCEDURE,http://snomed.info/sct,314098000,Rubella screening test (procedure)
+PROCEDURE,http://snomed.info/sct,314971001,Camera fundoscopy (procedure)
+PROCEDURE,http://snomed.info/sct,315124004,Human immunodeficiency virus viral load (procedure)
+PROCEDURE,http://snomed.info/sct,315639002,Initial patient assessment (procedure)
+PROCEDURE,http://snomed.info/sct,31676001,Human immunodeficiency virus antigen test (procedure)
+PROCEDURE,http://snomed.info/sct,33195004,External beam radiation therapy procedure (procedure)
+PROCEDURE,http://snomed.info/sct,33367005,Angiography of coronary artery (procedure)
+PROCEDURE,http://snomed.info/sct,34043003,Dental consultation and report (procedure)
+PROCEDURE,http://snomed.info/sct,34896006,Incision (procedure)
+PROCEDURE,http://snomed.info/sct,35025007,Manual pelvic examination (procedure)
+PROCEDURE,http://snomed.info/sct,359672006,Median sternotomy (procedure)
+PROCEDURE,http://snomed.info/sct,365853002,Imaging finding (finding)
+PROCEDURE,http://snomed.info/sct,367336001,Chemotherapy (procedure)
+PROCEDURE,http://snomed.info/sct,367494004,Premature birth of newborn (finding)
+PROCEDURE,http://snomed.info/sct,370789001,Development of individualized plan of care (procedure)
+PROCEDURE,http://snomed.info/sct,370995009,Health risks education (procedure)
+PROCEDURE,http://snomed.info/sct,371361000119107,Comprehensive metabolic panel (procedure)
+PROCEDURE,http://snomed.info/sct,371908008,Oxygen administration by mask (procedure)
+PROCEDURE,http://snomed.info/sct,37542007,"Posttreatment stabilization, orthodontic device (procedure)"
+PROCEDURE,http://snomed.info/sct,37729005,"Patient transfer, in-hospital (procedure)"
+PROCEDURE,http://snomed.info/sct,3802001,Dental application of desensitizing medicament (procedure)
+PROCEDURE,http://snomed.info/sct,384682003,Multidisciplinary care conference (procedure)
+PROCEDURE,http://snomed.info/sct,384700001,Injection of tetanus antitoxin (procedure)
+PROCEDURE,http://snomed.info/sct,385763009,Hospice care (regime/therapy)
+PROCEDURE,http://snomed.info/sct,385781007,Home health aide service (regime/therapy)
+PROCEDURE,http://snomed.info/sct,385892002,Mental health screening (procedure)
+PROCEDURE,http://snomed.info/sct,386053000,Evaluation procedure (procedure)
+PROCEDURE,http://snomed.info/sct,386216000,"Human parturition, function (observable entity)"
+PROCEDURE,http://snomed.info/sct,386394001,Pregnancy termination care (regime/therapy)
+PROCEDURE,http://snomed.info/sct,386478007,Triage: emergency center (procedure)
+PROCEDURE,http://snomed.info/sct,386516004,Anticipatory guidance (procedure)
+PROCEDURE,http://snomed.info/sct,387685009,Surgical manipulation of shoulder joint (procedure)
+PROCEDURE,http://snomed.info/sct,389153003,Indirect gonioscopy (procedure)
+PROCEDURE,http://snomed.info/sct,390791001,Referral for echocardiography (procedure)
+PROCEDURE,http://snomed.info/sct,392021009,Lumpectomy of breast (procedure)
+PROCEDURE,http://snomed.info/sct,392023007,Excision of lesion of breast (procedure)
+PROCEDURE,http://snomed.info/sct,392091000,Care regimes assessment (procedure)
+PROCEDURE,http://snomed.info/sct,392247006,Insertion of catheter into artery (procedure)
+PROCEDURE,http://snomed.info/sct,395123002,Urine screening test for diabetes (procedure)
+PROCEDURE,http://snomed.info/sct,395142003,Allergy screening test (procedure)
+PROCEDURE,http://snomed.info/sct,396487001,Sentinel lymph node biopsy (procedure)
+PROCEDURE,http://snomed.info/sct,397539000,Grid retinal photocoagulation (procedure)
+PROCEDURE,http://snomed.info/sct,398171003,Hearing examination (procedure)
+PROCEDURE,http://snomed.info/sct,399014008,Administration of vaccine product containing only Bordetella pertussis and Clostridium tetani and Corynebacterium diphtheriae antigens (procedure)
+PROCEDURE,http://snomed.info/sct,399208008,Plain X-ray of chest (procedure)
+PROCEDURE,http://snomed.info/sct,40617009,Artificial ventilation (regime/therapy)
+PROCEDURE,http://snomed.info/sct,40701008,Echocardiography (procedure)
+PROCEDURE,http://snomed.info/sct,409023009,Professional / ancillary services care (regime/therapy)
+PROCEDURE,http://snomed.info/sct,410006001,Digital examination of rectum (procedure)
+PROCEDURE,http://snomed.info/sct,410011004,Administration of anesthesia AND/OR sedation (procedure)
+PROCEDURE,http://snomed.info/sct,410299006,"Lab findings education, guidance, and counseling (procedure)"
+PROCEDURE,http://snomed.info/sct,410401003,Nursing care/supplementary surveillance (regime/therapy)
+PROCEDURE,http://snomed.info/sct,410538000,Scheduling (procedure)
+PROCEDURE,http://snomed.info/sct,410770002,Administration of anesthesia for procedure (procedure)
+PROCEDURE,http://snomed.info/sct,413180006,Pan retinal photocoagulation for diabetes (procedure)
+PROCEDURE,http://snomed.info/sct,414088005,Emergency coronary artery bypass graft (procedure)
+PROCEDURE,http://snomed.info/sct,415070008,Percutaneous coronary intervention
+PROCEDURE,http://snomed.info/sct,415300000,Review of systems (procedure)
+PROCEDURE,http://snomed.info/sct,417511005,Referral to home health care service (procedure)
+PROCEDURE,http://snomed.info/sct,417656005,Osteopathic postural examination (procedure)
+PROCEDURE,http://snomed.info/sct,418023006,"Computed tomography of chest, abdomen and pelvis (procedure)"
+PROCEDURE,http://snomed.info/sct,418824004,Off-pump coronary artery bypass (procedure)
+PROCEDURE,http://snomed.info/sct,418891003,Computed tomography of chest and abdomen (procedure)
+PROCEDURE,http://snomed.info/sct,423475008,Heart failure education (procedure)
+PROCEDURE,http://snomed.info/sct,426701000119108,"Ultrasonography of abdomen, right upper quadrant and epigastrium (procedure)"
+PROCEDURE,http://snomed.info/sct,428211000124100,Assessment of substance use (procedure)
+PROCEDURE,http://snomed.info/sct,42825003,Cannulation (procedure)
+PROCEDURE,http://snomed.info/sct,428830000,Pretransplant evaluation of kidney recipient (procedure)
+PROCEDURE,http://snomed.info/sct,429609002,Lung volume reduction surgery (procedure)
+PROCEDURE,http://snomed.info/sct,430193006,Medication reconciliation (procedure)
+PROCEDURE,http://snomed.info/sct,43060002,Intravenous injection (procedure)
+PROCEDURE,http://snomed.info/sct,430701006,Resuscitation using intravenous fluid (procedure)
+PROCEDURE,http://snomed.info/sct,43075005,Partial resection of colon (procedure)
+PROCEDURE,http://snomed.info/sct,431182000,Placing subject in prone position (procedure)
+PROCEDURE,http://snomed.info/sct,432231006,Fine needle aspiration biopsy of lung (procedure)
+PROCEDURE,http://snomed.info/sct,433112001,Percutaneous mechanical thrombectomy of portal vein using fluoroscopic guidance with contrast (procedure)
+PROCEDURE,http://snomed.info/sct,433114000,Human epidermal growth factor receptor 2 gene detection by immunohistochemistry (procedure)
+PROCEDURE,http://snomed.info/sct,433236007,Transthoracic echocardiography (procedure)
+PROCEDURE,http://snomed.info/sct,434363004,Human epidermal growth factor receptor 2 gene detection by fluorescence in situ hybridization (procedure)
+PROCEDURE,http://snomed.info/sct,440546007,Discussion about pregnancy (procedure)
+PROCEDURE,http://snomed.info/sct,441550005,Urinalysis with reflex to microscopy and culture (procedure)
+PROCEDURE,http://snomed.info/sct,443497002,Excision of sentinel lymph node (procedure)
+PROCEDURE,http://snomed.info/sct,443529005,Detection of chromosomal aneuploidy in prenatal amniotic fluid specimen using fluorescence in situ hybridization screening technique (procedure)
+PROCEDURE,http://snomed.info/sct,445912000,Excision of fallopian tube and surgical removal of ectopic pregnancy (procedure)
+PROCEDURE,http://snomed.info/sct,445988008,Assessment using health assessment questionnaire (procedure)
+PROCEDURE,http://snomed.info/sct,44608003,Blood group typing (procedure)
+PROCEDURE,http://snomed.info/sct,446573003,Continuous positive airway pressure titration (procedure)
+PROCEDURE,http://snomed.info/sct,447759004,Brachytherapy of breast (procedure)
+PROCEDURE,http://snomed.info/sct,448337001,Telemedicine consultation with patient (procedure)
+PROCEDURE,http://snomed.info/sct,449214001,Transfer to stepdown unit (procedure)
+PROCEDURE,http://snomed.info/sct,45595009,Laparoscopic cholecystectomy (procedure)
+PROCEDURE,http://snomed.info/sct,456191000124101,Postoperative care for dental procedure (regime/therapy)
+PROCEDURE,http://snomed.info/sct,46706006,Replacement of contraceptive intrauterine device (procedure)
+PROCEDURE,http://snomed.info/sct,473231009,Renal disorder medication review (procedure)
+PROCEDURE,http://snomed.info/sct,47758006,Hepatitis B surface antigen measurement (procedure)
+PROCEDURE,http://snomed.info/sct,51116004,Passive immunization (procedure)
+PROCEDURE,http://snomed.info/sct,52052004,Rehabilitation therapy (regime/therapy)
+PROCEDURE,http://snomed.info/sct,52765003,Intubation (procedure)
+PROCEDURE,http://snomed.info/sct,54550000,Electroencephalogram (procedure)
+PROCEDURE,http://snomed.info/sct,55468007,Ocular slit lamp examination (procedure)
+PROCEDURE,http://snomed.info/sct,57617002,Urine specimen collection (procedure)
+PROCEDURE,http://snomed.info/sct,58000006,Patient discharge (procedure)
+PROCEDURE,http://snomed.info/sct,5880005,Physical examination procedure (procedure)
+PROCEDURE,http://snomed.info/sct,58828004,"Application of dressing, sterile (procedure)"
+PROCEDURE,http://snomed.info/sct,60218003,"Urinalysis, protein, qualitative (procedure)"
+PROCEDURE,http://snomed.info/sct,609588000,Prosthetic total arthroplasty of knee joint (procedure)
+PROCEDURE,http://snomed.info/sct,61746007,Taking patient vital signs (procedure)
+PROCEDURE,http://snomed.info/sct,63332003,History AND physical examination (procedure)
+PROCEDURE,http://snomed.info/sct,63697000,Cardiopulmonary bypass operation (procedure)
+PROCEDURE,http://snomed.info/sct,64544008,"Gingivectomy or gingivoplasty, per tooth (procedure)"
+PROCEDURE,http://snomed.info/sct,65200003,Insertion of intrauterine contraceptive device (procedure)
+PROCEDURE,http://snomed.info/sct,65546002,Extraction of wisdom tooth (procedure)
+PROCEDURE,http://snomed.info/sct,65575008,Biopsy of prostate (procedure)
+PROCEDURE,http://snomed.info/sct,65677008,Pulmonary catheterization with Swan-Ganz catheter (procedure)
+PROCEDURE,http://snomed.info/sct,67879005,"History and physical examination, limited (procedure)"
+PROCEDURE,http://snomed.info/sct,68071007,Dental fluoride treatment (procedure)
+PROCEDURE,http://snomed.info/sct,69212005,Range of motion testing (procedure)
+PROCEDURE,http://snomed.info/sct,698314001,Consultation for treatment (procedure)
+PROCEDURE,http://snomed.info/sct,698354004,Magnetic resonance imaging for measurement of brain volume (procedure)
+PROCEDURE,http://snomed.info/sct,698560000,Referral to sleep apnea clinic (procedure)
+PROCEDURE,http://snomed.info/sct,699253003,Surgical manipulation of joint of knee (procedure)
+PROCEDURE,http://snomed.info/sct,700070005,Optical coherence tomography of retina (procedure)
+PROCEDURE,http://snomed.info/sct,703423002,Combined chemotherapy and radiation therapy (procedure)
+PROCEDURE,http://snomed.info/sct,70536003,Transplant of kidney (procedure)
+PROCEDURE,http://snomed.info/sct,709010006,Liaising with referral source (procedure)
+PROCEDURE,http://snomed.info/sct,709138001,Notification of treatment plan (procedure)
+PROCEDURE,http://snomed.info/sct,710824005,Assessment of health and social care needs (procedure)
+PROCEDURE,http://snomed.info/sct,710839006,Assessment of cardiac status using monitoring device (procedure)
+PROCEDURE,http://snomed.info/sct,710841007,Assessment of anxiety (procedure)
+PROCEDURE,http://snomed.info/sct,711069006,Coordination of care plan (procedure)
+PROCEDURE,http://snomed.info/sct,711446003,Transplantation of kidney regime (regime/therapy)
+PROCEDURE,http://snomed.info/sct,713021002,Plain X-ray of pelvis (procedure)
+PROCEDURE,http://snomed.info/sct,713024005,Plain X-ray of wrist region (procedure)
+PROCEDURE,http://snomed.info/sct,713026007,Plain X-ray of humerus (procedure)
+PROCEDURE,http://snomed.info/sct,713106006,Screening for drug abuse (procedure)
+PROCEDURE,http://snomed.info/sct,714812005,Induced termination of pregnancy (procedure)
+PROCEDURE,http://snomed.info/sct,71493000,Transfusion of packed red blood cells (procedure)
+PROCEDURE,http://snomed.info/sct,715252007,Depression screening using Patient Health Questionnaire Nine Item score (procedure)
+PROCEDURE,http://snomed.info/sct,71651007,Mammography (procedure)
+PROCEDURE,http://snomed.info/sct,722161008,Diabetic retinal eye exam (procedure)
+PROCEDURE,http://snomed.info/sct,736169004,Post anesthesia care management (procedure)
+PROCEDURE,http://snomed.info/sct,73761001,Colonoscopy (procedure)
+PROCEDURE,http://snomed.info/sct,737617004,Referral to prosthetic service (procedure) 
+PROCEDURE,http://snomed.info/sct,76164006,Biopsy of colon (procedure)
+PROCEDURE,http://snomed.info/sct,762993000,Assessment using Morse Fall Scale (procedure)
+PROCEDURE,http://snomed.info/sct,762998009,Assessment using New York Heart Association Classification (procedure)
+PROCEDURE,http://snomed.info/sct,763228001,Assessment using Canadian Study of Health and Aging Clinical Frailty Scale (procedure)
+PROCEDURE,http://snomed.info/sct,763302001,Assessment using Alcohol Use Disorders Identification Test - Consumption (procedure)
+PROCEDURE,http://snomed.info/sct,76601001,Intramuscular injection (procedure)
+PROCEDURE,http://snomed.info/sct,76746007,Cardiovascular stress testing (procedure)
+PROCEDURE,http://snomed.info/sct,772071006,Referral to dentist (procedure)
+PROCEDURE,http://snomed.info/sct,773996000,Transcatheter aortic valve implantation (procedure)
+PROCEDURE,http://snomed.info/sct,78429003,Referral to physical rehabilitation service (procedure)
+PROCEDURE,http://snomed.info/sct,79345008,Excision of maxillary torus palatinus (procedure)
+PROCEDURE,http://snomed.info/sct,80146002,Excision of appendix (procedure)
+PROCEDURE,http://snomed.info/sct,81733005,Dental surgical procedure (procedure)
+PROCEDURE,http://snomed.info/sct,82808001,Sleep apnea monitoring with alarm (regime/therapy)
+PROCEDURE,http://snomed.info/sct,8290005,Induced cardioplegia (procedure)
+PROCEDURE,http://snomed.info/sct,84100007,History taking (procedure)
+PROCEDURE,http://snomed.info/sct,84478008,Occupational therapy (regime/therapy)
+PROCEDURE,http://snomed.info/sct,85548006,Episiotomy (procedure)
+PROCEDURE,http://snomed.info/sct,85765000,Fiberoptic bronchoscopy (procedure)
+PROCEDURE,http://snomed.info/sct,866146005,Serum metabolic panel (procedure)
+PROCEDURE,http://snomed.info/sct,866148006,Screening for domestic abuse (procedure)
+PROCEDURE,http://snomed.info/sct,868187001,"Assessment using Car, Relax, Alone, Forget, Friends, Trouble Screening Test (procedure)"
+PROCEDURE,http://snomed.info/sct,90226004,"Cytopathology procedure, preparation of smear, genital source (procedure)"
+PROCEDURE,http://snomed.info/sct,90470006,Prostatectomy (procedure)
+PROCEDURE,http://snomed.info/sct,91251008,Physical therapy procedure (regime/therapy)
+PROCEDURE,http://snomed.info/sct,91602002,Thoracentesis (procedure)
+PROCEDURE,http://snomed.info/sct,9564003,"Complete blood count with white cell differential, automated (procedure)"
+REPORT,http://loinc.org,34117-2,History and physical note
+VITAL,http://loinc.org,2708-6,Oxygen saturation in Arterial blood
+VITAL,http://loinc.org,29463-7,Body Weight
+VITAL,http://loinc.org,39156-5,Body mass index (BMI) [Ratio]
+VITAL,http://loinc.org,59576-9,Body mass index (BMI) [Percentile] Per age and sex
+VITAL,http://loinc.org,70006-2,Medication management note
+VITAL,http://loinc.org,71425-3,Natriuretic peptide.B prohormone N-Terminal [Mass/volume] in Blood by Immunoassay
+VITAL,http://loinc.org,72514-3,Pain severity - 0-10 verbal numeric rating [Score] - Reported
+VITAL,http://loinc.org,74006-8,Weight difference [Mass difference] --pre dialysis - post dialysis
+VITAL,http://loinc.org,75893-8,Pain severity in the past week - 0-10 numeric rating [Reported]
+VITAL,http://loinc.org,77606-2,Weight-for-length Per age and sex
+VITAL,http://loinc.org,79892-6,Right eye Intraocular pressure
+VITAL,http://loinc.org,79893-4,Left eye Intraocular pressure
+VITAL,http://loinc.org,8289-1,Head Occipital-frontal circumference Percentile
+VITAL,http://loinc.org,8302-2,Body Height
+VITAL,http://loinc.org,8310-5,Body temperature
+VITAL,http://loinc.org,8462-4,Diastolic Blood Pressure
+VITAL,http://loinc.org,8478-0,Mean blood pressure
+VITAL,http://loinc.org,8480-6,Systolic Blood Pressure
+VITAL,http://loinc.org,86924-8,Overall summary score [KCCQ-12]
+VITAL,http://loinc.org,8867-4,Heart rate
+VITAL,http://loinc.org,91145-3,What number best describes how pain has interfered with your enjoyment of life during the past week
+VITAL,http://loinc.org,91146-1,What number best describes how pain has interfered with your general activity during the past week
+VITAL,http://loinc.org,9279-1,Respiratory rate
+VITAL,http://loinc.org,9843-4,Head Occipital-frontal circumference

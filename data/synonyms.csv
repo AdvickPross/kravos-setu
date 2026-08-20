@@ -1,0 +1,76 @@
+concept,surface_forms,category,code_system,codes
+# Concept-shaped, not code-shaped: one row per clinical concept, many codes.
+# Every code below was mined from lexicon.csv, not recalled from memory --
+# tests/test_lexicon.py fails the build if any code stops existing.
+# Leave `category` blank when a concept legitimately spans categories
+# (aspirin is both an ALLERGY substance and a MEDICATION); the loader then
+# takes each code's own category from the lexicon.
+hba1c,hba1c|a1c|hb a1c|glycated hemoglobin|glycosylated hemoglobin|glycated haemoglobin,LAB,http://loinc.org,4548-4
+potassium,k|k+|serum k|serum potassium|s potassium,LAB,http://loinc.org,2823-3|6298-4
+sodium,na|na+|serum sodium|s sodium,LAB,http://loinc.org,2947-0|2951-2
+creatinine,creat|s creat|serum creatinine|s creatinine,LAB,http://loinc.org,2160-0|38483-4
+urea nitrogen,bun|urea|blood urea|blood urea nitrogen|s urea,LAB,http://loinc.org,3094-0|6299-2
+egfr,egfr|gfr|glomerular filtration rate|creatinine clearance,LAB,http://loinc.org,33914-3
+hemoglobin,hb|hgb|haemoglobin|hb level,LAB,http://loinc.org,718-7
+hematocrit,hct|haematocrit|packed cell volume|pcv,LAB,http://loinc.org,4544-3|20570-8
+leukocytes,wbc|white count|white cell count|white blood cells|leucocytes|tlc|total leucocyte count,LAB,http://loinc.org,26464-8|6690-2
+platelets,plt|plts|platelet count,LAB,http://loinc.org,26515-7|777-3
+ldl cholesterol,ldl|ldl-c|ldl cholesterol|bad cholesterol,LAB,http://loinc.org,18262-6
+hdl cholesterol,hdl|hdl-c|hdl cholesterol|good cholesterol,LAB,http://loinc.org,2085-9
+total cholesterol,total cholesterol|serum cholesterol|lipids|lipid profile,LAB,http://loinc.org,2093-3|18262-6|2085-9|2571-8
+triglycerides,tg|trig|trigs|triglycerides,LAB,http://loinc.org,2571-8
+c reactive protein,crp|c-reactive protein|c reactive protein level,LAB,http://loinc.org,1988-5
+alanine aminotransferase,alt|sgpt|alanine transaminase,LAB,http://loinc.org,1742-6
+aspartate aminotransferase,ast|sgot|aspartate transaminase,LAB,http://loinc.org,1920-8
+liver function tests,lft|lfts|liver function|liver enzymes,LAB,http://loinc.org,1742-6|1920-8|1975-2|6768-6|1751-7
+renal function tests,rft|rfts|kidney function|renal function|renal profile,LAB,http://loinc.org,2160-0|38483-4|3094-0|6299-2|33914-3
+electrolytes,electrolytes|serum electrolytes|e-lytes|lytes,LAB,http://loinc.org,2823-3|6298-4|2947-0|2951-2|2069-3|2075-0
+blood glucose,sugar|blood sugar|rbs|random blood sugar|fbs|fasting blood sugar|fasting glucose|sugars,LAB,http://loinc.org,2339-0|2345-7
+thyrotropin,tsh|thyroid stimulating hormone|thyroid function,LAB,http://loinc.org,3016-3
+troponin,troponin|trop|trop i|troponin i|hs troponin|cardiac enzymes,LAB,http://loinc.org,89579-7
+nt-probnp,bnp|nt probnp|ntprobnp|pro bnp|nt-pro bnp,,http://loinc.org,33762-6|71425-3
+prothrombin time,pt/inr|prothrombin time|coagulation profile|coag profile|clotting profile,LAB,http://loinc.org,5902-2|6301-6
+ejection fraction,ef|lvef|ejection fraction|lv function,LAB,http://loinc.org,10230-1
+blood pressure,bp|blood pressure|bps,VITAL,http://loinc.org,8480-6|8462-4|8478-0
+systolic blood pressure,sbp|systolic|systolic bp,VITAL,http://loinc.org,8480-6
+diastolic blood pressure,dbp|diastolic|diastolic bp,VITAL,http://loinc.org,8462-4
+oxygen saturation,spo2|sats|o2 sat|o2 sats|oxygen sats|sao2|pulse oximetry,VITAL,http://loinc.org,2708-6
+heart rate,hr|pulse|pulse rate|heart rate,VITAL,http://loinc.org,8867-4
+respiratory rate,rr|resp rate|respiration rate|breathing rate,VITAL,http://loinc.org,9279-1
+body temperature,temp|temperature,VITAL,http://loinc.org,8310-5
+body mass index,bmi|body mass index,VITAL,http://loinc.org,39156-5|59576-9
+body weight,wt|weight|body weight,VITAL,http://loinc.org,29463-7
+hypertension,htn|high bp|high blood pressure|raised bp|hypertensive,CONDITION,http://snomed.info/sct,59621000
+type 2 diabetes,t2dm|dm|dm2|dm type 2|type 2 diabetes|type ii diabetes|diabetic|diabetes,CONDITION,http://snomed.info/sct,44054006
+prediabetes,prediabetes|pre diabetes|impaired glucose tolerance|igt,CONDITION,http://snomed.info/sct,714628002
+diabetic complications,diabetic nephropathy|diabetic neuropathy|diabetic retinopathy|diabetic kidney disease|diabetic complications,CONDITION,http://snomed.info/sct,127013003|157141000119108|368581000119106|90781000119102|1501000119109|1551000119108|97331000119101
+chronic kidney disease,ckd|chronic kidney disease|chronic renal failure|kidney disease|renal impairment,CONDITION,http://snomed.info/sct,431855005|431856006|433144002|431857002|46177005
+end stage renal disease,esrd|end stage renal disease|dialysis dependent,CONDITION,http://snomed.info/sct,46177005
+myocardial infarction,mi|heart attack|stemi|nstemi|previous mi|old mi,CONDITION,http://snomed.info/sct,22298006|401303003|401314000|399211009
+ischemic heart disease,ihd|cad|coronary artery disease|ischaemic heart disease|coronary disease,CONDITION,http://snomed.info/sct,414545008
+heart failure,chf|ccf|heart failure|cardiac failure|congestive cardiac failure,CONDITION,http://snomed.info/sct,88805009
+atrial fibrillation,af|afib|a fib|atrial fibrillation,CONDITION,http://snomed.info/sct,49436004
+dyspnea,sob|shortness of breath|breathlessness|dyspnoea|breathless,CONDITION,http://snomed.info/sct,267036007
+asthma,asthma|reactive airway disease|asthmatic,CONDITION,http://snomed.info/sct,195967001|233678006
+copd,copd|chronic obstructive pulmonary disease|emphysema,CONDITION,http://snomed.info/sct,185086009|87433001
+anemia,anemia|anaemia|low haemoglobin|low hemoglobin,CONDITION,http://snomed.info/sct,271737000
+hyperlipidemia,dyslipidemia|dyslipidaemia|hyperlipidaemia|hyperlipidemia|high cholesterol,CONDITION,http://snomed.info/sct,55822004
+hypothyroidism,hypothyroidism|hypothyroid|underactive thyroid,CONDITION,http://snomed.info/sct,83664006
+epilepsy,epilepsy|seizure disorder|seizures|fits|convulsions,CONDITION,http://snomed.info/sct,84757009|128613002|1290882004
+sepsis,sepsis|septicemia|septicaemia|septic shock,CONDITION,http://snomed.info/sct,91302008|76571007|770349000
+covid-19,covid|covid 19|covid-19|corona|sars cov 2|coronavirus,CONDITION,http://snomed.info/sct,840539006|840544004
+tobacco use,smoker|smoking|tobacco use|smokes,CONDITION,http://snomed.info/sct,449868002
+pregnancy,pregnant|pregnancy|expecting,CONDITION,http://snomed.info/sct,72892002|47200007
+allergic disposition,known allergies|drug allergies|allergies|allergy|allergic|nkda|nka|no known drug allergies|no known allergies,ALLERGY,http://snomed.info/sct,609328004
+paracetamol,paracetamol|pcm|acetaminophen|crocin|dolo,MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1043400|1049221|1049625|198440|209387|313782|313820|856987|857005|993770
+salbutamol,salbutamol|asthalin|inhaler,MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,2123111|245314|351136|351137|630208|745752|859088
+frusemide,frusemide|lasix|water tablet|water pill,MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1719286|313988
+adrenaline,adrenaline,MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,1870230
+penicillin,penicillin|penicillins|pen v|pen g,,http://www.nlm.nih.gov/research/umls/rxnorm,7984|105078|834061|834102
+sulfa,sulfa|sulpha|cotrimoxazole|co-trimoxazole|bactrim|septran,,http://www.nlm.nih.gov/research/umls/rxnorm,10831|198335
+insulin,insulin|insulins|humulin,MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,106892|311034
+metformin,metformin|glycomet,MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,860975
+warfarin,warfarin|coumadin,MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,855332
+enoxaparin,enoxaparin|lovenox|clexane|lmwh,MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,854235|854252|854255
+clopidogrel,clopidogrel|plavix|clopilet,MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,309362|749196
+nitroglycerin,gtn|ntg|nitroglycerine|glyceryl trinitrate|sorbitrate,MEDICATION,http://www.nlm.nih.gov/research/umls/rxnorm,198039|705129

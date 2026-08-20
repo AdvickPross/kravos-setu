@@ -1,0 +1,24 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: kravos-postgres
+    environment:
+      POSTGRES_DB: kravos
+      POSTGRES_USER: kravos
+      POSTGRES_PASSWORD: kravos
+    # 5434 on the host: 5432 is the usual default and 5433 is already taken
+    # by another project on this machine. The port lives in data/db.json --
+    # nothing hardcodes it.
+    ports:
+      - "5434:5432"
+    volumes:
+      - kravos_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kravos -d kravos"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    shm_size: 1gb
+
+volumes:
+  kravos_pgdata:

@@ -1,0 +1,155 @@
+{
+  "_comment": "Per-code-system normalization vocabulary. Terminology lives here, never in retrieval/normalize.py logic. Regenerate/extend when the corpus vocabulary changes.",
+
+  "loinc": {
+    "_comment": "Display grammar: 'Analyte [Property] in Specimen by Method'. Cut at the first '[', then strip trailing 'by <method>' / 'in <specimen>' clauses, but ONLY when the trailing phrase is in these lists - questionnaire items ('Recurrent opioid use in situations in which ...') must survive untouched.",
+    "specimens": [
+      "arterial blood",
+      "venous blood",
+      "capillary blood",
+      "mixed venous blood",
+      "positive blood culture",
+      "platelet poor plasma",
+      "serum or plasma",
+      "blood",
+      "serum",
+      "plasma",
+      "urine",
+      "stool",
+      "csf",
+      "cerebral spinal fluid",
+      "body fluid",
+      "saliva",
+      "sputum",
+      "nasopharynx",
+      "respiratory system specimen",
+      "tissue",
+      "tumor",
+      "breast tumor",
+      "specimen"
+    ],
+    "methods": [
+      "automated count",
+      "manual count",
+      "coagulation assay",
+      "immunoassay",
+      "direct assay",
+      "naa with probe detection",
+      "probe",
+      "test strip",
+      "screen method",
+      "ophthalmoscopy",
+      "oct",
+      "palpation",
+      "culture",
+      "calculation",
+      "estimated",
+      "measured",
+      "refractometry",
+      "spectrophotometry"
+    ],
+    "stoplist": [
+      "total score",
+      "score",
+      "total",
+      "value",
+      "result",
+      "count",
+      "note",
+      "panel"
+    ],
+    "_min_form_length_comment": "3, not 4: every 3-char residue in this corpus is a real analyte (inr, mcv, mch) and dropping them would make 'INR?' unresolvable. 2-char residues (ph) are still dropped.",
+    "min_form_length": 3
+  },
+
+  "snomed": {
+    "_comment": "Trailing parenthetical semantic tag, stripped when the inner text is one of these.",
+    "semantic_tags": [
+      "disorder",
+      "situation",
+      "finding",
+      "procedure",
+      "regime/therapy",
+      "morphologic abnormality",
+      "qualifier value",
+      "substance",
+      "observable entity",
+      "organism",
+      "person",
+      "physical object",
+      "event",
+      "body structure",
+      "product"
+    ],
+    "stoplist": [],
+    "min_form_length": 4
+  },
+
+  "rxnorm": {
+    "_comment": "Displays carry quantity prefix, strength, dose form, packaging and brand. Ingredients = '/'-split fragments cut at the first digit, minus dose-form/noise tokens, minus trailing salt/ester words. Brand = trailing bracketed name.",
+    "leading_prefix_patterns": [
+      "^NDA\\d+",
+      "^\\d+(\\.\\d+)?\\s*(ML|MG|HR|DAY|ACTUAT|UNT)\\b",
+      "^(Abuse-Deterrent|Breath-Actuated|Chewable|Extended Release|Delayed Release)\\b",
+      "^\\d+(\\.\\d+)?\\s+(?=[A-Za-z])"
+    ],
+    "brand_strip_patterns": [
+      "\\s+\\d+\\s*day$"
+    ],
+    "salt_suffixes": [
+      "hydrochloride",
+      "hydrobromide",
+      "sodium",
+      "potassium",
+      "calcium",
+      "disodium",
+      "acetate",
+      "maleate",
+      "hyclate",
+      "monohydrate",
+      "bromide",
+      "bitartrate",
+      "tartrate",
+      "succinate",
+      "fumarate",
+      "sulfate",
+      "phosphate",
+      "citrate",
+      "valerate",
+      "dipropionate",
+      "propionate",
+      "besylate",
+      "mesylate",
+      "porcine",
+      "human"
+    ],
+    "noise_tokens": [
+      "ml", "mg", "hr", "unt", "actuat", "day", "mcg", "usp", "nda",
+      "oral", "topical", "ophthalmic", "otic", "nasal", "rectal", "vaginal",
+      "sublingual", "buccal", "mucosal", "transdermal", "intrauterine",
+      "inhalation", "injectable", "injection", "infusion",
+      "tablet", "tablets", "capsule", "capsules", "solution", "suspension",
+      "cream", "ointment", "gel", "lotion", "patch", "spray", "granules",
+      "powder", "syrup", "elixir", "lozenge", "suppository", "aerosol",
+      "extended", "delayed", "release", "chewable", "prefilled", "syringe",
+      "pen", "injector", "auto-injector", "metered", "dose", "inhaler",
+      "dry", "system", "implant", "drug", "pack", "kit",
+      "inert", "ingredients", "modified", "macrocrystals",
+      "for", "and", "with", "in", "of",
+      "breath-actuated", "abuse-deterrent"
+    ],
+    "stoplist": [],
+    "min_form_length": 4
+  },
+
+  "cvx": {
+    "_comment": "No structured pattern to strip; lowercase and trim only. Short codes such as MMR / IPV / HPV survive because the full display is always indexed.",
+    "stoplist": [],
+    "min_form_length": 3
+  },
+
+  "default": {
+    "stoplist": [],
+    "min_form_length": 4
+  }
+}

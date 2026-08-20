@@ -1,0 +1,52 @@
+{
+  "_comment": "Pre-op assessment checklist for the missingness check in backend/retrieve.py. Code sets are copied verbatim from the matching concept rows in data/synonyms.csv -- corpus-derived, already vetted for NER matching -- not invented here. Extend only by pointing at another synonyms.csv concept (or several, unioned) plus a codes-derived from data/expected_facts.json review. window_days is a placeholder clinical default (90 days for labs), not a measured value -- revisit with real guidance.",
+  "items": [
+    {
+      "key": "renal_function",
+      "label": "Recent renal function (urea nitrogen, creatinine, eGFR)",
+      "categories": ["LAB"],
+      "codes": ["2160-0", "38483-4", "3094-0", "6299-2", "33914-3"],
+      "window_days": 90
+    },
+    {
+      "key": "electrolytes",
+      "label": "Recent electrolytes (potassium, sodium)",
+      "categories": ["LAB"],
+      "codes": ["2823-3", "6298-4", "2947-0", "2951-2", "2069-3", "2075-0"],
+      "window_days": 90
+    },
+    {
+      "key": "cbc",
+      "label": "Recent complete blood count (hemoglobin, hematocrit, leukocytes, platelets)",
+      "categories": ["LAB"],
+      "codes": ["718-7", "4544-3", "20570-8", "26464-8", "6690-2", "26515-7", "777-3"],
+      "window_days": 90
+    },
+    {
+      "key": "allergy_documentation",
+      "label": "Allergy documentation",
+      "categories": ["ALLERGY"],
+      "codes": [],
+      "window_days": null
+    },
+    {
+      "key": "current_medications",
+      "label": "Current medication list",
+      "categories": ["MEDICATION"],
+      "codes": [],
+      "window_days": null
+    },
+    {
+      "key": "cardiac_history",
+      "label": "Cardiac history (ischemic heart disease, MI, heart failure, atrial fibrillation)",
+      "categories": ["CONDITION"],
+      "codes": [
+        "414545008",
+        "22298006", "401303003", "401314000", "399211009",
+        "88805009",
+        "49436004"
+      ],
+      "window_days": null
+    }
+  ]
+}

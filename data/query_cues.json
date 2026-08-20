@@ -1,0 +1,115 @@
+{
+  "_comment": "Query-side language cues for retrieval/ner.py. Not terminology - these are the words doctors wrap terminology in.",
+
+  "negation": {
+    "_comment": "Scanned in the window_tokens tokens immediately before a matched entity. The extractor already distinguishes ALLERGY_NEGATED on the fact side, so 'no known drug allergies' must not resolve like 'allergic to penicillin'.",
+    "window_tokens": 4,
+    "cues": [
+      "no",
+      "not",
+      "never",
+      "none",
+      "nil",
+      "denies",
+      "denied",
+      "denying",
+      "without",
+      "negative for",
+      "ruled out",
+      "rule out",
+      "free of",
+      "absence of",
+      "absent",
+      "nkda",
+      "no known",
+      "no history of",
+      "no h/o",
+      "not on",
+      "off"
+    ],
+    "blockers": [
+      "but",
+      "however",
+      "except",
+      "besides"
+    ],
+    "_self_negating_comment": "Forms that carry their own negation: the cue is inside the matched span, not before it.",
+    "self_negating": [
+      "nkda",
+      "nka",
+      "no known drug allergies",
+      "no known allergies",
+      "nil known allergies"
+    ]
+  },
+
+  "dates": {
+    "recent_months": 6,
+    "number_words": {
+      "a": 1, "an": 1, "one": 1, "two": 2, "couple": 2, "three": 3, "few": 3,
+      "several": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8,
+      "nine": 9, "ten": 10, "eleven": 11, "twelve": 12, "eighteen": 18
+    },
+    "units": {
+      "day": 1, "days": 1,
+      "week": 7, "weeks": 7,
+      "month": 30, "months": 30,
+      "year": 365, "years": 365
+    },
+    "months": {
+      "jan": 1, "january": 1, "feb": 2, "february": 2, "mar": 3, "march": 3,
+      "apr": 4, "april": 4, "may": 5, "jun": 6, "june": 6, "jul": 7, "july": 7,
+      "aug": 8, "august": 8, "sep": 9, "sept": 9, "september": 9,
+      "oct": 10, "october": 10, "nov": 11, "november": 11, "dec": 12, "december": 12
+    },
+    "upper_bound_cues": [
+      "before surgery",
+      "prior to surgery",
+      "before the surgery",
+      "before the operation",
+      "before op",
+      "pre op",
+      "preop",
+      "pre-op",
+      "preoperative",
+      "pre operative",
+      "before theatre",
+      "before the procedure"
+    ]
+  },
+
+  "stopwords": [
+    "a", "an", "the", "this", "that", "these", "those", "there", "here",
+    "i", "we", "you", "he", "she", "they", "it", "me", "my", "our", "your",
+    "his", "her", "their", "its", "them", "us",
+    "is", "are", "was", "were", "be", "been", "being", "am",
+    "do", "does", "did", "doing", "done",
+    "has", "have", "had", "having",
+    "can", "could", "will", "would", "shall", "should", "may", "might", "must",
+    "and", "or", "but", "if", "so", "then", "than", "as", "at", "by", "for",
+    "from", "in", "into", "of", "on", "onto", "to", "with", "within", "without",
+    "about", "over", "under", "between", "before", "after", "during", "since",
+    "up", "down", "out", "off", "again", "also", "any", "all", "both", "each",
+    "more", "most", "less", "least", "much", "many", "some", "no", "not",
+    "only", "other", "same", "such", "too", "very", "just", "still", "yet",
+    "what", "whats", "when", "where", "which", "who", "whom", "why", "how",
+    "please", "show", "list", "give", "tell", "get", "got", "find", "look",
+    "need", "needs", "needed", "want", "wants", "know", "known", "check",
+    "checked", "checking", "see", "seen", "take", "takes", "taking", "took",
+    "start", "started", "stop", "stopped", "prescribe", "prescribed",
+    "prescribing", "order", "ordered", "run", "ran", "done", "doing",
+    "patient", "patients", "pt", "case", "man", "woman", "male", "female",
+    "year", "years", "month", "months", "week", "weeks", "day", "days",
+    "old", "age", "aged", "ago", "last", "past", "recent", "recently",
+    "latest", "current", "currently", "today", "yesterday", "now", "ever",
+    "trend", "trends", "trending", "result", "results", "value", "values",
+    "level", "levels", "reading", "readings", "record", "records", "report",
+    "reports", "note", "notes", "history", "hx", "summary", "brief", "review",
+    "status", "details", "info", "information", "data", "test", "tests",
+    "anything", "everything", "something", "nothing", "ok", "okay", "yes",
+    "right", "well", "actually", "really", "quite", "bit",
+    "documented", "noted", "recorded", "charted", "mentioned",
+    "surgery", "operation", "procedure", "theatre", "op", "preop", "post",
+    "due", "worth", "flag", "flags", "flagged", "missing", "known"
+  ]
+}

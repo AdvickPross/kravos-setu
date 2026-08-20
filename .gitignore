@@ -1,0 +1,25 @@
+# Corpus data -- huge, regenerable (scripts/build_lexicon.py, scripts/split_facts.py),
+# and over GitHub's file-size limits. patients.jsonl and lexicon.csv stay
+# tracked: small, and useful without regenerating anything.
+facts.jsonl
+facts_by_patient/
+synthea-with-dependencies.jar
+
+# Secrets -- never commit real credentials, only the .example templates.
+.env
+.env.local
+frontend/.env.local
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+
+# Node / Next.js
+frontend/node_modules/
+frontend/.next/
+frontend/tsconfig.tsbuildinfo
+
+# Claude Code local settings (machine-specific, not shared)
+.claude/settings.local.json

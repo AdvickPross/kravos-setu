@@ -1,0 +1,9 @@
+{
+  "_comment": "Postgres connection settings. Port 5434 deliberately: 5433 is already in use by another project on this machine. Every value can be overridden by an environment variable of the same name uppercased and prefixed KRAVOS_ (KRAVOS_PORT, KRAVOS_PASSWORD, ...).",
+  "host": "localhost",
+  "port": 5434,
+  "dbname": "kravos",
+  "user": "kravos",
+  "password": "kravos",
+  "connect_timeout": 10
+}
