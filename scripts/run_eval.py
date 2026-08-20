@@ -160,6 +160,21 @@ def render(meta: dict, rows: list[dict], overall: dict, today: date) -> str:
         f"| queries retrieving nothing correct | {overall['zero_recall']}/{overall['scored']} |",
         f"| clean abstentions | {overall['clean_abstentions']}/{overall['abstain']} |",
         "",
+        *(
+            [
+                "> **This set is saturated and has stopped discriminating.**",
+                "> Every scored query is exact and every abstention is clean, which means "
+                "the next regression will show up as a drop from 1.000 but the next "
+                "*improvement* cannot show up at all. A perfect score is a signal to add "
+                "harder queries, not a result to quote. Archetypes worth adding: queries "
+                "mixing several categories at once, misspelled drug names, questions whose "
+                "answer is a trend rather than a list, and the narrative REPORT path that "
+                "no archetype touches yet.",
+                "",
+            ]
+            if overall["f1"] >= 1.0 and overall["clean_abstentions"] == overall["abstain"]
+            else []
+        ),
         "### Reading these numbers",
         "",
         "**Recall is the informative figure; precision is structurally easy here.** "

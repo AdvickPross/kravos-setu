@@ -145,6 +145,24 @@ LAB_WINDOW_PHRASINGS = [
 ]
 VITAL_PHRASINGS = ["what is {sub} latest {c}", "most recent {c} reading", "{c} before surgery"]
 
+# Bare category questions: the clinician asks for a *list*, not about one
+# substance. Restricted to ALLERGY and MEDICATION, the two lists a pre-op
+# assessment turns on. CONDITION is deliberately excluded -- "problem list"
+# would have to score against every CONDITION fact, and this corpus files
+# social findings ("Full-time employment") in that category, so the gold
+# would encode a judgement about what belongs on a problem list that nobody
+# has actually made.
+CATEGORY_QUESTIONS = [
+    ("does {sub} have any allergies", "ALLERGY"),
+    ("any allergies", "ALLERGY"),
+    ("allergy list", "ALLERGY"),
+    ("known allergies", "ALLERGY"),
+    ("what is {sub} allergic to", "ALLERGY"),
+    ("what medications is {sub} on", "MEDICATION"),
+    ("medication list", "MEDICATION"),
+    ("current medications", "MEDICATION"),
+]
+
 # Queries with no coded answer anywhere in this corpus. Gold is empty on
 # purpose: the thing being measured is that the pipeline returns nothing
 # rather than reaching for a plausible-looking wrong code.
@@ -333,7 +351,7 @@ def build_allergies(b: "Builder", patients: dict) -> None:
 
     # -- asked-about substance absent, but other allergies on file --------
     used = set()
-    for name, (code, phrasings) in list(ALLERGENS.items())[:6]:
+    for name, (code, phrasings) in list(ALLERGENS.items())[:4]:
         for pid in b.pick(
             lambda v, c=code: v["cats"].get("ALLERGY", 0) > 1 and c not in v["codes"], used
         ):
@@ -585,9 +603,34 @@ def build_language(b: "Builder", concepts: dict, patients: dict) -> None:
                 tags=["negation", "parser"],
             )
 
+    # -- bare category questions -------------------------------------------
+    # The safety case. A patient with nine allergy facts including penicillin
+    # must not answer "any allergies" with the single generic disposition
+    # marker -- get_patient_facts() refuses to apply `limit` to ALLERGY
+    # retrieval for exactly this reason, and that guarantee is worth nothing
+    # if the code filter has already discarded eight of the nine facts.
+    used = set()
+    for phrasing, category in CATEGORY_QUESTIONS:
+        for pid in b.pick(
+            lambda v, c=category: v["cats"].get(c, 0) >= (4 if c == "ALLERGY" else 6)
+            and v["cats"].get(c, 0) <= 60,
+            used,
+        ):
+            b.add(
+                archetype="category_question",
+                query=phrasing.format(sub=pronoun(patients[pid])[0]),
+                patient_id=pid,
+                rationale=(
+                    f"asks for the whole {category} list, not about one substance; "
+                    f"the correct answer is every {category} fact on file"
+                ),
+                required=[{"categories": [category]}],
+                tags=["category", "safety"],
+            )
+
     # -- nothing coded to find -------------------------------------------------
     used = set()
-    for phrasing in UNRESOLVABLE:
+    for phrasing in UNRESOLVABLE[:5]:  # 5 is plenty for one behaviour; see the 80-100 ceiling
         for pid in b.pick(lambda v: v["cats"].get("REPORT", 0) > 5, used):
             b.add(
                 archetype="unresolvable",

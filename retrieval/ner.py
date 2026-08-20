@@ -74,6 +74,17 @@ class QueryNER:
         self.self_negating = tuple(negation.get("self_negating", ()))
         self._dates = self.cues.get("dates", {})
 
+        # Surface form -> category, for phrases that name a whole category
+        # instead of a substance. Terminology stays in the data file; this is
+        # only the index over it.
+        self.category_cues: dict[str, str] = {
+            form: category
+            for category, forms in self.cues.get("category_cues", {}).items()
+            if not category.startswith("_")
+            for form in (normalize_query_text(f) for f in forms)
+            if form
+        }
+
         # Fuzzy candidates: single-token forms only. Matching "amoxicilin"
         # against a 40-token questionnaire title helps nobody.
         self._fuzzy_candidates = [f for f in self.lexicon.forms if " " not in f and len(f) >= 4]
@@ -108,6 +119,7 @@ class QueryNER:
                 index += 1
 
         entities.extend(self._leftovers(tokens, consumed, query))
+        entities = self._drop_redundant_category_cues(entities)
         entities.sort(key=lambda e: (e.start, e.end))
         parsed.entities = entities
         return parsed
@@ -130,11 +142,72 @@ class QueryNER:
             if any(i in consumed for i in span_indices):
                 continue
             key = " ".join(tokens[i].norm for i in span_indices)
+
+            # Category cues are checked before the lexicon at each width, so
+            # "any allergies" resolves to the ALLERGY *category* rather than
+            # to synonyms.csv's marker code for "Allergic disposition
+            # (finding)". Nothing is lost by winning here: the category
+            # retrieval returns that disposition fact too, along with the
+            # eight others the code filter used to discard.
+            category = self.category_cues.get(key)
+            if category:
+                out.append(self._category_entity(tokens, index, index + width, category, raw))
+                return width
+
             hits = self.lexicon.lookup(key)
             if hits:
                 out.extend(self._entities(tokens, index, index + width, hits, raw))
                 return width
         return 0
+
+    def _category_entity(
+        self, tokens: list[Token], start_token: int, end_token: int, category: str, raw: str
+    ) -> ResolvedEntity:
+        """An entity naming a category, carrying no codes.
+
+        The empty ``codes`` list is the whole point, not an omission:
+        ``retrieve()`` turns it into ``codes=None``, which asks the data layer
+        for every fact in the category.
+        """
+        start = tokens[start_token].start
+        end = tokens[end_token - 1].end
+        span_text = " ".join(t.norm for t in tokens[start_token:end_token])
+        return ResolvedEntity(
+            span=raw[start:end],
+            start=start,
+            end=end,
+            category=category,
+            code_system=None,
+            codes=[],
+            display=f"all {category.lower()} on file",
+            quality=MatchQuality.EXACT,
+            negated=span_text in self.self_negating or self._is_negated(tokens, start_token),
+        )
+
+    @staticmethod
+    def _is_category_entity(entity: ResolvedEntity) -> bool:
+        """Category cues are the only entities that resolve with a category
+        but no codes -- a lexicon hit always carries at least one."""
+        return entity.category is not None and not entity.codes
+
+    def _drop_redundant_category_cues(
+        self, entities: list[ResolvedEntity]
+    ) -> list[ResolvedEntity]:
+        """Drop a category cue when the query also named something specific in
+        that category.
+
+        "Any frusemide in the medication list" is a question about frusemide;
+        returning every medication on file would bury the answer. This reads
+        only what already resolved -- it does not inspect the query to guess
+        intent, so it stays a deterministic disambiguation rule rather than
+        the intent classifier the spec rules out.
+        """
+        coded = {e.category for e in entities if e.codes and e.category}
+        if not coded:
+            return entities
+        return [
+            e for e in entities if not (self._is_category_entity(e) and e.category in coded)
+        ]
 
     def _entities(
         self,

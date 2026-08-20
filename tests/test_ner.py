@@ -134,10 +134,18 @@ def test_blocker_resets_the_window(ner: QueryNER) -> None:
 
 
 def test_self_negating_form(ner: QueryNER) -> None:
-    """NKDA carries its negation inside the span, not before it."""
+    """NKDA carries its negation inside the span, not before it.
+
+    It resolves to the ALLERGY *category* now rather than to the single
+    marker code 609328004. That is the point: a chart saying "NKDA" while
+    nine allergy facts sit on file is precisely the contradiction a clinician
+    has to see before operating, so the whole list is retrieved and flagged
+    negated rather than reduced to one generic line.
+    """
     entity = find(ner, "NKDA?", "NKDA")
     assert entity.negated
-    assert entity.codes == ["609328004"]
+    assert entity.category == "ALLERGY"
+    assert entity.codes == []
 
 
 def test_negated_and_positive_allergy_do_not_resolve_identically(ner: QueryNER) -> None:
@@ -301,3 +309,76 @@ def test_allergen_plurals_resolve(ner: QueryNER) -> None:
         ("any bee sting allergy documented", "288328004"),
     ):
         assert code in _codes(ner, query), query
+
+
+# --------------------------------------------------------------------------
+# category cues: a question about a list, not about a substance
+# --------------------------------------------------------------------------
+
+
+def _category_entity(ner: QueryNER, query: str, category: str):
+    for e in entities(ner, query):
+        if e.category == category and not e.codes:
+            return e
+    return None
+
+
+def test_bare_allergy_question_resolves_to_the_whole_category(ner: QueryNER) -> None:
+    """The safety case. Every one of these used to resolve to the single
+    SNOMED marker for "Allergic disposition (finding)", so a patient with
+    nine allergy facts including penicillin answered "any allergies" with one
+    generic line that rendered as a complete, low-criticality section."""
+    for query in (
+        "does she have any allergies",
+        "any allergies",
+        "allergy list",
+        "known allergies",
+        "what is she allergic to",
+    ):
+        entity = _category_entity(ner, query, "ALLERGY")
+        assert entity is not None, query
+        assert entity.codes == [], query
+
+
+def test_category_entity_carries_no_codes_so_retrieval_drops_the_code_filter(
+    ner: QueryNER,
+) -> None:
+    """The empty list is load-bearing, not an omission: retrieve() turns it
+    into codes=None, which is what asks for the entire category -- and what
+    finally engages get_patient_facts()'s never-top-k rule for ALLERGY."""
+    entity = _category_entity(ner, "any allergies", "ALLERGY")
+    assert entity.codes == []
+    assert entity.quality is MatchQuality.EXACT
+
+
+def test_bare_medication_question_resolves_to_the_whole_category(ner: QueryNER) -> None:
+    """These resolved to nothing at all before -- not even a marker."""
+    for query in ("what medications is she on", "medication list", "current medications"):
+        assert _category_entity(ner, query, "MEDICATION") is not None, query
+
+
+def test_named_substance_suppresses_the_category_cue(ner: QueryNER) -> None:
+    """"Any frusemide in the medication list" is a question about frusemide.
+    Returning every medication on file would bury the answer."""
+    query = "any frusemide in the medication list"
+    assert _category_entity(ner, query, "MEDICATION") is None
+    assert any(e.codes and e.category == "MEDICATION" for e in entities(ner, query))
+
+
+def test_named_allergen_suppresses_the_category_cue(ner: QueryNER) -> None:
+    assert _category_entity(ner, "is she allergic to penicillin", "ALLERGY") is None
+
+
+def test_suppression_is_per_category_not_global(ner: QueryNER) -> None:
+    """A named drug must not suppress an unrelated category's cue."""
+    query = "is she on metformin, and what are her allergies"
+    assert _category_entity(ner, query, "ALLERGY") is not None
+    assert _category_entity(ner, query, "MEDICATION") is None
+
+
+def test_nkda_retrieves_the_allergy_list_and_flags_it_negated(ner: QueryNER) -> None:
+    """A chart saying NKDA while allergy facts sit on file is the
+    contradiction that most needs surfacing, not suppressing."""
+    entity = _category_entity(ner, "no known drug allergies", "ALLERGY")
+    assert entity is not None
+    assert entity.negated

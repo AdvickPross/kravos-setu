@@ -7,7 +7,7 @@ python scripts/build_eval_set.py
 python scripts/run_eval.py
 ```
 
-`data/eval_set.jsonl` — 97 queries, reference date 2026-08-21.
+`data/eval_set.jsonl` — 100 queries, reference date 2026-08-21.
 
 Gold `fact_id` lists are resolved from hand-specified clinical clauses and never from `parse_query()` or `retrieve()`, so these numbers measure the pipeline rather than reflecting it back. This is the artifact `tests/queries.md` explicitly is not: figures below are quotable, the probe file's are not.
 
@@ -17,18 +17,21 @@ Gold `fact_id` lists are resolved from hand-specified clinical clauses and never
 
 | metric | value |
 | --- | --- |
-| queries | 97 |
-| scored (non-empty gold) | 66 |
-| abstention cases (empty gold) | 31 |
+| queries | 100 |
+| scored (non-empty gold) | 74 |
+| abstention cases (empty gold) | 26 |
 | **precision** (micro) | **1.000** |
-| **recall** (micro) | **0.998** |
-| **F1** (micro) | **0.999** |
-| true positives | 411 |
+| **recall** (micro) | **1.000** |
+| **F1** (micro) | **1.000** |
+| true positives | 506 |
 | false positives | 0 |
-| false negatives | 1 |
-| exact queries (no FP, no FN) | 65/66 |
-| queries retrieving nothing correct | 0/66 |
-| clean abstentions | 31/31 |
+| false negatives | 0 |
+| exact queries (no FP, no FN) | 74/74 |
+| queries retrieving nothing correct | 0/74 |
+| clean abstentions | 26/26 |
+
+> **This set is saturated and has stopped discriminating.**
+> Every scored query is exact and every abstention is clean, which means the next regression will show up as a drop from 1.000 but the next *improvement* cannot show up at all. A perfect score is a signal to add harder queries, not a result to quote. Archetypes worth adding: queries mixing several categories at once, misspelled drug names, questions whose answer is a trend rather than a list, and the narrative REPORT path that no archetype touches yet.
 
 ### Reading these numbers
 
@@ -39,9 +42,10 @@ Gold `fact_id` lists are resolved from hand-specified clinical clauses and never
 | archetype | n | precision | recall | F1 | notes |
 | --- | --- | --- | --- | --- | --- |
 | abbreviation | 8 | 1.000 | 1.000 | 1.000 |  |
-| allergy_negative_other_on_file | 6 | — | — | — | abstention: 6/6 clean |
+| allergy_negative_other_on_file | 4 | — | — | — | abstention: 4/4 clean |
 | allergy_none_on_file | 6 | — | — | — | abstention: 6/6 clean |
 | allergy_positive | 12 | 1.000 | 1.000 | 1.000 |  |
+| category_question | 8 | 1.000 | 1.000 | 1.000 |  |
 | class_rollup | 4 | — | — | — | abstention: 4/4 clean |
 | condition_absent | 4 | — | — | — | abstention: 4/4 clean |
 | condition_present | 10 | 1.000 | 1.000 | 1.000 |  |
@@ -50,15 +54,13 @@ Gold `fact_id` lists are resolved from hand-specified clinical clauses and never
 | lab_single_code | 6 | 1.000 | 1.000 | 1.000 |  |
 | medication_absent | 3 | — | — | — | abstention: 3/3 clean |
 | medication_present | 8 | 1.000 | 1.000 | 1.000 |  |
-| negation | 5 | 1.000 | 0.950 | 0.974 |  |
-| unresolvable | 8 | — | — | — | abstention: 8/8 clean |
+| negation | 5 | 1.000 | 1.000 | 1.000 |  |
+| unresolvable | 5 | — | — | — | abstention: 5/5 clean |
 | vital | 5 | 1.000 | 1.000 | 1.000 |  |
 
 ## Queries that missed
 
-| query | archetype | gold | got | FN | FP | unresolved |
-| --- | --- | --- | --- | --- | --- | --- |
-| `no known drug allergies` | negation | 2 | 1 | 1 | 0 | — |
+- none
 
 ## Abstention cases that returned something
 
@@ -68,4 +70,4 @@ Gold `fact_id` lists are resolved from hand-specified clinical clauses and never
 
 Parse plus retrieve, warm cache. Excludes brief rendering.
 
-- median 1.0 ms · p95 16.5 ms · max 79.3 ms
+- median 0.8 ms · p95 16.6 ms · max 67.0 ms

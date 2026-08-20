@@ -812,3 +812,77 @@ added unilaterally.
 The eval set does not currently cover bare category questions — its allergy
 archetypes all name a substance. Adding that archetype is what would put a
 number on this.
+
+## 2026-08-21 — Category cues: bare list questions retrieve the list
+
+Measured the open finding first, then fixed it, so the safety bug has a
+number rather than an anecdote. Adding the `category_question` archetype
+(8 queries) put overall recall at **0.822**, with that archetype scoring
+**0.053** — 8 of 8 failing. The allergy phrasings each returned exactly one
+fact (the generic disposition marker); the medication phrasings returned
+**zero**, since `medications`/`medication list` resolved to nothing at all.
+
+Set trimmed back to exactly **100** queries — `UNRESOLVABLE` 8 → 5 and
+`allergy_negative_other_on_file` 6 → 4, both of which tested one behaviour
+several times over. The spec's ceiling is 100 and the full phrasing lists
+stay in the source as a record of what was considered.
+
+**The fix.** A new `category_cues` block in `data/query_cues.json` maps ~50
+phrases to categories, keeping terminology in a data file as the constraints
+require. A cue produces a `ResolvedEntity` carrying a category and an **empty
+`codes` list** — load-bearing, not an omission, since `retrieve()` turns it
+into `codes=None`, which asks the data layer for the whole category. That is
+also the first time `get_patient_facts()`'s never-top-k rule for ALLERGY has
+ever been reachable: the guarantee existed, but the code filter had already
+discarded the other facts before it was consulted.
+
+Cues are checked before the lexicon at each span width, so `any allergies`
+resolves to the ALLERGY category rather than to the marker code. Nothing is
+lost by winning there — the category retrieval returns the disposition fact
+too, alongside the eight the filter used to drop.
+
+**Precedence rule:** a cue is dropped when the same query also resolved a
+specific entity in that category, so `any frusemide in the medication list`
+stays a question about frusemide. This reads only what already resolved and
+never inspects the query to guess intent, which keeps it a deterministic
+disambiguation rule rather than the intent classifier the spec rules out.
+Suppression is per category — a named drug does not suppress an unrelated
+category's cue.
+
+`synonyms.csv` was left alone. The `allergic disposition` row is still a
+correct statement about 609328004; it simply no longer monopolises the list
+phrasings.
+
+**One existing test changed meaning.** `test_self_negating_form` asserted
+NKDA resolves to `["609328004"]`. It now resolves to the ALLERGY category
+with no codes, which is the better contract: a chart saying NKDA while nine
+allergy facts sit on file is exactly the contradiction that has to be seen
+before operating, so the whole list is retrieved and flagged negated rather
+than reduced to one generic line. The test's stated intent — negation lives
+inside the span — is unchanged and still asserted.
+
+### Results
+
+| | before | after |
+|---|---|---|
+| recall | 0.822 | **1.000** |
+| precision | 1.000 | 1.000 |
+| exact queries | 65/74 | **74/74** |
+| `category_question` recall | 0.053 | **1.000** |
+
+Suite 211 → 218.
+
+The concrete case: the patient with nine allergy facts now answers "does she
+have any allergies" with all nine, **Penicillin V and Aspirin included**,
+instead of one generic line reading as a complete low-criticality section.
+
+### The set is now saturated — this is a limitation, not a win
+
+Every scored query is exact and every abstention clean. A regression would
+show as a drop, but no *improvement* can show at all, so 1.000 is a signal to
+add harder queries rather than a number to quote. `run_eval.py` now prints
+this warning into `eval/report.md` itself whenever F1 hits 1.0, so the next
+person reads the caveat before the figure. Archetypes worth adding: queries
+mixing several categories at once, misspelled drug names, questions whose
+answer is a trend rather than a list, and the narrative REPORT path, which no
+archetype touches yet.
