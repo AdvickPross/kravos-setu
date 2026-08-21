@@ -13,9 +13,13 @@ surgery.
 
 The full pipeline works end to end and has been verified in a real browser,
 not just by its test suite: `parse_query()` → `retrieve()` → `build_brief()`
-→ FastAPI → Next.js UI. **180 tests passing.** An optional LLM prose-polish
+→ FastAPI → Next.js UI. **218 tests passing.** An optional LLM prose-polish
 pass and Pinecone vector search over free-text notes are built and wired in
 behind feature flags, both off by default.
+
+A **gold evaluation set** now exists (`data/eval_set.jsonl`, 100 queries
+with gold `fact_id` answers), so precision and recall are quotable for the
+first time — see [**Evaluation**](#evaluation) below.
 
 Full build history and every design decision behind it:
 [`kravos_hackathon_progress.md`](kravos_hackathon_progress.md). Path B
@@ -25,13 +29,14 @@ paused, not abandoned — see [`PATH_B_STATUS.md`](PATH_B_STATUS.md).
 ## Repo layout
 
 ```
-retrieval/    Query-side NER: parse_query() -> ParsedQuery. Done, tested, don't modify.
+retrieval/    Query-side NER: parse_query() -> ParsedQuery. Change only with an eval run to back it.
 backend/      FastAPI app: data layer, retrieval, missingness, brief templating, LLM polish, vector search
 frontend/     Next.js 16 UI
 scripts/      One-off/regenerable data pipeline scripts (see below)
-data/         Lexicon synonyms, intent cues, the pre-op missingness checklist
+data/         Lexicon synonyms, query/category cues, the pre-op missingness checklist, the gold eval set
 tests/        pytest suite for retrieval/ and backend/
 demo/         Curated demo patients and rehearsed queries
+eval/         Generated evaluation report (scripts/run_eval.py)
 ```
 
 ## Prerequisites
@@ -99,6 +104,36 @@ python -m pytest tests/ -q
 Frontend: `cd frontend; npm run build` (also runs the TypeScript check)
 and `npm run lint`.
 
+## Evaluation
+
+```pwsh
+python scripts/build_eval_set.py   # regenerate data/eval_set.jsonl from the corpus
+python scripts/run_eval.py         # score the pipeline -> eval/report.md
+```
+
+`data/eval_set.jsonl` is 100 queries across 16 archetypes, each carrying the
+`fact_id`s a correct answer must contain. **Gold is derived on a path that
+never touches `parse_query()` or `retrieve()`** — clinical intent is
+hand-specified as `(categories, codes, window)` clauses and resolved against
+the corpus, because scoring gold produced by the code under test would return
+1.0 by construction and measure nothing. A test enforces this structurally by
+walking the builder's AST for banned imports and calls.
+
+Two-tier relevance: `required` drives recall, `allowed` is neither rewarded
+nor penalised (asking "is he allergic to penicillin" legitimately surfaces
+"prescribed penicillin V in 2017"; scoring that as a false positive would
+score a judgement call as a bug).
+
+**Read recall, not precision.** Retrieval is a strict `category` + `code IN
+(...)` filter, so it can only return facts whose codes the parser already
+produced — a false positive needs the parser to resolve a span to a
+confidently *wrong* code set, which is far rarer than resolving it to nothing.
+
+The set currently scores 1.000/1.000, which means **it is saturated and has
+stopped discriminating** — a regression would show as a drop, but no
+improvement can show at all. That is a signal to add harder queries, not a
+number to quote, and `run_eval.py` prints the warning into the report itself.
+
 ## Optional features (both off by default, both degrade safely)
 
 | Feature | Env var | What it needs |
@@ -116,15 +151,26 @@ querying the corpus, documented in [`demo/queries.md`](demo/queries.md):
 
 - No fact anywhere in the corpus has `status: "stopped"` or
   `"discontinued"` — only `final`, `active`, `resolved`, `completed`.
-- The NER doesn't resolve the bare word "hypertension" (`UNRESOLVED`); "high
-  blood pressure" resolves correctly to the same code. A `data/synonyms.csv`
-  gap, not fixed in this pass since `retrieval/` is out of scope for it.
+- Every allergy in the corpus has `criticality: low` (880/880). The UI renders
+  `high` in danger tone regardless, so real data cannot hide one.
+- ~98 surface forms reach more than one code. Most are intended
+  (`acetaminophen` → 10 RxNorm products is the ingredient rollup working), but
+  a few are cross-specimen: `glucose`, `hemoglobin` and `leukocytes` each
+  reach a blood analyte *and* a urine dipstick, because `normalize_loinc()`
+  strips the specimen phrase from both displays. The curated
+  `data/synonyms.csv` concepts (`blood glucose`, `hemoglobin`) resolve to the
+  blood-only code sets; the bare analyte deliberately still spans all of them.
+- ~~The NER doesn't resolve the bare word "hypertension"~~ — **fixed.** The
+  root cause was that a concept's own name was never indexed as a surface
+  form, which silently broke six concepts. Found by the gold eval set.
 
 ## What's deliberately not built yet
 
-- **A gold evaluation set.** `tests/queries.md` is a debugging instrument,
-  not an accuracy benchmark — no precision/recall/accuracy number is
-  claimable until an 80–100-query gold set with `fact_id` answers exists.
+- **Harder eval archetypes.** The gold set exists now but is saturated (see
+  **Evaluation**). Worth adding: queries mixing several categories, misspelled
+  drug names, trend-shaped answers, and the narrative REPORT path, which no
+  archetype touches yet. `tests/queries.md` remains a debugging instrument and
+  still claims no accuracy number.
 - **Drug-class rollups** ("is he on antiplatelets?"). `beta blockers`,
   `ACE inhibitors`, etc. resolve `UNRESOLVED` on purpose — an honest miss
   beats a class list that's silently out of date.
