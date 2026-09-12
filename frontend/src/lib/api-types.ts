@@ -4,6 +4,309 @@
  */
 
 export interface paths {
+    "/api/abha/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Abha Status
+         * @description Whether ABHA flows are available, without attempting a call.
+         *
+         *     Deliberately does not touch ABDM: the frontend asks this on load to
+         *     decide whether to render the identity flow at all, and that decision
+         *     should not depend on the sandbox being up.
+         */
+        get: operations["abha_status_api_abha_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/abha/enrol/aadhaar/otp": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Api Enrol Aadhaar Otp */
+        post: operations["api_enrol_aadhaar_otp_api_abha_enrol_aadhaar_otp_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/abha/enrol/aadhaar/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Api Enrol Aadhaar Verify */
+        post: operations["api_enrol_aadhaar_verify_api_abha_enrol_aadhaar_verify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/abha/enrol/mobile/otp": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Api Enrol Mobile Otp */
+        post: operations["api_enrol_mobile_otp_api_abha_enrol_mobile_otp_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/abha/enrol/mobile/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Api Enrol Mobile Verify */
+        post: operations["api_enrol_mobile_verify_api_abha_enrol_mobile_verify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/abha/enrol/address/suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Api Address Suggestions */
+        get: operations["api_address_suggestions_api_abha_enrol_address_suggestions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/abha/enrol/address": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Api Set Address */
+        post: operations["api_set_address_api_abha_enrol_address_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/abha/face/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Api Face Start */
+        post: operations["api_face_start_api_abha_face_start_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/abha/face/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Api Face Status
+         * @description One poll, not a blocking wait.
+         *
+         *     `faceauth.await_capture` blocks until the patient acts, which is right
+         *     for a script and wrong for an HTTP handler -- it would hold a worker for
+         *     up to ten minutes per patient. The browser polls this instead.
+         */
+        get: operations["api_face_status_api_abha_face_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/abha/face/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Api Face Complete */
+        post: operations["api_face_complete_api_abha_face_complete_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/abha/login/otp": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Api Login Otp */
+        post: operations["api_login_otp_api_abha_login_otp_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/abha/login/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Api Login Verify */
+        post: operations["api_login_verify_api_abha_login_verify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/abha/login/select": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Api Login Select */
+        post: operations["api_login_select_api_abha_login_select_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/abha/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Api Search */
+        get: operations["api_search_api_abha_search_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/abha/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Api Profile */
+        get: operations["api_profile_api_abha_profile_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/abha/qr": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Api Qr */
+        get: operations["api_qr_api_abha_qr_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/abha/card": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Api Card */
+        get: operations["api_card_api_abha_card_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/patients": {
         parameters: {
             query?: never;
@@ -62,6 +365,94 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AadhaarEnrolRequest */
+        AadhaarEnrolRequest: {
+            /** Txnid */
+            txnId: string;
+            /** Otp */
+            otp: string;
+            /** Mobile */
+            mobile?: string | null;
+        };
+        /** AadhaarOtpRequest */
+        AadhaarOtpRequest: {
+            /** Aadhaar */
+            aadhaar: string;
+        };
+        /**
+         * AbhaAccount
+         * @description One ABHA identity, as returned by search, login and enrolment.
+         *
+         *     `mobile` being `None` is meaningful, not missing data -- see
+         *     `EnrolmentResult.mobile_is_linked`.
+         */
+        AbhaAccount: {
+            /** Abha Number */
+            abha_number?: string | null;
+            /** Abha Address */
+            abha_address?: string | null;
+            /** Name */
+            name?: string | null;
+            /** Gender */
+            gender?: string | null;
+            /** Date Of Birth */
+            date_of_birth?: string | null;
+            /** Mobile */
+            mobile?: string | null;
+            /** Email */
+            email?: string | null;
+            /** State */
+            state?: string | null;
+            /** District */
+            district?: string | null;
+            /** Kyc Verified */
+            kyc_verified?: boolean | null;
+            /** Status */
+            status?: string | null;
+            /** Auth Methods */
+            auth_methods?: string[];
+            /** Index */
+            index?: string | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** AbhaAddressRequest */
+        AbhaAddressRequest: {
+            /** Txnid */
+            txnId: string;
+            /** Abhaaddress */
+            abhaAddress: string;
+            /**
+             * Preferred
+             * @default true
+             */
+            preferred: boolean;
+        };
+        /**
+         * AbhaProfile
+         * @description The full profile from `GET /v3/profile/account`, which is richer than
+         *     the account stub returned by search.
+         */
+        AbhaProfile: {
+            account?: components["schemas"]["AbhaAccount"];
+            /** Address Line */
+            address_line?: string | null;
+            /** Pin Code */
+            pin_code?: string | null;
+            /** Profile Photo */
+            profile_photo?: string | null;
+            /** Abha Addresses */
+            abha_addresses?: string[];
+        } & {
+            [key: string]: unknown;
+        };
+        /** AccountSelectRequest */
+        AccountSelectRequest: {
+            /** Txnid */
+            txnId: string;
+            /** Index */
+            index: string;
+        };
         /**
          * Brief
          * @description The rendered answer.
@@ -132,6 +523,30 @@ export interface components {
          */
         BriefSource: "template" | "llm_polished";
         /**
+         * EnrolmentResult
+         * @description The outcome of `enrol/byAadhaar`.
+         *
+         *     `is_new` distinguishes a created ABHA from one that already existed --
+         *     ABDM answers both with 200 and the same body shape, differing only in
+         *     `new`/`isNew`. A caller that cannot tell them apart will report a
+         *     duplicate as a fresh enrolment.
+         */
+        EnrolmentResult: {
+            /** Txn Id */
+            txn_id?: string | null;
+            account?: components["schemas"]["AbhaAccount"];
+            /** Token */
+            token?: string | null;
+            /** Refresh Token */
+            refresh_token?: string | null;
+            /** Is New */
+            is_new?: boolean | null;
+            /** Message */
+            message?: string | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
          * EntityFacts
          * @description Facts retrieved for one resolved entity.
          *
@@ -159,6 +574,23 @@ export interface components {
             limit_applied?: number | null;
             /** Coverage Note */
             coverage_note?: string | null;
+        };
+        /** FaceCompleteRequest */
+        FaceCompleteRequest: {
+            /** Txnid */
+            txnId: string;
+            /** Mobile */
+            mobile?: string | null;
+        };
+        /** FaceStartRequest */
+        FaceStartRequest: {
+            /** Aadhaar */
+            aadhaar: string;
+            /**
+             * Forlogin
+             * @default false
+             */
+            forLogin: boolean;
         };
         /**
          * Fact
@@ -208,6 +640,54 @@ export interface components {
             detail?: components["schemas"]["ValidationError"][];
         };
         /**
+         * LoginMethod
+         * @enum {string}
+         */
+        LoginMethod: "aadhaar" | "mobile" | "abha-number" | "abha-address";
+        /** LoginOtpRequest */
+        LoginOtpRequest: {
+            /** Identifier */
+            identifier: string;
+            /** @default aadhaar */
+            method: components["schemas"]["LoginMethod"];
+        };
+        /**
+         * LoginResult
+         * @description The outcome of `login/verify`.
+         *
+         *     One credential can map to several ABHA accounts -- ABDM allows six ABHA
+         *     numbers per mobile -- so this carries either a finished session (`token`
+         *     set, one account) or a choice to put to the user (`t_token` set,
+         *     `accounts` populated). `needs_account_selection` is the discriminator;
+         *     branching on `len(accounts)` alone is wrong, because a single-account
+         *     response still lists that account.
+         */
+        LoginResult: {
+            /** Txn Id */
+            txn_id?: string | null;
+            /** Token */
+            token?: string | null;
+            /** Refresh Token */
+            refresh_token?: string | null;
+            /** T Token */
+            t_token?: string | null;
+            /** Accounts */
+            accounts?: components["schemas"]["AbhaAccount"][];
+            /** Message */
+            message?: string | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** LoginVerifyRequest */
+        LoginVerifyRequest: {
+            /** Txnid */
+            txnId: string;
+            /** Otp */
+            otp: string;
+            /** @default aadhaar */
+            method: components["schemas"]["LoginMethod"];
+        };
+        /**
          * MatchQuality
          * @description How an entity span was resolved to codes.
          *
@@ -247,6 +727,20 @@ export interface components {
          * @enum {string}
          */
         MissingReason: "absent" | "stale";
+        /** MobileOtpRequest */
+        MobileOtpRequest: {
+            /** Txnid */
+            txnId: string;
+            /** Mobile */
+            mobile: string;
+        };
+        /** MobileVerifyRequest */
+        MobileVerifyRequest: {
+            /** Txnid */
+            txnId: string;
+            /** Otp */
+            otp: string;
+        };
         /**
          * NarrativeMatch
          * @description One hit from the REPORT-note vector-search fallback.
@@ -269,6 +763,24 @@ export interface components {
             text: string;
             /** Score */
             score: number;
+        };
+        /**
+         * OtpChallenge
+         * @description The txnId returned by any `request/otp` call, plus what to show a user.
+         *
+         *     `masked_identifier` is ABDM's own masking of the destination
+         *     (`XXXXXXX769`). It exists so a UI can say *where* the OTP went without
+         *     this service ever holding the full number.
+         */
+        OtpChallenge: {
+            /** Txn Id */
+            txn_id: string;
+            /** Message */
+            message?: string | null;
+            /** Masked Identifier */
+            masked_identifier?: string | null;
+        } & {
+            [key: string]: unknown;
         };
         /**
          * ParsedQuery
@@ -421,10 +933,6 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
-            /** Input */
-            input?: unknown;
-            /** Context */
-            ctx?: Record<string, never>;
         };
     };
     responses: never;
@@ -435,6 +943,562 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    abha_status_api_abha_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    api_enrol_aadhaar_otp_api_abha_enrol_aadhaar_otp_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AadhaarOtpRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OtpChallenge"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    api_enrol_aadhaar_verify_api_abha_enrol_aadhaar_verify_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AadhaarEnrolRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EnrolmentResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    api_enrol_mobile_otp_api_abha_enrol_mobile_otp_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MobileOtpRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OtpChallenge"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    api_enrol_mobile_verify_api_abha_enrol_mobile_verify_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MobileVerifyRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    api_address_suggestions_api_abha_enrol_address_suggestions_get: {
+        parameters: {
+            query: {
+                txnId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string[];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    api_set_address_api_abha_enrol_address_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AbhaAddressRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    api_face_start_api_abha_face_start_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FaceStartRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    api_face_status_api_abha_face_status_get: {
+        parameters: {
+            query: {
+                txnId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    api_face_complete_api_abha_face_complete_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FaceCompleteRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EnrolmentResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    api_login_otp_api_abha_login_otp_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginOtpRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OtpChallenge"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    api_login_verify_api_abha_login_verify_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginVerifyRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoginResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    api_login_select_api_abha_login_select_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "T-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccountSelectRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoginResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    api_search_api_abha_search_get: {
+        parameters: {
+            query: {
+                abhaAddress: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AbhaAccount"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    api_profile_api_abha_profile_get: {
+        parameters: {
+            query?: {
+                viaAbhaAddress?: boolean;
+            };
+            header?: {
+                "X-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AbhaProfile"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    api_qr_api_abha_qr_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    api_card_api_abha_card_get: {
+        parameters: {
+            query?: {
+                viaAbhaAddress?: boolean;
+            };
+            header?: {
+                "X-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     api_list_patients_api_patients_get: {
         parameters: {
             query?: {
