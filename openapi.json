@@ -5,6 +5,806 @@
     "version": "0.1.0"
   },
   "paths": {
+    "/api/abha/status": {
+      "get": {
+        "tags": [
+          "abha"
+        ],
+        "summary": "Abha Status",
+        "description": "Whether ABHA flows are available, without attempting a call.\n\nDeliberately does not touch ABDM: the frontend asks this on load to\ndecide whether to render the identity flow at all, and that decision\nshould not depend on the sandbox being up.",
+        "operationId": "abha_status_api_abha_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Abha Status Api Abha Status Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/abha/enrol/aadhaar/otp": {
+      "post": {
+        "tags": [
+          "abha"
+        ],
+        "summary": "Api Enrol Aadhaar Otp",
+        "operationId": "api_enrol_aadhaar_otp_api_abha_enrol_aadhaar_otp_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AadhaarOtpRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OtpChallenge"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/abha/enrol/aadhaar/verify": {
+      "post": {
+        "tags": [
+          "abha"
+        ],
+        "summary": "Api Enrol Aadhaar Verify",
+        "operationId": "api_enrol_aadhaar_verify_api_abha_enrol_aadhaar_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AadhaarEnrolRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnrolmentResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/abha/enrol/mobile/otp": {
+      "post": {
+        "tags": [
+          "abha"
+        ],
+        "summary": "Api Enrol Mobile Otp",
+        "operationId": "api_enrol_mobile_otp_api_abha_enrol_mobile_otp_post",
+        "parameters": [
+          {
+            "name": "X-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MobileOtpRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OtpChallenge"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/abha/enrol/mobile/verify": {
+      "post": {
+        "tags": [
+          "abha"
+        ],
+        "summary": "Api Enrol Mobile Verify",
+        "operationId": "api_enrol_mobile_verify_api_abha_enrol_mobile_verify_post",
+        "parameters": [
+          {
+            "name": "X-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MobileVerifyRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Api Enrol Mobile Verify Api Abha Enrol Mobile Verify Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/abha/enrol/address/suggestions": {
+      "get": {
+        "tags": [
+          "abha"
+        ],
+        "summary": "Api Address Suggestions",
+        "operationId": "api_address_suggestions_api_abha_enrol_address_suggestions_get",
+        "parameters": [
+          {
+            "name": "txnId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Txnid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "Response Api Address Suggestions Api Abha Enrol Address Suggestions Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/abha/enrol/address": {
+      "post": {
+        "tags": [
+          "abha"
+        ],
+        "summary": "Api Set Address",
+        "operationId": "api_set_address_api_abha_enrol_address_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AbhaAddressRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Api Set Address Api Abha Enrol Address Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/abha/face/start": {
+      "post": {
+        "tags": [
+          "abha"
+        ],
+        "summary": "Api Face Start",
+        "operationId": "api_face_start_api_abha_face_start_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FaceStartRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Face Start Api Abha Face Start Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/abha/face/status": {
+      "get": {
+        "tags": [
+          "abha"
+        ],
+        "summary": "Api Face Status",
+        "description": "One poll, not a blocking wait.\n\n`faceauth.await_capture` blocks until the patient acts, which is right\nfor a script and wrong for an HTTP handler -- it would hold a worker for\nup to ten minutes per patient. The browser polls this instead.",
+        "operationId": "api_face_status_api_abha_face_status_get",
+        "parameters": [
+          {
+            "name": "txnId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Txnid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Api Face Status Api Abha Face Status Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/abha/face/complete": {
+      "post": {
+        "tags": [
+          "abha"
+        ],
+        "summary": "Api Face Complete",
+        "operationId": "api_face_complete_api_abha_face_complete_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FaceCompleteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnrolmentResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/abha/login/otp": {
+      "post": {
+        "tags": [
+          "abha"
+        ],
+        "summary": "Api Login Otp",
+        "operationId": "api_login_otp_api_abha_login_otp_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginOtpRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OtpChallenge"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/abha/login/verify": {
+      "post": {
+        "tags": [
+          "abha"
+        ],
+        "summary": "Api Login Verify",
+        "operationId": "api_login_verify_api_abha_login_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginVerifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/abha/login/select": {
+      "post": {
+        "tags": [
+          "abha"
+        ],
+        "summary": "Api Login Select",
+        "operationId": "api_login_select_api_abha_login_select_post",
+        "parameters": [
+          {
+            "name": "T-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "T-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountSelectRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/abha/search": {
+      "get": {
+        "tags": [
+          "abha"
+        ],
+        "summary": "Api Search",
+        "operationId": "api_search_api_abha_search_get",
+        "parameters": [
+          {
+            "name": "abhaAddress",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Abhaaddress"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AbhaAccount"
+                  },
+                  "title": "Response Api Search Api Abha Search Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/abha/profile": {
+      "get": {
+        "tags": [
+          "abha"
+        ],
+        "summary": "Api Profile",
+        "operationId": "api_profile_api_abha_profile_get",
+        "parameters": [
+          {
+            "name": "viaAbhaAddress",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Viaabhaaddress"
+            }
+          },
+          {
+            "name": "X-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AbhaProfile"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/abha/qr": {
+      "get": {
+        "tags": [
+          "abha"
+        ],
+        "summary": "Api Qr",
+        "operationId": "api_qr_api_abha_qr_get",
+        "parameters": [
+          {
+            "name": "X-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Api Qr Api Abha Qr Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/abha/card": {
+      "get": {
+        "tags": [
+          "abha"
+        ],
+        "summary": "Api Card",
+        "operationId": "api_card_api_abha_card_get",
+        "parameters": [
+          {
+            "name": "viaAbhaAddress",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Viaabhaaddress"
+            }
+          },
+          {
+            "name": "X-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Card Api Abha Card Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/patients": {
       "get": {
         "summary": "Api List Patients",
@@ -136,6 +936,289 @@
   },
   "components": {
     "schemas": {
+      "AadhaarEnrolRequest": {
+        "properties": {
+          "txnId": {
+            "type": "string",
+            "title": "Txnid"
+          },
+          "otp": {
+            "type": "string",
+            "title": "Otp"
+          },
+          "mobile": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mobile"
+          }
+        },
+        "type": "object",
+        "required": [
+          "txnId",
+          "otp"
+        ],
+        "title": "AadhaarEnrolRequest"
+      },
+      "AadhaarOtpRequest": {
+        "properties": {
+          "aadhaar": {
+            "type": "string",
+            "maxLength": 14,
+            "minLength": 12,
+            "title": "Aadhaar"
+          }
+        },
+        "type": "object",
+        "required": [
+          "aadhaar"
+        ],
+        "title": "AadhaarOtpRequest"
+      },
+      "AbhaAccount": {
+        "properties": {
+          "abha_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Abha Number"
+          },
+          "abha_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Abha Address"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "gender": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gender"
+          },
+          "date_of_birth": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Of Birth"
+          },
+          "mobile": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mobile"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State"
+          },
+          "district": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "District"
+          },
+          "kyc_verified": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kyc Verified"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "auth_methods": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Auth Methods"
+          },
+          "index": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Index"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "AbhaAccount",
+        "description": "One ABHA identity, as returned by search, login and enrolment.\n\n`mobile` being `None` is meaningful, not missing data -- see\n`EnrolmentResult.mobile_is_linked`."
+      },
+      "AbhaAddressRequest": {
+        "properties": {
+          "txnId": {
+            "type": "string",
+            "title": "Txnid"
+          },
+          "abhaAddress": {
+            "type": "string",
+            "title": "Abhaaddress"
+          },
+          "preferred": {
+            "type": "boolean",
+            "title": "Preferred",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "txnId",
+          "abhaAddress"
+        ],
+        "title": "AbhaAddressRequest"
+      },
+      "AbhaProfile": {
+        "properties": {
+          "account": {
+            "$ref": "#/components/schemas/AbhaAccount"
+          },
+          "address_line": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address Line"
+          },
+          "pin_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pin Code"
+          },
+          "profile_photo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profile Photo"
+          },
+          "abha_addresses": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Abha Addresses"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "AbhaProfile",
+        "description": "The full profile from `GET /v3/profile/account`, which is richer than\nthe account stub returned by search."
+      },
+      "AccountSelectRequest": {
+        "properties": {
+          "txnId": {
+            "type": "string",
+            "title": "Txnid"
+          },
+          "index": {
+            "type": "string",
+            "title": "Index"
+          }
+        },
+        "type": "object",
+        "required": [
+          "txnId",
+          "index"
+        ],
+        "title": "AccountSelectRequest"
+      },
       "Brief": {
         "properties": {
           "patient_id": {
@@ -295,6 +1378,72 @@
         ],
         "title": "BriefSource"
       },
+      "EnrolmentResult": {
+        "properties": {
+          "txn_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Txn Id"
+          },
+          "account": {
+            "$ref": "#/components/schemas/AbhaAccount"
+          },
+          "token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Token"
+          },
+          "refresh_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refresh Token"
+          },
+          "is_new": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is New"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "EnrolmentResult",
+        "description": "The outcome of `enrol/byAadhaar`.\n\n`is_new` distinguishes a created ABHA from one that already existed --\nABDM answers both with 200 and the same body shape, differing only in\n`new`/`isNew`. A caller that cannot tell them apart will report a\nduplicate as a fresh enrolment."
+      },
       "EntityFacts": {
         "properties": {
           "entity": {
@@ -350,6 +1499,50 @@
         ],
         "title": "EntityFacts",
         "description": "Facts retrieved for one resolved entity.\n\nKept per-entity rather than merged into one pile because entities can\nshare a span: `aspirin` resolves to both an ALLERGY substance and four\nMEDICATION products, and those are two different clinical answers."
+      },
+      "FaceCompleteRequest": {
+        "properties": {
+          "txnId": {
+            "type": "string",
+            "title": "Txnid"
+          },
+          "mobile": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mobile"
+          }
+        },
+        "type": "object",
+        "required": [
+          "txnId"
+        ],
+        "title": "FaceCompleteRequest"
+      },
+      "FaceStartRequest": {
+        "properties": {
+          "aadhaar": {
+            "type": "string",
+            "maxLength": 14,
+            "minLength": 12,
+            "title": "Aadhaar"
+          },
+          "forLogin": {
+            "type": "boolean",
+            "title": "Forlogin",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "aadhaar"
+        ],
+        "title": "FaceStartRequest"
       },
       "Fact": {
         "properties": {
@@ -534,6 +1727,125 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "LoginMethod": {
+        "type": "string",
+        "enum": [
+          "aadhaar",
+          "mobile",
+          "abha-number",
+          "abha-address"
+        ],
+        "title": "LoginMethod"
+      },
+      "LoginOtpRequest": {
+        "properties": {
+          "identifier": {
+            "type": "string",
+            "title": "Identifier"
+          },
+          "method": {
+            "$ref": "#/components/schemas/LoginMethod",
+            "default": "aadhaar"
+          }
+        },
+        "type": "object",
+        "required": [
+          "identifier"
+        ],
+        "title": "LoginOtpRequest"
+      },
+      "LoginResult": {
+        "properties": {
+          "txn_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Txn Id"
+          },
+          "token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Token"
+          },
+          "refresh_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refresh Token"
+          },
+          "t_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "T Token"
+          },
+          "accounts": {
+            "items": {
+              "$ref": "#/components/schemas/AbhaAccount"
+            },
+            "type": "array",
+            "title": "Accounts"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "LoginResult",
+        "description": "The outcome of `login/verify`.\n\nOne credential can map to several ABHA accounts -- ABDM allows six ABHA\nnumbers per mobile -- so this carries either a finished session (`token`\nset, one account) or a choice to put to the user (`t_token` set,\n`accounts` populated). `needs_account_selection` is the discriminator;\nbranching on `len(accounts)` alone is wrong, because a single-account\nresponse still lists that account."
+      },
+      "LoginVerifyRequest": {
+        "properties": {
+          "txnId": {
+            "type": "string",
+            "title": "Txnid"
+          },
+          "otp": {
+            "type": "string",
+            "title": "Otp"
+          },
+          "method": {
+            "$ref": "#/components/schemas/LoginMethod",
+            "default": "aadhaar"
+          }
+        },
+        "type": "object",
+        "required": [
+          "txnId",
+          "otp"
+        ],
+        "title": "LoginVerifyRequest"
+      },
       "MatchQuality": {
         "type": "string",
         "enum": [
@@ -624,6 +1936,42 @@
         ],
         "title": "MissingReason"
       },
+      "MobileOtpRequest": {
+        "properties": {
+          "txnId": {
+            "type": "string",
+            "title": "Txnid"
+          },
+          "mobile": {
+            "type": "string",
+            "title": "Mobile"
+          }
+        },
+        "type": "object",
+        "required": [
+          "txnId",
+          "mobile"
+        ],
+        "title": "MobileOtpRequest"
+      },
+      "MobileVerifyRequest": {
+        "properties": {
+          "txnId": {
+            "type": "string",
+            "title": "Txnid"
+          },
+          "otp": {
+            "type": "string",
+            "title": "Otp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "txnId",
+          "otp"
+        ],
+        "title": "MobileVerifyRequest"
+      },
       "NarrativeMatch": {
         "properties": {
           "fact_id": {
@@ -675,6 +2023,43 @@
         ],
         "title": "NarrativeMatch",
         "description": "One hit from the REPORT-note vector-search fallback.\n\nStage 2 only, and a fallback only: ``retrieve()`` attempts this path\nsolely when nothing in the query resolved to a code at all. Never a\nreplacement for coded retrieval -- REPORT is the ~5% of the corpus with\nno code to filter on, everything else stays on the structured path."
+      },
+      "OtpChallenge": {
+        "properties": {
+          "txn_id": {
+            "type": "string",
+            "title": "Txn Id"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "masked_identifier": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Masked Identifier"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "txn_id"
+        ],
+        "title": "OtpChallenge",
+        "description": "The txnId returned by any `request/otp` call, plus what to show a user.\n\n`masked_identifier` is ABDM's own masking of the destination\n(`XXXXXXX769`). It exists so a UI can say *where* the OTP went without\nthis service ever holding the full number."
       },
       "ParsedQuery": {
         "properties": {
@@ -1101,13 +2486,6 @@
           "type": {
             "type": "string",
             "title": "Error Type"
-          },
-          "input": {
-            "title": "Input"
-          },
-          "ctx": {
-            "type": "object",
-            "title": "Context"
           }
         },
         "type": "object",

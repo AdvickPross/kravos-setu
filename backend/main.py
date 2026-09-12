@@ -14,6 +14,7 @@ import time
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
+from backend.abha_routes import router as abha_router
 from backend.brief import build_brief
 from backend.data_layer import get_patient, list_patients
 from backend.llm_polish import polish_brief
@@ -31,6 +32,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ABHA identity (M1). Mounted unconditionally: the routes answer 503 with
+# a fixable message when ABDM credentials are absent, which is more useful to
+# the frontend than a 404 that reads as "this feature does not exist".
+app.include_router(abha_router)
 
 
 @app.get("/api/patients")

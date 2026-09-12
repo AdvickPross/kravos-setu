@@ -13,9 +13,14 @@ surgery.
 
 The full pipeline works end to end and has been verified in a real browser,
 not just by its test suite: `parse_query()` → `retrieve()` → `build_brief()`
-→ FastAPI → Next.js UI. **218 tests passing.** An optional LLM prose-polish
+→ FastAPI → Next.js UI. **339 tests passing.** An optional LLM prose-polish
 pass and Pinecone vector search over free-text notes are built and wired in
 behind feature flags, both off by default.
+
+**Milestone 1 (ABDM identity) is built.** ABHA creation and verification
+against the ABHA V3 APIs — enrolment by Aadhaar OTP and by face auth, login
+across four credentials, Find ABHA, profile, QR and card — live in `abha/`
+and are exposed at `/api/abha/*`. See [**ABHA / ABDM (M1)**](#abha--abdm-m1).
 
 A **gold evaluation set** now exists (`data/eval_set.jsonl`, 100 queries
 with gold `fact_id` answers), so precision and recall are quotable for the
@@ -29,12 +34,13 @@ paused, not abandoned — see [`PATH_B_STATUS.md`](PATH_B_STATUS.md).
 ## Repo layout
 
 ```
+abha/         ABDM ABHA V3 identity integration (M1): session, crypto, enrolment, login, profile
 retrieval/    Query-side NER: parse_query() -> ParsedQuery. Change only with an eval run to back it.
 backend/      FastAPI app: data layer, retrieval, missingness, brief templating, LLM polish, vector search
 frontend/     Next.js 16 UI
 scripts/      One-off/regenerable data pipeline scripts (see below)
 data/         Lexicon synonyms, query/category cues, the pre-op missingness checklist, the gold eval set
-tests/        pytest suite for retrieval/ and backend/
+tests/        pytest suite for retrieval/, backend/ and abha/
 demo/         Curated demo patients and rehearsed queries
 eval/         Generated evaluation report (scripts/run_eval.py)
 ```
@@ -134,6 +140,88 @@ stopped discriminating** — a regression would show as a drop, but no
 improvement can show at all. That is a signal to add harder queries, not a
 number to quote, and `run_eval.py` prints the warning into the report itself.
 
+## ABHA / ABDM (M1)
+
+Milestone 1 of the ABDM integration is **Identities**: creating an ABHA and
+verifying one. (M2 is facility-to-facility record flow, M3 is consent; both
+sit on top of this and are not built.) Implemented from the *ABHA V3 APIs
+Integrator Guide v1.4* against the sandbox.
+
+```
+abha/config.py      three hosts per environment, credentials from env
+abha/errors.py      typed failures; annotates K-547 with its real cause
+abha/transport.py   REQUEST-ID / TIMESTAMP, retry policy, PII redaction
+abha/crypto.py      RSA-OAEP-SHA1 + the cached public certificate
+abha/session.py     client_credentials token, cached and refreshed
+abha/client.py      composes the above; the object every flow takes
+abha/endpoints.py   every ABDM path M1 touches, in one table
+abha/enrollment.py  Aadhaar OTP enrolment, mobile attach, ABHA address
+abha/login.py       four login credentials, multi-account selection, Find ABHA
+abha/faceauth.py    QR + capturePID polling
+abha/biometrics.py  the wadh digest
+backend/abha_routes.py   17 routes under /api/abha
+```
+
+### Running it
+
+Put sandbox credentials in `.env` (see `.env.example`; they are never
+committed), then:
+
+```pwsh
+python scripts/abha_smoke.py                 # session + certificate + encrypt
+python scripts/abha_smoke.py --find me@sbx   # Find ABHA
+python scripts/abha_smoke.py --enrol 999999999999 --mobile 9999999999
+```
+
+The no-argument run consumes no quota. The sandbox allows **100 ABHA
+creations per client id**, deleted one at a time through a web portal, so
+`--enrol` is opt-in and interactive — ABDM sends a real OTP to a real phone.
+
+With no credentials set, `/api/abha/*` answers **503 with a message naming
+`.env`**, and the rest of the API is unaffected. `GET /api/abha/status` says
+whether the flows are available without calling ABDM at all, so the frontend
+can ask before offering them.
+
+### What the tests do and don't prove
+
+There is no ABDM sandbox in CI and there will not be one: credentials are
+per-integrator, creations are rate-limited, and the OTPs go to a real phone.
+So **the 121 ABHA tests do not prove ABDM accepts these calls.** They prove
+the half that is ours — every assertion is made against the bytes that would
+have gone out, with the real client, transport, session and crypto running
+and only the socket replaced (`tests/abha_support.py`). The fake holds the
+RSA private key, so "was this field encrypted, and with what" is checked by
+decrypting it rather than assumed.
+
+`scripts/abha_smoke.py` is the other half. Run it before claiming M1 works.
+
+### Traps this implementation handles
+
+Each of these is a documented ABDM behaviour that fails silently or reports
+the wrong cause, and each has a test pinning it:
+
+- **A successful enrolment can save `mobile` as null.** If the supplied
+  number is not the Aadhaar-linked one, ABDM returns HTTP 200 with a
+  complete-looking profile and no mobile. The ABHA is real but has no contact
+  route, so every later OTP login on it fails with a message about the
+  account. `EnrolmentResult.mobile_is_linked` makes it checkable and the flow
+  logs a warning.
+- **`K-547` means the biometric `lr` flag was not `'Y'`** — nothing in ABDM's
+  message says so. `abha/errors.py` appends the explanation.
+- **The padding is OAEP with SHA-1, not SHA-256.** SHA-256 produces
+  ciphertext of identical length that ABDM cannot decrypt, with no local
+  symptom.
+- **Three hosts, not one.** Gateway, ABHA and PHR differ by environment *and*
+  from each other; production swaps the ABHA path segments rather than
+  changing a prefix.
+- **Login is not always one step.** Six ABHA numbers per mobile are allowed,
+  so `login/verify` can return a choice instead of a session. Branching on
+  `len(accounts)` is wrong — a single-account response still lists one.
+- **`otpSystem` flips between `aadhaar` and `abdm`** in a way that does not
+  follow from the credential. ABHA-number login uses the UIDAI OTP system.
+- **Two time formats in one request**: ISO-8601 with `Z` in the header,
+  `YYYY-MM-DD HH:MM:SS` inside the OTP auth block.
+
 ## Optional features (both off by default, both degrade safely)
 
 | Feature | Env var | What it needs |
@@ -166,6 +254,14 @@ querying the corpus, documented in [`demo/queries.md`](demo/queries.md):
 
 ## What's deliberately not built yet
 
+- **M2 and M3** (facility-to-facility record flow, and the consent layer
+  on top of it). Both route through the same Gateway pattern and will
+  reuse the bottom half of `abha/` — config, session, transport, crypto —
+  which is why those are separated from the flow modules.
+- **The remaining ABHA V3 sections.** M1 covers enrolment, login, profile,
+  QR and card. Driving-licence and demographic enrolment, fingerprint/iris
+  capture, re-KYC, delete/deactivate/reactivate, Forgot ABHA and the
+  Benefit/Child APIs are not built; `abha/endpoints.py` lists the paths.
 - **Harder eval archetypes.** The gold set exists now but is saturated (see
   **Evaluation**). Worth adding: queries mixing several categories, misspelled
   drug names, trend-shaped answers, and the narrative REPORT path, which no
