@@ -43,7 +43,7 @@ Verification levels, which are not the same thing as status:
 | Test case | Requirement | Status | Notes |
 |---|---|---|---|
 | CRT_ABHA_101 | Create-ABHA option; 8 APIs | done | all 8 exist and accept our auth (**live**) |
-| CRT_ABHA_102 | Consent collection | **partial** | the `{code, version}` artefact is sent on every enrolment. The **consent language must be displayed to the patient**, and this repo does not ship NHA's approved text — see *Outstanding* below |
+| CRT_ABHA_102 | Consent collection | **partial** | artefact sent; consent is its own step *before* Aadhaar, as the row requires. The **wording** is a labelled placeholder — NHA's approved text is not in this repo. See *Outstanding* |
 | CRT_ABHA_103 | Multilingual consent | not built | Optional |
 | CRT_ABHA_104 | Aadhaar entry + error message | done | 12-digit check before any call; 422 with a message |
 | CRT_ABHA_105 | Aadhaar OTP entry | done | `masked_identifier` surfaced so the UI can say where it went |
@@ -52,8 +52,8 @@ Verification levels, which are not the same thing as status:
 | CRT_ABHA_108 | Skip OTP when comms mobile == Aadhaar mobile | not built | Optional; `checkAndGenerateMobileOTP` not implemented |
 | CRT_ABHA_109 | Verify a different communication mobile | done | `request_mobile_otp` / `verify_mobile_otp`, **plus** detection of the null-mobile trap |
 | CRT_ABHA_112 | ≥3 address suggestions + 5 validation rules | done | `suggest_abha_addresses`; the rules are enforced in `validate_abha_address`, which the checklist requires "at the API level" |
-| CRT_ABHA_113 | Display ABHA number | **partial** | returned by the API; no UI screen renders it yet |
-| CRT_ABHA_114 | View / download ABHA card | done | `GET /api/abha/card` returns PNG bytes |
+| CRT_ABHA_113 | Display ABHA number | done | shown on the sign-up completion screen and the profile screen; **verified live** with 91-7366-1108-3337 |
+| CRT_ABHA_114 | View / download ABHA card | **blocked upstream** | `GET /api/abha/card` is built and returns PNG bytes, but the sandbox answers ABDM's card endpoint with **501**. Re-test on production |
 | CRT_ABHA_115 | Alternative to a card | n/a | CRT_ABHA_114 is implemented instead |
 
 ## 2 · ABHA creation via Aadhaar biometric — *Optional*
@@ -62,7 +62,7 @@ Verification levels, which are not the same thing as status:
 |---|---|---|---|
 | CRT_ABHA_201–208 | Fingerprint enrolment | **partial** | the `wadh` digest and PID options are built and tested (`abha/biometrics.py`) — the part that is reliably wrong elsewhere — but no fingerprint enrolment call is wired |
 | — | Face auth | done | `abha/faceauth.py`: init → QR → `capturePID` poll → enrol |
-| CRT_ABHA_209 | Card (Mandatory for private) | done | same endpoint as CRT_ABHA_114 |
+| CRT_ABHA_209 | Card (Mandatory for private) | **blocked upstream** | same endpoint as CRT_ABHA_114; sandbox 501 |
 
 ## 3 · Demo auth / offline — *Government only*
 
