@@ -108,7 +108,7 @@ export function ProfileGate({
         <button
           type="button"
           onClick={onSignOut}
-          className="rounded border border-border-strong bg-surface px-3 py-1.5 text-sm font-medium text-ink hover:bg-surface-2"
+          className="rounded border border-line-strong bg-surface px-3 py-1.5 text-sm font-medium text-ink hover:bg-surface-2"
         >
           Sign out
         </button>
@@ -184,7 +184,7 @@ export function ProfileGate({
             <button
               type="button"
               onClick={() => onContinue(linkedPatient)}
-              className="mt-3 w-full rounded-lg bg-accent px-3 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 sm:w-auto sm:px-6"
+              className="mt-3 w-full rounded-lg bg-accent px-3 py-2.5 text-sm font-semibold text-[#0b0d11] transition hover:brightness-110 sm:w-auto sm:px-6"
             >
               Open clinical view →
             </button>
@@ -237,10 +237,10 @@ export function ProfileGate({
               type="button"
               onClick={linkAndContinue}
               disabled={!selected || busy}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-3 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:px-6"
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-3 py-2.5 text-sm font-semibold text-[#0b0d11] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:px-6"
             >
               {busy && (
-                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
               )}
               Tag and open clinical view →
             </button>

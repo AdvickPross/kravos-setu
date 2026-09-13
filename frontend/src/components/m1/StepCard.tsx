@@ -52,7 +52,7 @@ export function StepCard({
           className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${
             done
               ? "bg-active text-white"
-              : "border border-border-strong text-ink-muted"
+              : "border border-line-strong text-ink-muted"
           }`}
         >
           {done ? "✓" : n}

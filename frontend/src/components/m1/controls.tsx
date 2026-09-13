@@ -84,7 +84,7 @@ export function Button({
 }) {
   const styles = {
     primary: "bg-accent text-white border-accent hover:opacity-90",
-    secondary: "bg-surface text-ink border-border-strong hover:bg-surface-2",
+    secondary: "bg-surface text-ink border-line-strong hover:bg-surface-2",
     danger: "bg-danger-bg text-danger border-danger-line hover:opacity-90",
   } as const;
   return (

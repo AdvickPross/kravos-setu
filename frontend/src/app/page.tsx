@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-import { LoginScreen } from "@/components/auth/LoginScreen";
+import { AuthScreen } from "@/components/auth/AuthScreen";
 import { ProfileGate } from "@/components/auth/ProfileGate";
 import { Workspace } from "@/components/Workspace";
 import { getPatient, type PatientSummary } from "@/lib/api";
@@ -47,8 +47,8 @@ export default function Home() {
 
   if (!session) {
     return (
-      <LoginScreen
-        onSignedIn={(next, token) => {
+      <AuthScreen
+        onAuthenticated={(next, token) => {
           setLiveToken(token);
           signIn(next);
         }}
@@ -140,7 +140,7 @@ function SessionBar({
 function Splash() {
   return (
     <div className="flex min-h-dvh items-center justify-center">
-      <span className="h-5 w-5 animate-spin rounded-full border-2 border-border-strong border-t-transparent" />
+      <span className="h-5 w-5 animate-spin rounded-full border-2 border-line-strong border-t-transparent" />
     </div>
   );
 }

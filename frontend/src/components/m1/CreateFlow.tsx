@@ -302,7 +302,7 @@ export function CreateFlow() {
                 <a
                   href={cardUrl}
                   download="abha-card.png"
-                  className="rounded border border-border-strong bg-surface px-3 py-1.5 text-sm font-medium text-ink hover:bg-surface-2"
+                  className="rounded border border-line-strong bg-surface px-3 py-1.5 text-sm font-medium text-ink hover:bg-surface-2"
                 >
                   Download
                 </a>

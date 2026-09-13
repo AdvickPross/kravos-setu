@@ -153,7 +153,7 @@ function EmptyState({ picker }: { picker?: React.ReactNode }) {
       {picker}
       <Link
         href="/m1"
-        className="mt-4 rounded border border-border-strong bg-surface px-3 py-1.5 text-xs font-medium text-ink hover:bg-surface-2"
+        className="mt-4 rounded border border-line-strong bg-surface px-3 py-1.5 text-xs font-medium text-ink hover:bg-surface-2"
       >
         ABDM M1 test console →
       </Link>
