@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 import { BriefView } from "@/components/BriefView";
@@ -46,6 +47,9 @@ export default function Home() {
 
   return (
     <div className="mx-auto flex h-dvh w-full max-w-[88rem] gap-5 p-4 sm:p-5">
+      {/* Below md the sidebar collapses; without the drawer below it, a
+          narrow window showed "Select a patient to begin." and offered no way
+          to select one -- the page read as broken rather than as empty. */}
       <aside className="hidden w-64 shrink-0 md:block">
         <PatientPicker
           selectedId={patient?.patient_id ?? null}
@@ -59,7 +63,20 @@ export default function Home() {
 
       <main className="flex min-w-0 flex-1 flex-col gap-4 overflow-y-auto">
         {!patient ? (
-          <EmptyState />
+          <EmptyState
+            picker={
+              <div className="w-full max-w-sm md:hidden">
+                <PatientPicker
+                  selectedId={null}
+                  onSelect={(selected) => {
+                    setPatient(selected);
+                    setResponse(null);
+                    setError(null);
+                  }}
+                />
+              </div>
+            }
+          />
         ) : (
           <>
             <PatientHeader patient={patient} />
@@ -96,7 +113,7 @@ export default function Home() {
   );
 }
 
-function EmptyState() {
+function EmptyState({ picker }: { picker?: React.ReactNode }) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
       <h2 className="text-lg font-semibold tracking-tight text-ink">
@@ -107,7 +124,17 @@ function EmptyState() {
         that patient&apos;s records and cites the FHIR resource it came from — and the
         brief names what a pre-op assessment expects to see but cannot find.
       </p>
-      <p className="mt-1 text-xs text-ink-faint">Select a patient to begin.</p>
+      <p className="mt-1 text-xs text-ink-faint">
+        <span className="hidden md:inline">Select a patient from the list on the left.</span>
+        <span className="md:hidden">Select a patient below.</span>
+      </p>
+      {picker}
+      <Link
+        href="/m1"
+        className="mt-4 rounded border border-border-strong bg-surface px-3 py-1.5 text-xs font-medium text-ink hover:bg-surface-2"
+      >
+        ABDM M1 test console →
+      </Link>
     </div>
   );
 }

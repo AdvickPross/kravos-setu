@@ -93,6 +93,11 @@ python -m uvicorn backend.main:app --port 8000
 ```
 
 ```pwsh
+# If the UI loads but no patients appear, the browser is resolving
+# "localhost" to IPv6 ::1 while uvicorn listens on IPv4 only. Pin it:
+#   frontend/.env.local  ->  NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
+# (.env.local is gitignored, so each machine sets its own.)
+
 # Terminal 2 -- frontend, port 3000
 cd frontend
 npm run dev
@@ -167,6 +172,16 @@ abha/biometrics.py  the wadh digest
 backend/abha_link.py     one ABHA <-> one patient ID (the mandatory non-API item)
 backend/abha_routes.py   25 routes under /api/abha
 ```
+
+### The M1 test console
+
+`http://localhost:3000/m1` walks NHA's checklist by hand. Each step names the
+test-case IDs it is evidence for, shows the request and response that produced
+it, and records a pass/fail next to the row — which is what functional testing
+against the sheet actually is. Aadhaar numbers and OTPs are masked in the
+evidence panel so a screenshot is safe to put in a certification pack.
+
+The tagging section works with no ABDM credentials at all; the rest needs them.
 
 ### Running it
 
