@@ -191,9 +191,17 @@ def _handle(call: "Any") -> Any:
         # 4xx is passed through; 5xx from ABDM becomes 502, because it is not
         # this service that failed.
         status = exc.status_code if 400 <= exc.status_code < 500 else 502
+        # `fields` carries ABDM's per-field complaints through to the caller.
+        # Dropping them -- which this did -- leaves a UI showing "ABDM returned
+        # HTTP 400" with no way to learn that it was the txnId that expired.
         raise HTTPException(
             status_code=status,
-            detail={"code": exc.code, "message": exc.message, "source": "abdm"},
+            detail={
+                "code": exc.code,
+                "message": exc.message,
+                "source": "abdm",
+                "fields": exc.details or None,
+            },
         ) from exc
     except AbhaTransportError as exc:
         raise HTTPException(status_code=502, detail=f"ABDM unreachable: {exc}") from exc

@@ -159,3 +159,53 @@ def test_non_json_error_body_keeps_the_raw_text():
     error = AbhaApiError.from_response(httpx.Response(502, text="<html>gateway</html>"))
     assert error.raw and "gateway" in error.raw
     assert error.is_retryable
+
+
+def test_flat_field_error_map_is_the_fourth_shape():
+    """ABDM's request-validation layer emits a flat field -> message map with
+    no code, message or details key anywhere in it.
+
+    It is the most common error body on the whole v3 surface, and a parser
+    that knows only the three enveloped shapes falls back to "ABDM returned
+    HTTP 400" -- discarding the one thing the caller needed, which is *which
+    field* was wrong. Reached in practice, from the UI, on a real enrolment.
+    """
+    error = AbhaApiError.from_response(
+        httpx.Response(
+            400,
+            json={
+                "txnId": "Invalid Transaction Id",
+                "mobile": "Invalid Mobile Number",
+                "timestamp": "2026-09-13 11:09:49",
+            },
+        )
+    )
+    assert "txnId: Invalid Transaction Id" in error.message
+    assert "mobile: Invalid Mobile Number" in error.message
+    assert error.message != "ABDM returned HTTP 400"
+    assert {d["attribute"] for d in error.details} == {"txnId", "mobile"}
+
+
+def test_timestamp_is_not_reported_as_a_field_error():
+    """Every one of these bodies carries it, and it is metadata rather than a
+    complaint. Reporting it would bury the real errors."""
+    error = AbhaApiError.from_response(
+        httpx.Response(400, json={"scope": "Invalid Scope", "timestamp": "2026-09-13"})
+    )
+    assert "timestamp" not in error.message
+    assert error.message == "scope: Invalid Scope"
+
+
+def test_an_enveloped_body_still_wins_over_the_flat_reading():
+    """Shape 4 is recognised by exclusion, so it must not hijack a body that
+    already yielded a proper message."""
+    error = AbhaApiError.from_response(
+        httpx.Response(400, json={"code": "ABDM-1044", "message": "invalid otp"})
+    )
+    assert error.message == "invalid otp"
+    assert error.details == []
+
+
+def test_a_body_with_no_usable_text_still_falls_back():
+    error = AbhaApiError.from_response(httpx.Response(400, json={"timestamp": "x"}))
+    assert error.message == "ABDM returned HTTP 400"

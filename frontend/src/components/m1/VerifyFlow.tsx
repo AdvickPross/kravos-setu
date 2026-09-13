@@ -198,7 +198,7 @@ export function VerifyFlow() {
                       ? "91-1234-5678-9012"
                       : method === "aadhaar"
                         ? "9999 9999 9999"
-                        : "9999999999"
+                        : "9876543210"
                 }
               />
             </Field>

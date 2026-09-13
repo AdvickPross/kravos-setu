@@ -7,14 +7,25 @@ service that only sees "400" cannot tell the user whether to retype the OTP,
 restart the flow, or stop trying -- so the status code alone is not a usable
 signal and the body has to be parsed.
 
-The bodies are not uniform either. Three shapes are in circulation across the
-v3 surface:
+The bodies are not uniform either. **Four** shapes are in circulation across
+the v3 surface:
 
     {"code": "ABDM-1044", "message": "..."}
     {"error": {"code": "...", "message": "...", "details": [...]}}
     {"details": [{"code": "...", "message": "...", "attribute": "..."}]}
+    {"txnId": "Invalid Transaction Id", "mobile": "Invalid Mobile Number",
+     "timestamp": "2026-09-13 11:09:49"}
 
-`AbhaApiError.from_response` flattens all three. When it cannot, it keeps the
+The fourth is the one that bites, and it is the *most common* of the four
+because it is what ABDM's request-validation layer emits -- every malformed
+enrolment, login and profile call comes back this way. It is a flat map of
+field name to message, with no `code`, no `message` and no `details` key
+anywhere in it. A parser that looks only for those three finds nothing and
+falls back to "ABDM returned HTTP 400", which discards the one piece of
+information the caller needed: *which field* was wrong. That fallback was
+reached in practice, from the UI, on a real enrolment.
+
+`AbhaApiError.from_response` flattens all four. When it cannot, it keeps the
 raw body on the exception rather than inventing a message -- a truncated
 unparsed body is more useful in a bug report than a confident wrong summary.
 
@@ -28,6 +39,10 @@ from __future__ import annotations
 from typing import Any
 
 import httpx
+
+
+# Keys that appear in a flat error body without being a field complaint.
+_NOT_A_FIELD_ERROR = {"timestamp", "time", "path", "status", "traceid", "trackingid"}
 
 
 class AbhaError(RuntimeError):
@@ -101,6 +116,22 @@ class AbhaApiError(AbhaError):
                 ) or None
             if not code and details:
                 code = details[0].get("code")
+
+        if not message and isinstance(body, dict):
+            # Shape 4: a flat field -> message map. Recognised by exclusion,
+            # after the three enveloped shapes have failed to yield anything.
+            # `timestamp` is metadata every one of these carries and is not a
+            # field complaint, so reporting it would bury the real errors.
+            fields = {
+                key: value
+                for key, value in body.items()
+                if isinstance(value, str) and key.lower() not in _NOT_A_FIELD_ERROR
+            }
+            if fields:
+                message = "; ".join(f"{k}: {v}" for k, v in fields.items())
+                details = [
+                    {"attribute": k, "message": v} for k, v in fields.items()
+                ]
 
         if not message:
             message = f"ABDM returned HTTP {response.status_code}"

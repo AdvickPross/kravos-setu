@@ -110,12 +110,28 @@ export function CallEvidence({ call }: { call: AbhaCall }) {
         <span className="shrink-0 text-[10px] text-ink-faint">{open ? "hide" : "show"}</span>
       </button>
 
-      {call.message && !open && (
-        <p
-          className={`px-3 pb-2 text-xs ${call.ok ? "text-ink-muted" : "text-danger"}`}
-        >
-          {call.message}
-        </p>
+      {/* Field errors are shown whether or not the raw panel is expanded.
+          They are the actionable part of an ABDM 400 -- "txnId: Invalid
+          Transaction Id" tells the tester their transaction expired, where
+          the status code alone sends them guessing. */}
+      {call.fields && call.fields.length > 0 ? (
+        <ul className="space-y-0.5 px-3 pb-2">
+          {call.fields.map((field, i) => (
+            <li key={i} className="flex gap-1.5 text-xs">
+              {field.attribute && (
+                <code className="shrink-0 font-mono text-danger/70">{field.attribute}</code>
+              )}
+              <span className="text-danger">{field.message}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        call.message &&
+        !open && (
+          <p className={`px-3 pb-2 text-xs ${call.ok ? "text-ink-muted" : "text-danger"}`}>
+            {call.message}
+          </p>
+        )
       )}
 
       {open && (

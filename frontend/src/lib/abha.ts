@@ -15,6 +15,8 @@
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
 
+export type FieldError = { attribute?: string; message?: string };
+
 /** One request/response pair, kept so the UI can display the evidence. */
 export type AbhaCall<T = unknown> = {
   method: string;
@@ -26,17 +28,28 @@ export type AbhaCall<T = unknown> = {
   /** ABDM's own error code when the failure came from them, not from us. */
   abdmCode?: string;
   message?: string;
+  /** ABDM's per-field complaints, when it sent any. This is usually the only
+   *  actionable part of a 400 -- "txnId: Invalid Transaction Id" rather than
+   *  "ABDM returned HTTP 400". */
+  fields?: FieldError[];
   ms: number;
 };
 
-function describe(status: number, body: unknown): { message?: string; abdmCode?: string } {
+function describe(
+  status: number,
+  body: unknown,
+): { message?: string; abdmCode?: string; fields?: FieldError[] } {
   if (typeof body === "string") return { message: body };
   if (body && typeof body === "object") {
     const detail = (body as { detail?: unknown }).detail;
     if (typeof detail === "string") return { message: detail };
-    if (detail && typeof detail === "object") {
-      const d = detail as { code?: string; message?: string; source?: string };
-      return { message: d.message, abdmCode: d.code };
+    if (detail && typeof detail === "object" && !Array.isArray(detail)) {
+      const d = detail as {
+        code?: string;
+        message?: string;
+        fields?: FieldError[] | null;
+      };
+      return { message: d.message, abdmCode: d.code, fields: d.fields ?? undefined };
     }
     if (Array.isArray(detail)) {
       // FastAPI's validation-error shape.

@@ -190,14 +190,17 @@ export function CreateFlow() {
             </Field>
           </div>
           <div className="w-44">
-            <Field label="Mobile (optional)">
+            <Field
+              label="Mobile (optional)"
+              hint="ABDM rejects repeated-digit numbers like 9999999999 as invalid, so use a real one or leave it blank."
+            >
               <Input
                 value={mobile}
                 onChange={setMobile}
                 disabled={!txnId}
                 maxLength={10}
                 inputMode="numeric"
-                placeholder="9999999999"
+                placeholder="9876543210"
               />
             </Field>
           </div>
