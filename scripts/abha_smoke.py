@@ -23,7 +23,6 @@ is not automatable and should not be faked.
 from __future__ import annotations
 
 import argparse
-import os
 import sys
 from pathlib import Path
 
@@ -31,29 +30,13 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
 from abha import enrollment, login  # noqa: E402
+from backend.env_file import load_dotenv  # noqa: E402
 from abha.client import AbhaClient  # noqa: E402
 from abha.config import AbhaConfig, AbhaConfigError  # noqa: E402
 from abha.errors import AbhaError  # noqa: E402
 
 OK = "  ok  "
 FAIL = " FAIL "
-
-
-def load_dotenv(path: Path = REPO_ROOT / ".env") -> None:
-    """Read `.env` into the environment without adding a dependency.
-
-    Deliberately does not overwrite variables already set: a shell that
-    exported ABDM_ENVIRONMENT=production should win over a stale file, not
-    silently lose to it.
-    """
-    if not path.exists():
-        return
-    for line in path.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, _, value = line.partition("=")
-        os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
 
 
 def check_connectivity(client: AbhaClient) -> None:

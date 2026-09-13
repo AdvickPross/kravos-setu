@@ -48,7 +48,7 @@ from typing import Any
 
 from abha import endpoints
 from abha.client import AbhaClient
-from abha.errors import AbhaFlowError
+from abha.errors import AbhaApiError, AbhaFlowError
 from abha.models import AbhaAccount, LoginResult, OtpChallenge
 
 _HOST = "phr"
@@ -100,15 +100,41 @@ def search_abha_address(client: AbhaClient, *, abha_address: str) -> AbhaAccount
 
     The field is `abhaAddress`. `healthId` -- the v1 spelling, still widely
     copied -- is rejected with "Invalid ABHA Address".
+
+    ABDM reports the absence as an **HTTP 400**, not an empty 200, which is
+    the detail that makes this function more than a passthrough: left alone,
+    the ordinary answer "nobody has that address" arrives as an exception and
+    the route turns it into a client error. The UI then shows a failure where
+    the checklist requires it to offer ABHA creation.
     """
-    payload = client.post(
-        endpoints.PHR_LOGIN_SEARCH,
-        {"abhaAddress": _require((abha_address or "").strip(), "abha_address")},
-        host=_HOST,
-    )
-    if not payload or payload.get("message") == "User not found":
+    try:
+        payload = client.post(
+            endpoints.PHR_LOGIN_SEARCH,
+            {"abhaAddress": _require((abha_address or "").strip(), "abha_address")},
+            host=_HOST,
+        )
+    except AbhaApiError as exc:
+        if _is_not_found(exc):
+            return None
+        raise
+    if not payload or _looks_absent(payload.get("message")):
         return None
     return AbhaAccount.from_payload(payload)
+
+
+def _looks_absent(message: object) -> bool:
+    return isinstance(message, str) and "not found" in message.lower()
+
+
+def _is_not_found(error: AbhaApiError) -> bool:
+    """Distinguish "no such address" from "your request was wrong".
+
+    Both are 400. Matching on the message is unattractive but it is the only
+    signal ABDM gives -- and the alternative, treating every 400 as absence,
+    would swallow a genuinely malformed request and report it to the user as
+    "no such patient".
+    """
+    return error.status_code in (400, 404) and _looks_absent(error.message)
 
 
 def request_address_otp(

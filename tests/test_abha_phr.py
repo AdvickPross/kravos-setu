@@ -171,3 +171,29 @@ def test_empty_address_fails_before_any_call(abdm: FakeAbdm, bad: str):
     with pytest.raises(AbhaFlowError):
         search_abha_address(abdm.client(), abha_address=bad)
     assert not abdm.sent_to(SEARCH)
+
+
+def test_not_found_arrives_as_an_http_400_and_still_returns_none():
+    """ABDM reports absence as a 400, not an empty 200.
+
+    Left alone, the ordinary answer "nobody has that address" arrives as an
+    exception, the route turns it into a client error, and the UI shows a
+    failure where VRFY_ABHA_302 requires it to offer ABHA creation. Caught
+    live against the sandbox, not in review.
+    """
+    from abha_support import error
+
+    abdm = FakeAbdm({SEARCH: error(400, "ABDM-9999", "User not found")})
+    assert search_abha_address(abdm.client(), abha_address="nobody@sbx") is None
+
+
+def test_a_genuinely_bad_request_still_raises():
+    """The mirror risk: treating every 400 as absence would swallow a
+    malformed request and report it to the user as "no such patient"."""
+    from abha_support import error
+
+    from abha.errors import AbhaApiError
+
+    abdm = FakeAbdm({SEARCH: error(400, "ABDM-9999", "Invalid ABHA Address")})
+    with pytest.raises(AbhaApiError):
+        search_abha_address(abdm.client(), abha_address="bogus@@sbx")

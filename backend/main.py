@@ -14,8 +14,17 @@ import time
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.abha_routes import router as abha_router
-from backend.brief import build_brief
+from backend.env_file import load_dotenv
+
+# Before any import below reads os.environ. The feature flags in
+# backend/llm_polish.py and backend/vector_store.py are evaluated at call
+# time, but AbhaConfig.is_configured() and the Pinecone key check are read
+# early enough that ordering matters -- and a reader should not have to work
+# out which.
+load_dotenv()
+
+from backend.abha_routes import router as abha_router  # noqa: E402
+from backend.brief import build_brief  # noqa: E402
 from backend.data_layer import get_patient, list_patients
 from backend.llm_polish import polish_brief
 from backend.models import BriefSource, PatientSummary, QueryRequest, QueryResponse, StageTimings
