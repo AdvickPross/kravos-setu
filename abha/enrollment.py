@@ -30,6 +30,7 @@ attribute, never logged, and never stored.
 from __future__ import annotations
 
 import logging
+import re
 from datetime import datetime
 from typing import Any
 
@@ -57,12 +58,20 @@ def _require(value: str | None, name: str) -> str:
     return value
 
 
-def request_aadhaar_otp(client: AbhaClient, aadhaar: str) -> OtpChallenge:
+def request_aadhaar_otp(
+    client: AbhaClient, aadhaar: str, *, txn_id: str | None = None
+) -> OtpChallenge:
     """Send an OTP to the mobile UIDAI has on file for this Aadhaar.
 
-    `txnId` is empty on this first call -- ABDM mints it. Sending a stale one
-    from a previous flow is rejected, which is why it is hard-coded here
-    rather than being a parameter someone can helpfully thread through.
+    `txn_id` is empty on a first request -- ABDM mints it -- and carries the
+    existing transaction on a **resend**, which is the same endpoint rather
+    than a separate one. Passing a txnId from an unrelated flow is rejected
+    by ABDM, so this is not a field to thread through opportunistically; the
+    only correct value is the one the first request returned.
+
+    The resend *limit* is not enforced here. It is policy, not protocol, and
+    it lives in `abha/otp_policy.py` so that the count is kept in one place
+    rather than once per flow.
     """
     digits = _require(aadhaar, "aadhaar").replace(" ", "").replace("-", "")
     if len(digits) != 12 or not digits.isdigit():
@@ -74,7 +83,7 @@ def request_aadhaar_otp(client: AbhaClient, aadhaar: str) -> OtpChallenge:
     payload = client.post(
         endpoints.ENROL_REQUEST_OTP,
         {
-            "txnId": "",
+            "txnId": txn_id or "",
             "scope": ["abha-enrol"],
             "loginHint": "aadhaar",
             "loginId": client.encrypt(digits),
@@ -179,6 +188,46 @@ def verify_mobile_otp(
     )
 
 
+# NHA M1 CRT_ABHA_112 states these five rules and says explicitly that they
+# are "to be set at the API level" -- not merely hinted next to the input box.
+# They are checked here so a rejection arrives before a round trip, and so the
+# same rule applies to every caller rather than to whichever UI remembered it.
+_ADDRESS_MIN = 8
+_ADDRESS_MAX = 18
+
+
+def validate_abha_address(abha_address: str) -> str:
+    """Apply CRT_ABHA_112's rules, or say precisely which one failed.
+
+    A generic "invalid ABHA address" sends the patient guessing between five
+    different rules, so each raises its own message.
+    """
+    value = (abha_address or "").strip()
+    # ABDM addresses are sometimes typed with the @sbx suffix; the rules apply
+    # to the local part, which is what the API takes.
+    local = value.split("@", 1)[0]
+
+    if not (_ADDRESS_MIN <= len(local) <= _ADDRESS_MAX):
+        raise AbhaFlowError(
+            f"ABHA address must be {_ADDRESS_MIN}-{_ADDRESS_MAX} characters; "
+            f"{local!r} is {len(local)}"
+        )
+    if not re.fullmatch(r"[A-Za-z0-9._]+", local):
+        raise AbhaFlowError(
+            "ABHA address may contain only letters, digits, one dot and one "
+            "underscore"
+        )
+    if local[0] in "._" or local[-1] in "._":
+        raise AbhaFlowError(
+            "a dot or underscore must be between characters, never first or last"
+        )
+    if local.count(".") > 1:
+        raise AbhaFlowError("at most one dot is allowed in an ABHA address")
+    if local.count("_") > 1:
+        raise AbhaFlowError("at most one underscore is allowed in an ABHA address")
+    return value
+
+
 def suggest_abha_addresses(client: AbhaClient, *, txn_id: str) -> list[str]:
     """Candidate ABHA addresses ABDM will accept for this enrolment.
 
@@ -201,12 +250,18 @@ def set_abha_address(
 
     An ABHA number can carry up to six addresses; `preferred` marks which one
     is the primary. ABDM wants `1`/`0` rather than a JSON boolean here.
+
+    The address is validated first (CRT_ABHA_112). ABDM would reject a
+    malformed one too, but with a message that does not say which of the five
+    rules was broken.
     """
     return client.post(
         endpoints.ENROL_SET_ADDRESS,
         {
             "txnId": _require(txn_id, "txn_id"),
-            "abhaAddress": _require(abha_address, "abha_address"),
+            "abhaAddress": validate_abha_address(
+                _require(abha_address, "abha_address")
+            ),
             "preferred": 1 if preferred else 0,
         },
     )

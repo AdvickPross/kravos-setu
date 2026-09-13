@@ -37,7 +37,15 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Api Enrol Aadhaar Otp */
+        /**
+         * Api Enrol Aadhaar Otp
+         * @description First request, or a resend when `txnId` is present.
+         *
+         *     The resend budget is spent *before* the call goes out, not after it
+         *     succeeds: a refusal from ABDM still consumed an OTP send on their side,
+         *     so counting only successes would let a loop of failures sail past the
+         *     limit the checklist requires.
+         */
         post: operations["api_enrol_aadhaar_otp_api_abha_enrol_aadhaar_otp_post"];
         delete?: never;
         options?: never;
@@ -205,6 +213,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/abha/otp/state": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Api Otp State
+         * @description Resend budget and countdown for one transaction.
+         *
+         *     Read-only, so polling it is free. It exists so the UI renders its
+         *     countdown from the authority that enforces the limit rather than keeping
+         *     a second timer that can disagree with the first.
+         */
+        get: operations["api_otp_state_api_abha_otp_state_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/abha/login/verify": {
         parameters: {
             query?: never;
@@ -233,6 +265,67 @@ export interface paths {
         put?: never;
         /** Api Login Select */
         post: operations["api_login_select_api_abha_login_select_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/abha/address/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Api Address Search
+         * @description `null` means no such address -- a branch for the UI, not an error.
+         *
+         *     NHA's checklist requires the "not found" case to offer ABHA creation
+         *     (VRFY_ABHA_302), so it must be distinguishable from a failure.
+         */
+        post: operations["api_address_search_api_abha_address_search_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/abha/address/otp": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Api Address Otp */
+        post: operations["api_address_otp_api_abha_address_otp_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/abha/address/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Api Address Verify
+         * @description The X-token this returns only works against the PHR host -- pass
+         *     `viaAbhaAddress=true` to /profile and /card when using it.
+         */
+        post: operations["api_address_verify_api_abha_address_verify_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -302,6 +395,84 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/abha/link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Api Link
+         * @description Tag one verified ABHA number to one patient.
+         *
+         *     The patient is looked up before the link is written. A tag pointing at a
+         *     patient_id that does not exist is worse than no tag: it reads as a
+         *     verified identity and resolves to nothing.
+         */
+        post: operations["api_link_api_abha_link_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/abha/link/by-abha/{abha_number}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Api Link By Abha
+         * @description Check before creating a patient record -- the checklist's actual ask.
+         */
+        get: operations["api_link_by_abha_api_abha_link_by_abha__abha_number__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/abha/link/by-patient/{patient_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Api Link By Patient */
+        get: operations["api_link_by_patient_api_abha_link_by_patient__patient_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/abha/link/{abha_number}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Api Unlink */
+        delete: operations["api_unlink_api_abha_link__abha_number__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -378,6 +549,8 @@ export interface components {
         AadhaarOtpRequest: {
             /** Aadhaar */
             aadhaar: string;
+            /** Txnid */
+            txnId?: string | null;
         };
         /**
          * AbhaAccount
@@ -428,6 +601,17 @@ export interface components {
              */
             preferred: boolean;
         };
+        /** AbhaLink */
+        AbhaLink: {
+            /** Abha Number */
+            abha_number: string;
+            /** Patient Id */
+            patient_id: string;
+            /** Abha Address */
+            abha_address: string | null;
+            /** Linked At */
+            linked_at: string;
+        };
         /**
          * AbhaProfile
          * @description The full profile from `GET /v3/profile/account`, which is richer than
@@ -452,6 +636,37 @@ export interface components {
             txnId: string;
             /** Index */
             index: string;
+        };
+        /**
+         * AddressOtpChannel
+         * @description Where the OTP for an ABHA-address verification is sent.
+         *
+         *     AADHAAR -- UIDAI sends it to the Aadhaar-linked mobile (VRFY_ABHA_102).
+         *     MOBILE  -- ABDM sends it to the ABHA-linked communication mobile
+         *                (VRFY_ABHA_202).
+         * @enum {string}
+         */
+        AddressOtpChannel: "aadhaar" | "mobile";
+        /** AddressOtpRequest */
+        AddressOtpRequest: {
+            /** Abhaaddress */
+            abhaAddress: string;
+            /** @default aadhaar */
+            channel: components["schemas"]["AddressOtpChannel"];
+        };
+        /** AddressSearchRequest */
+        AddressSearchRequest: {
+            /** Abhaaddress */
+            abhaAddress: string;
+        };
+        /** AddressVerifyRequest */
+        AddressVerifyRequest: {
+            /** Txnid */
+            txnId: string;
+            /** Otp */
+            otp: string;
+            /** @default aadhaar */
+            channel: components["schemas"]["AddressOtpChannel"];
         };
         /**
          * Brief
@@ -639,17 +854,35 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** LinkRequest */
+        LinkRequest: {
+            /** Abhanumber */
+            abhaNumber: string;
+            /** Patientid */
+            patientId: string;
+            /** Abhaaddress */
+            abhaAddress?: string | null;
+        };
         /**
          * LoginMethod
+         * @description The three credentials the ABHA host accepts.
+         *
+         *     ABHA *address* is deliberately absent. It looks like it belongs here and
+         *     it does not: the ABHA host rejects it with "Invalid Scope" and "Invalid
+         *     Login Hint", because address verification is a separate family on the PHR
+         *     host. It lives in `abha/phr.py`. Adding a fourth row here is the mistake
+         *     that module's docstring exists to prevent.
          * @enum {string}
          */
-        LoginMethod: "aadhaar" | "mobile" | "abha-number" | "abha-address";
+        LoginMethod: "aadhaar" | "mobile" | "abha-number";
         /** LoginOtpRequest */
         LoginOtpRequest: {
             /** Identifier */
             identifier: string;
             /** @default aadhaar */
             method: components["schemas"]["LoginMethod"];
+            /** Txnid */
+            txnId?: string | null;
         };
         /**
          * LoginResult
@@ -843,6 +1076,15 @@ export interface components {
             brief: components["schemas"]["Brief"];
             result: components["schemas"]["RetrievalResult"];
             timings?: components["schemas"]["StageTimings"];
+        };
+        /** ResendState */
+        ResendState: {
+            /** Resends Used */
+            resends_used: number;
+            /** Resends Remaining */
+            resends_remaining: number;
+            /** Seconds Until Allowed */
+            seconds_until_allowed: number;
         };
         /**
          * ResolvedEntity
@@ -1301,6 +1543,37 @@ export interface operations {
             };
         };
     };
+    api_otp_state_api_abha_otp_state_get: {
+        parameters: {
+            query: {
+                txnId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResendState"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     api_login_verify_api_abha_login_verify_post: {
         parameters: {
             query?: never;
@@ -1346,6 +1619,105 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["AccountSelectRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoginResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    api_address_search_api_abha_address_search_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddressSearchRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AbhaAccount"] | null;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    api_address_otp_api_abha_address_otp_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddressOtpRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OtpChallenge"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    api_address_verify_api_abha_address_verify_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddressVerifyRequest"];
             };
         };
         responses: {
@@ -1486,6 +1858,136 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    api_link_api_abha_link_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AbhaLink"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    api_link_by_abha_api_abha_link_by_abha__abha_number__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                abha_number: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string | null;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    api_link_by_patient_api_abha_link_by_patient__patient_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patient_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AbhaLink"] | null;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    api_unlink_api_abha_link__abha_number__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                abha_number: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: boolean;
+                    };
                 };
             };
             /** @description Validation Error */

@@ -13,14 +13,17 @@ surgery.
 
 The full pipeline works end to end and has been verified in a real browser,
 not just by its test suite: `parse_query()` → `retrieve()` → `build_brief()`
-→ FastAPI → Next.js UI. **339 tests passing.** An optional LLM prose-polish
+→ FastAPI → Next.js UI. **408 tests passing.** An optional LLM prose-polish
 pass and Pinecone vector search over free-text notes are built and wired in
 behind feature flags, both off by default.
 
-**Milestone 1 (ABDM identity) is built.** ABHA creation and verification
-against the ABHA V3 APIs — enrolment by Aadhaar OTP and by face auth, login
-across four credentials, Find ABHA, profile, QR and card — live in `abha/`
-and are exposed at `/api/abha/*`. See [**ABHA / ABDM (M1)**](#abha--abdm-m1).
+**Milestone 1 (ABDM identity) is built and verified against the live
+sandbox.** Every Mandatory item on NHA's M1 checklist that applies to a
+private integrator is implemented at the API layer; 23/23 endpoints are
+reachable and all five scope tables were confirmed against
+`abhasbx.abdm.gov.in`. Row-by-row status, including what is *not* done, is in
+[`M1_COVERAGE.md`](M1_COVERAGE.md). Code lives in `abha/`, exposed at
+`/api/abha/*` — see [**ABHA / ABDM (M1)**](#abha--abdm-m1).
 
 A **gold evaluation set** now exists (`data/eval_set.jsonl`, 100 queries
 with gold `fact_id` answers), so precision and recall are quotable for the
@@ -156,10 +159,13 @@ abha/session.py     client_credentials token, cached and refreshed
 abha/client.py      composes the above; the object every flow takes
 abha/endpoints.py   every ABDM path M1 touches, in one table
 abha/enrollment.py  Aadhaar OTP enrolment, mobile attach, ABHA address
-abha/login.py       four login credentials, multi-account selection, Find ABHA
+abha/login.py       three login credentials, multi-account selection, Find ABHA
+abha/phr.py         ABHA-*address* verification -- a separate family, separate host
+abha/otp_policy.py  resend limits (max 2, 60s), enforced server-side
 abha/faceauth.py    QR + capturePID polling
 abha/biometrics.py  the wadh digest
-backend/abha_routes.py   17 routes under /api/abha
+backend/abha_link.py     one ABHA <-> one patient ID (the mandatory non-API item)
+backend/abha_routes.py   25 routes under /api/abha
 ```
 
 ### Running it
@@ -169,9 +175,14 @@ committed), then:
 
 ```pwsh
 python scripts/abha_smoke.py                 # session + certificate + encrypt
-python scripts/abha_smoke.py --find me@sbx   # Find ABHA
+python scripts/abha_probe.py                 # every M1 endpoint: exists? auth ok?
+python scripts/abha_probe.py --contract      # scope/otpSystem matrices, live
 python scripts/abha_smoke.py --enrol 999999999999 --mobile 9999999999
 ```
+
+`abha_probe.py` sends only non-existent identifiers, so a well-formed request
+reaches the account lookup and comes back "User not found" — which is the
+*pass* signal. It spends no creation quota and sends no OTP to anyone.
 
 The no-argument run consumes no quota. The sandbox allows **100 ABHA
 creations per client id**, deleted one at a time through a web portal, so
@@ -217,6 +228,15 @@ the wrong cause, and each has a test pinning it:
 - **Login is not always one step.** Six ABHA numbers per mobile are allowed,
   so `login/verify` can return a choice instead of a session. Branching on
   `len(accounts)` is wrong — a single-account response still lists one.
+- **ABHA *address* is not a fourth login credential.** It looks like one and
+  the first implementation here treated it as one; the sandbox answers
+  `{"scope": "Invalid Scope", "loginHint": "Invalid Login Hint"}`. It is a
+  separate family on the PHR host (`abha/phr.py`), and NHA's checklist says
+  so — VRFY_ABHA_102/202 list `/v3/phr/web/login/…` paths where the
+  ABHA-number rows list `/v3/profile/login/…`.
+- **Two patient records against one ABHA splits a history in half.** Nothing
+  in ABDM prevents it; the checklist puts the uniqueness guarantee on the
+  integrator (`backend/abha_link.py`).
 - **`otpSystem` flips between `aadhaar` and `abdm`** in a way that does not
   follow from the credential. ABHA-number login uses the UIDAI OTP system.
 - **Two time formats in one request**: ISO-8601 with `Z` in the header,

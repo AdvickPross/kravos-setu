@@ -55,6 +55,14 @@ PROFILE_QR_CODE = "/v3/profile/account/qrCode"
 PROFILE_ABHA_CARD = "/v3/profile/account/abha-card"
 
 # -- §14 ABHA address flow (PHR host, not the ABHA host) -------------------
+# The whole ABHA-*address* verification family lives here, not just the
+# profile reads. Routing an ABHA address through the ABHA-host login
+# endpoints above is rejected with "Invalid Scope" and "Invalid Login Hint" --
+# verified against the sandbox, not inferred. NHA's M1 checklist
+# (VRFY_ABHA_102, VRFY_ABHA_202) names these five paths explicitly.
+PHR_LOGIN_SEARCH = "/login/abha/search"
+PHR_LOGIN_REQUEST_OTP = "/login/abha/request/otp"
+PHR_LOGIN_VERIFY = "/login/abha/verify"
 PHR_PROFILE = "/login/profile/abha-profile"
 PHR_CARD = "/login/profile/abha/phr-card"
 

@@ -38,7 +38,7 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Header, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from abha import faceauth, login as login_flow
+from abha import faceauth, login as login_flow, phr as phr_flow
 from abha.client import AbhaClient
 from abha.config import AbhaConfig, AbhaConfigError
 from abha.enrollment import (
@@ -51,7 +51,10 @@ from abha.enrollment import (
 )
 from abha.errors import AbhaApiError, AbhaError, AbhaFlowError, AbhaTransportError
 from abha.models import AbhaAccount, AbhaProfile, EnrolmentResult, LoginResult, OtpChallenge
+from abha.otp_policy import ResendState, default_policy
 from abha.profile import get_abha_card, get_profile, get_qr_code
+from backend.abha_link import AbhaLink, AbhaLinkError, default_store
+from backend.data_layer import get_patient
 
 router = APIRouter(prefix="/api/abha", tags=["abha"])
 
@@ -89,6 +92,10 @@ def reset_client() -> None:
 
 class AadhaarOtpRequest(BaseModel):
     aadhaar: str = Field(min_length=12, max_length=14)
+    # Present only on a resend. ABDM has no separate resend endpoint, so the
+    # presence of a txnId is what distinguishes the two -- and what makes the
+    # resend limit applicable (CRT_ABHA_106).
+    txn_id: str | None = Field(default=None, alias="txnId")
 
 
 class AadhaarEnrolRequest(BaseModel):
@@ -126,6 +133,7 @@ class FaceCompleteRequest(BaseModel):
 class LoginOtpRequest(BaseModel):
     identifier: str
     method: login_flow.LoginMethod = login_flow.LoginMethod.AADHAAR
+    txn_id: str | None = Field(default=None, alias="txnId")
 
 
 class LoginVerifyRequest(BaseModel):
@@ -137,6 +145,27 @@ class LoginVerifyRequest(BaseModel):
 class AccountSelectRequest(BaseModel):
     txn_id: str = Field(alias="txnId")
     index: str
+
+
+class LinkRequest(BaseModel):
+    abha_number: str = Field(alias="abhaNumber")
+    patient_id: str = Field(alias="patientId")
+    abha_address: str | None = Field(default=None, alias="abhaAddress")
+
+
+class AddressSearchRequest(BaseModel):
+    abha_address: str = Field(alias="abhaAddress")
+
+
+class AddressOtpRequest(BaseModel):
+    abha_address: str = Field(alias="abhaAddress")
+    channel: phr_flow.AddressOtpChannel = phr_flow.AddressOtpChannel.AADHAAR
+
+
+class AddressVerifyRequest(BaseModel):
+    txn_id: str = Field(alias="txnId")
+    otp: str
+    channel: phr_flow.AddressOtpChannel = phr_flow.AddressOtpChannel.AADHAAR
 
 
 # --------------------------------------------------------------------------
@@ -211,7 +240,18 @@ def abha_status() -> dict[str, Any]:
 
 @router.post("/enrol/aadhaar/otp")
 def api_enrol_aadhaar_otp(request: AadhaarOtpRequest) -> OtpChallenge:
-    return _handle(lambda: request_aadhaar_otp(_client(), request.aadhaar))
+    """First request, or a resend when `txnId` is present.
+
+    The resend budget is spent *before* the call goes out, not after it
+    succeeds: a refusal from ABDM still consumed an OTP send on their side,
+    so counting only successes would let a loop of failures sail past the
+    limit the checklist requires.
+    """
+    if request.txn_id:
+        _handle(lambda: default_policy().check_and_record(request.txn_id))
+    return _handle(
+        lambda: request_aadhaar_otp(_client(), request.aadhaar, txn_id=request.txn_id)
+    )
 
 
 @router.post("/enrol/aadhaar/verify")
@@ -313,11 +353,27 @@ def api_face_complete(request: FaceCompleteRequest) -> EnrolmentResult:
 
 @router.post("/login/otp")
 def api_login_otp(request: LoginOtpRequest) -> OtpChallenge:
+    if request.txn_id:
+        _handle(lambda: default_policy().check_and_record(request.txn_id))
     return _handle(
         lambda: login_flow.request_login_otp(
-            _client(), identifier=request.identifier, method=request.method
+            _client(),
+            identifier=request.identifier,
+            method=request.method,
+            txn_id=request.txn_id,
         )
     )
+
+
+@router.get("/otp/state")
+def api_otp_state(txn_id: Annotated[str, Query(alias="txnId")]) -> ResendState:
+    """Resend budget and countdown for one transaction.
+
+    Read-only, so polling it is free. It exists so the UI renders its
+    countdown from the authority that enforces the limit rather than keeping
+    a second timer that can disagree with the first.
+    """
+    return default_policy().state_for(txn_id)
 
 
 @router.post("/login/verify")
@@ -343,6 +399,46 @@ def api_login_select(
     return _handle(
         lambda: login_flow.select_account(
             _client(), txn_id=request.txn_id, account=request.index, t_token=t_token
+        )
+    )
+
+
+# -- ABHA address verification (PHR host) ----------------------------------
+# A separate family from /login/* above, on a different host. Routing an ABHA
+# address through the ABHA-host login endpoints is rejected outright; see
+# abha/phr.py.
+
+
+@router.post("/address/search")
+def api_address_search(request: AddressSearchRequest) -> AbhaAccount | None:
+    """`null` means no such address -- a branch for the UI, not an error.
+
+    NHA's checklist requires the "not found" case to offer ABHA creation
+    (VRFY_ABHA_302), so it must be distinguishable from a failure.
+    """
+    return _handle(
+        lambda: phr_flow.search_abha_address(
+            _client(), abha_address=request.abha_address
+        )
+    )
+
+
+@router.post("/address/otp")
+def api_address_otp(request: AddressOtpRequest) -> OtpChallenge:
+    return _handle(
+        lambda: phr_flow.request_address_otp(
+            _client(), abha_address=request.abha_address, channel=request.channel
+        )
+    )
+
+
+@router.post("/address/verify")
+def api_address_verify(request: AddressVerifyRequest) -> LoginResult:
+    """The X-token this returns only works against the PHR host -- pass
+    `viaAbhaAddress=true` to /profile and /card when using it."""
+    return _handle(
+        lambda: phr_flow.verify_address_otp(
+            _client(), txn_id=request.txn_id, otp=request.otp, channel=request.channel
         )
     )
 
@@ -390,3 +486,61 @@ def api_card(
         lambda: get_abha_card(_client(), token=token, via_abha_address=via_abha_address)
     )
     return Response(content=png, media_type="image/png")
+
+
+# --------------------------------------------------------------------------
+# ABHA <-> patient tagging (NHA M1 TAGGING_UNIQUEPATIENTID_UNIQUEABHANUMBER)
+# --------------------------------------------------------------------------
+# Mandatory, and the only M1 item with no ABDM API behind it -- the checklist
+# puts the uniqueness guarantee on the integrator. These routes touch no
+# ABDM endpoint, so unlike everything above they work with no credentials
+# configured.
+
+
+@router.post("/link")
+def api_link(request: LinkRequest) -> AbhaLink:
+    """Tag one verified ABHA number to one patient.
+
+    The patient is looked up before the link is written. A tag pointing at a
+    patient_id that does not exist is worse than no tag: it reads as a
+    verified identity and resolves to nothing.
+    """
+    try:
+        get_patient(request.patient_id)
+    except KeyError:
+        raise HTTPException(
+            status_code=404, detail=f"unknown patient_id: {request.patient_id}"
+        ) from None
+    try:
+        return default_store().link(
+            abha_number=request.abha_number,
+            patient_id=request.patient_id,
+            abha_address=request.abha_address,
+        )
+    except AbhaLinkError as exc:
+        # 409, not 400: the request is well-formed and the refusal is about
+        # state the caller can inspect and resolve.
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@router.get("/link/by-abha/{abha_number}")
+def api_link_by_abha(abha_number: str) -> dict[str, str | None]:
+    """Check before creating a patient record -- the checklist's actual ask."""
+    try:
+        patient_id = default_store().patient_for(abha_number)
+    except AbhaLinkError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return {"abha_number": abha_number, "patient_id": patient_id}
+
+
+@router.get("/link/by-patient/{patient_id}")
+def api_link_by_patient(patient_id: str) -> AbhaLink | None:
+    return default_store().abha_for(patient_id)
+
+
+@router.delete("/link/{abha_number}")
+def api_unlink(abha_number: str) -> dict[str, bool]:
+    try:
+        return {"unlinked": default_store().unlink(abha_number)}
+    except AbhaLinkError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc

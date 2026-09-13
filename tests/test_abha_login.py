@@ -1,5 +1,9 @@
 """Login, the scope table, and multi-account selection.
 
+Three credentials, not four. ABHA *address* was in this table once and the
+sandbox rejected it -- it is a separate family on the PHR host, covered by
+`tests/test_abha_phr.py`, which also guards against it reappearing here.
+
 The scope table is the specification for section 7, so these tests read it
 back against the guide one credential at a time. The multi-account tests are
 the ones that matter operationally: single-account logins work whatever the
@@ -60,19 +64,19 @@ def abdm() -> FakeAbdm:
             "aadhaar",
             ["abha-login", "aadhaar-verify"],
         ),
-        (
-            LoginMethod.ABHA_ADDRESS,
-            "abha-address",
-            "abdm",
-            ["abha-address-login", "mobile-verify"],
-        ),
     ],
 )
 def test_each_credential_sends_its_own_three_fields(
     abdm: FakeAbdm, method, login_hint, otp_system, scope
 ):
-    """Reads the table back against the guide. Getting one of the three
-    wrong produces a 400 that names none of them."""
+    """Reads the table back against the guide.
+
+    Each row was also confirmed against the live sandbox: Aadhaar reaches
+    UIDAI (ABDM-1204), mobile and ABHA number reach ABDM's account lookup
+    (ABDM-1115, ABDM-1114). Reaching the lookup is the pass condition --
+    it means the triple was accepted. Getting one of the three wrong
+    produces a 400 that names none of them.
+    """
     request_login_otp(abdm.client(), identifier="999999999999", method=method)
     body = abdm.body(OTP_PATH)
     assert body["loginHint"] == login_hint
@@ -95,7 +99,6 @@ def test_every_identifier_is_encrypted(abdm: FakeAbdm):
         (LoginMethod.AADHAAR, "999999999999"),
         (LoginMethod.MOBILE, "9999999999"),
         (LoginMethod.ABHA_NUMBER, "91-1111-2222-3333"),
-        (LoginMethod.ABHA_ADDRESS, "patient@sbx"),
     ]:
         fake = FakeAbdm({OTP_PATH: {"txnId": "t"}})
         request_login_otp(fake.client(), identifier=identifier, method=method)

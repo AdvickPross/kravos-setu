@@ -48,11 +48,11 @@ def abdm() -> FakeAbdm:
             "/v3/enrollment/auth/byAbdm": {"txnId": "txn-1", "message": "verified"},
             "/v3/enrollment/enrol/suggestion": {
                 "txnId": "txn-1",
-                "abhaAddressList": ["test1@sbx", "test2@sbx"],
+                "abhaAddressList": ["testuser1@sbx", "testuser2@sbx"],
             },
             "/v3/enrollment/enrol/abha-address": {
                 "txnId": "txn-1",
-                "preferredAbhaAddress": "test1@sbx",
+                "preferredAbhaAddress": "testuser1@sbx",
             },
         }
     )
@@ -233,8 +233,8 @@ def test_suggestion_sends_the_txn_id_in_a_header_not_the_body(abdm: FakeAbdm):
     """This one call takes the txnId as `Transaction_Id`; every other takes
     it in the body. The inconsistency is ABDM's."""
     assert suggest_abha_addresses(abdm.client(), txn_id="txn-1") == [
-        "test1@sbx",
-        "test2@sbx",
+        "testuser1@sbx",
+        "testuser2@sbx",
     ]
     request = abdm.last("/v3/enrollment/enrol/suggestion")
     assert request.headers["Transaction_Id"] == "txn-1"
@@ -244,7 +244,7 @@ def test_suggestion_sends_the_txn_id_in_a_header_not_the_body(abdm: FakeAbdm):
 def test_preferred_flag_is_sent_as_an_int_not_a_bool(abdm: FakeAbdm):
     """ABDM wants 1/0 here; a JSON `true` is rejected."""
     set_abha_address(
-        abdm.client(), txn_id="txn-1", abha_address="test1@sbx", preferred=True
+        abdm.client(), txn_id="txn-1", abha_address="testuser1@sbx", preferred=True
     )
     body = abdm.body("/v3/enrollment/enrol/abha-address")
     assert body["preferred"] == 1
@@ -279,12 +279,12 @@ def test_a_401_triggers_exactly_one_re_authentication():
             ],
             "/v3/enrollment/enrol/abha-address": [
                 httpx.Response(401, json={"message": "token expired"}),
-                {"preferredAbhaAddress": "test1@sbx"},
+                {"preferredAbhaAddress": "testuser1@sbx"},
             ],
         }
     )
     client = abdm.client()
-    set_abha_address(client, txn_id="t", abha_address="test1@sbx")
+    set_abha_address(client, txn_id="t", abha_address="testuser1@sbx")
 
     assert len(abdm.sent_to("/gateway/v3/sessions")) == 2
     assert len(abdm.sent_to("/v3/enrollment/enrol/abha-address")) == 2
@@ -298,7 +298,7 @@ def test_a_401_that_persists_is_not_retried_forever():
         {"/v3/enrollment/enrol/abha-address": httpx.Response(401, json={"m": "no"})}
     )
     with pytest.raises(AbhaApiError):
-        set_abha_address(abdm.client(), txn_id="t", abha_address="x@sbx")
+        set_abha_address(abdm.client(), txn_id="t", abha_address="testuser1@sbx")
     assert len(abdm.sent_to("/v3/enrollment/enrol/abha-address")) == 2
 
 
@@ -343,3 +343,53 @@ def test_an_ordinary_400_does_not_drop_the_key():
         request_aadhaar_otp(client, AADHAAR)
     assert len(abdm.sent_to("/v3/profile/public/certificate")) == 1
     assert len(abdm.sent_to("/v3/enrollment/request/otp")) == 2
+
+
+# --------------------------------------------------------------------------
+# ABHA address rules (CRT_ABHA_112)
+# --------------------------------------------------------------------------
+
+
+def test_valid_addresses_are_accepted():
+    from abha.enrollment import validate_abha_address
+
+    for good in ("animesh.reddy", "ok_name12", "abcdefgh", "a" * 18):
+        assert validate_abha_address(good) == good
+
+
+def test_the_sbx_suffix_is_tolerated():
+    """Patients and UIs both paste the full address; the rules apply to the
+    local part, which is what the API takes."""
+    from abha.enrollment import validate_abha_address
+
+    assert validate_abha_address("valid.name@sbx") == "valid.name@sbx"
+
+
+@pytest.mark.parametrize(
+    "bad,because",
+    [
+        ("ab", "8-18 characters"),
+        ("a" * 19, "8-18 characters"),
+        ("has space1", "only letters"),
+        ("has-dash12", "only letters"),
+        ("_leading123", "never first or last"),
+        ("trailing12_", "never first or last"),
+        (".leading123", "never first or last"),
+        ("a.b.c12345", "at most one dot"),
+        ("a_b_c12345", "at most one underscore"),
+    ],
+)
+def test_each_broken_rule_names_itself(bad: str, because: str):
+    """A generic "invalid ABHA address" sends the patient guessing between
+    five rules."""
+    from abha.enrollment import validate_abha_address
+
+    with pytest.raises(AbhaFlowError) as exc:
+        validate_abha_address(bad)
+    assert because in str(exc.value)
+
+
+def test_a_malformed_address_never_reaches_abdm(abdm: FakeAbdm):
+    with pytest.raises(AbhaFlowError):
+        set_abha_address(abdm.client(), txn_id="txn-1", abha_address="ab")
+    assert not abdm.sent_to("/v3/enrollment/enrol/abha-address")

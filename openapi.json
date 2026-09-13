@@ -35,6 +35,7 @@
           "abha"
         ],
         "summary": "Api Enrol Aadhaar Otp",
+        "description": "First request, or a resend when `txnId` is present.\n\nThe resend budget is spent *before* the call goes out, not after it\nsucceeds: a refusal from ABDM still consumed an OTP send on their side,\nso counting only successes would let a loop of failures sail past the\nlimit the checklist requires.",
         "operationId": "api_enrol_aadhaar_otp_api_abha_enrol_aadhaar_otp_post",
         "requestBody": {
           "content": {
@@ -490,6 +491,49 @@
         }
       }
     },
+    "/api/abha/otp/state": {
+      "get": {
+        "tags": [
+          "abha"
+        ],
+        "summary": "Api Otp State",
+        "description": "Resend budget and countdown for one transaction.\n\nRead-only, so polling it is free. It exists so the UI renders its\ncountdown from the authority that enforces the limit rather than keeping\na second timer that can disagree with the first.",
+        "operationId": "api_otp_state_api_abha_otp_state_get",
+        "parameters": [
+          {
+            "name": "txnId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Txnid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResendState"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/abha/login/verify": {
       "post": {
         "tags": [
@@ -565,6 +609,139 @@
               }
             }
           }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/abha/address/search": {
+      "post": {
+        "tags": [
+          "abha"
+        ],
+        "summary": "Api Address Search",
+        "description": "`null` means no such address -- a branch for the UI, not an error.\n\nNHA's checklist requires the \"not found\" case to offer ABHA creation\n(VRFY_ABHA_302), so it must be distinguishable from a failure.",
+        "operationId": "api_address_search_api_abha_address_search_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddressSearchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/AbhaAccount"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Api Address Search Api Abha Address Search Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/abha/address/otp": {
+      "post": {
+        "tags": [
+          "abha"
+        ],
+        "summary": "Api Address Otp",
+        "operationId": "api_address_otp_api_abha_address_otp_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddressOtpRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OtpChallenge"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/abha/address/verify": {
+      "post": {
+        "tags": [
+          "abha"
+        ],
+        "summary": "Api Address Verify",
+        "description": "The X-token this returns only works against the PHR host -- pass\n`viaAbhaAddress=true` to /profile and /card when using it.",
+        "operationId": "api_address_verify_api_abha_address_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddressVerifyRequest"
+              }
+            }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -805,6 +982,198 @@
         }
       }
     },
+    "/api/abha/link": {
+      "post": {
+        "tags": [
+          "abha"
+        ],
+        "summary": "Api Link",
+        "description": "Tag one verified ABHA number to one patient.\n\nThe patient is looked up before the link is written. A tag pointing at a\npatient_id that does not exist is worse than no tag: it reads as a\nverified identity and resolves to nothing.",
+        "operationId": "api_link_api_abha_link_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AbhaLink"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/abha/link/by-abha/{abha_number}": {
+      "get": {
+        "tags": [
+          "abha"
+        ],
+        "summary": "Api Link By Abha",
+        "description": "Check before creating a patient record -- the checklist's actual ask.",
+        "operationId": "api_link_by_abha_api_abha_link_by_abha__abha_number__get",
+        "parameters": [
+          {
+            "name": "abha_number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Abha Number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "title": "Response Api Link By Abha Api Abha Link By Abha  Abha Number  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/abha/link/by-patient/{patient_id}": {
+      "get": {
+        "tags": [
+          "abha"
+        ],
+        "summary": "Api Link By Patient",
+        "operationId": "api_link_by_patient_api_abha_link_by_patient__patient_id__get",
+        "parameters": [
+          {
+            "name": "patient_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Patient Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/AbhaLink"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Api Link By Patient Api Abha Link By Patient  Patient Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/abha/link/{abha_number}": {
+      "delete": {
+        "tags": [
+          "abha"
+        ],
+        "summary": "Api Unlink",
+        "operationId": "api_unlink_api_abha_link__abha_number__delete",
+        "parameters": [
+          {
+            "name": "abha_number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Abha Number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "boolean"
+                  },
+                  "title": "Response Api Unlink Api Abha Link  Abha Number  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/patients": {
       "get": {
         "summary": "Api List Patients",
@@ -972,6 +1341,17 @@
             "maxLength": 14,
             "minLength": 12,
             "title": "Aadhaar"
+          },
+          "txnId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Txnid"
           }
         },
         "type": "object",
@@ -1150,6 +1530,41 @@
         ],
         "title": "AbhaAddressRequest"
       },
+      "AbhaLink": {
+        "properties": {
+          "abha_number": {
+            "type": "string",
+            "title": "Abha Number"
+          },
+          "patient_id": {
+            "type": "string",
+            "title": "Patient Id"
+          },
+          "abha_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Abha Address"
+          },
+          "linked_at": {
+            "type": "string",
+            "title": "Linked At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "abha_number",
+          "patient_id",
+          "abha_address",
+          "linked_at"
+        ],
+        "title": "AbhaLink"
+      },
       "AbhaProfile": {
         "properties": {
           "account": {
@@ -1218,6 +1633,67 @@
           "index"
         ],
         "title": "AccountSelectRequest"
+      },
+      "AddressOtpChannel": {
+        "type": "string",
+        "enum": [
+          "aadhaar",
+          "mobile"
+        ],
+        "title": "AddressOtpChannel",
+        "description": "Where the OTP for an ABHA-address verification is sent.\n\nAADHAAR -- UIDAI sends it to the Aadhaar-linked mobile (VRFY_ABHA_102).\nMOBILE  -- ABDM sends it to the ABHA-linked communication mobile\n           (VRFY_ABHA_202)."
+      },
+      "AddressOtpRequest": {
+        "properties": {
+          "abhaAddress": {
+            "type": "string",
+            "title": "Abhaaddress"
+          },
+          "channel": {
+            "$ref": "#/components/schemas/AddressOtpChannel",
+            "default": "aadhaar"
+          }
+        },
+        "type": "object",
+        "required": [
+          "abhaAddress"
+        ],
+        "title": "AddressOtpRequest"
+      },
+      "AddressSearchRequest": {
+        "properties": {
+          "abhaAddress": {
+            "type": "string",
+            "title": "Abhaaddress"
+          }
+        },
+        "type": "object",
+        "required": [
+          "abhaAddress"
+        ],
+        "title": "AddressSearchRequest"
+      },
+      "AddressVerifyRequest": {
+        "properties": {
+          "txnId": {
+            "type": "string",
+            "title": "Txnid"
+          },
+          "otp": {
+            "type": "string",
+            "title": "Otp"
+          },
+          "channel": {
+            "$ref": "#/components/schemas/AddressOtpChannel",
+            "default": "aadhaar"
+          }
+        },
+        "type": "object",
+        "required": [
+          "txnId",
+          "otp"
+        ],
+        "title": "AddressVerifyRequest"
       },
       "Brief": {
         "properties": {
@@ -1727,15 +2203,44 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "LinkRequest": {
+        "properties": {
+          "abhaNumber": {
+            "type": "string",
+            "title": "Abhanumber"
+          },
+          "patientId": {
+            "type": "string",
+            "title": "Patientid"
+          },
+          "abhaAddress": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Abhaaddress"
+          }
+        },
+        "type": "object",
+        "required": [
+          "abhaNumber",
+          "patientId"
+        ],
+        "title": "LinkRequest"
+      },
       "LoginMethod": {
         "type": "string",
         "enum": [
           "aadhaar",
           "mobile",
-          "abha-number",
-          "abha-address"
+          "abha-number"
         ],
-        "title": "LoginMethod"
+        "title": "LoginMethod",
+        "description": "The three credentials the ABHA host accepts.\n\nABHA *address* is deliberately absent. It looks like it belongs here and\nit does not: the ABHA host rejects it with \"Invalid Scope\" and \"Invalid\nLogin Hint\", because address verification is a separate family on the PHR\nhost. It lives in `abha/phr.py`. Adding a fourth row here is the mistake\nthat module's docstring exists to prevent."
       },
       "LoginOtpRequest": {
         "properties": {
@@ -1746,6 +2251,17 @@
           "method": {
             "$ref": "#/components/schemas/LoginMethod",
             "default": "aadhaar"
+          },
+          "txnId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Txnid"
           }
         },
         "type": "object",
@@ -2232,6 +2748,29 @@
         ],
         "title": "QueryResponse",
         "description": "What POST /api/query returns.\n\n`parsed` is included so the UI can render the question with its resolved\nentities highlighted by match quality -- the NER work is visible rather\nthan invisible."
+      },
+      "ResendState": {
+        "properties": {
+          "resends_used": {
+            "type": "integer",
+            "title": "Resends Used"
+          },
+          "resends_remaining": {
+            "type": "integer",
+            "title": "Resends Remaining"
+          },
+          "seconds_until_allowed": {
+            "type": "number",
+            "title": "Seconds Until Allowed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "resends_used",
+          "resends_remaining",
+          "seconds_until_allowed"
+        ],
+        "title": "ResendState"
       },
       "ResolvedEntity": {
         "properties": {

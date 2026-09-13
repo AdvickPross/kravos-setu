@@ -242,3 +242,165 @@ def test_openapi_still_generates(api: TestClient):
     schema = api.get("/openapi.json").json()
     assert "/api/abha/enrol/aadhaar/otp" in schema["paths"]
     assert "/api/query" in schema["paths"]
+
+
+# --------------------------------------------------------------------------
+# ABHA address verification (PHR host)
+# --------------------------------------------------------------------------
+
+
+def test_address_search_returns_null_for_an_unknown_address(
+    api: TestClient, monkeypatch
+):
+    """`null`, not 404: the checklist requires the UI to answer this by
+    offering ABHA creation, which is a branch rather than an error."""
+    _wire(monkeypatch, FakeAbdm({"/login/abha/search": {"message": "User not found"}}))
+    response = api.post("/api/abha/address/search", json={"abhaAddress": "nobody@sbx"})
+    assert response.status_code == 200
+    assert response.json() is None
+
+
+def test_address_otp_goes_to_the_phr_host(api: TestClient, monkeypatch):
+    """Routing an ABHA address through the ABHA-host login endpoints is
+    rejected with "Invalid Scope"; this pins the correct host at the HTTP
+    boundary as well as inside the flow module."""
+    abdm = FakeAbdm({"/login/abha/request/otp": {"txnId": "phr-txn"}})
+    _wire(monkeypatch, abdm)
+    response = api.post(
+        "/api/abha/address/otp",
+        json={"abhaAddress": "patient@sbx", "channel": "mobile"},
+    )
+    assert response.status_code == 200
+    assert "/phr/web/" in abdm.last("/login/abha/request/otp").url.path
+    assert abdm.body("/login/abha/request/otp")["otpSystem"] == "abdm"
+
+
+# --------------------------------------------------------------------------
+# resend policy
+# --------------------------------------------------------------------------
+
+
+def test_first_otp_request_is_not_a_resend(api: TestClient, monkeypatch):
+    """No txnId means no prior OTP, so the budget is untouched."""
+    from abha.otp_policy import default_policy
+
+    abdm = FakeAbdm({"/v3/enrollment/request/otp": {"txnId": "t"}})
+    _wire(monkeypatch, abdm)
+    api.post("/api/abha/enrol/aadhaar/otp", json={"aadhaar": "9" * 12})
+    assert default_policy().state_for("t").resends_used == 0
+
+
+def test_a_third_resend_is_refused_with_422(api: TestClient, monkeypatch):
+    """CRT_ABHA_106: max two resends. Enforced server-side, because a
+    disabled button does nothing about a second tab."""
+    from abha.otp_policy import ResendPolicy
+    import abha.otp_policy as otp_policy
+
+    clock = [0.0]
+    monkeypatch.setattr(
+        otp_policy, "_default_policy", ResendPolicy(now=lambda: clock[0])
+    )
+    abdm = FakeAbdm({"/v3/enrollment/request/otp": {"txnId": "t"}})
+    _wire(monkeypatch, abdm)
+
+    body = {"aadhaar": "9" * 12, "txnId": "t"}
+    assert api.post("/api/abha/enrol/aadhaar/otp", json=body).status_code == 200
+    clock[0] += 60
+    assert api.post("/api/abha/enrol/aadhaar/otp", json=body).status_code == 200
+    clock[0] += 60
+    third = api.post("/api/abha/enrol/aadhaar/otp", json=body)
+    assert third.status_code == 422
+    assert "limit reached" in third.json()["detail"]
+    assert len(abdm.sent_to("/v3/enrollment/request/otp")) == 2, (
+        "the refused resend must not reach ABDM"
+    )
+
+
+def test_otp_state_is_readable_for_the_ui(api: TestClient, monkeypatch):
+    from abha.otp_policy import ResendPolicy
+    import abha.otp_policy as otp_policy
+
+    monkeypatch.setattr(otp_policy, "_default_policy", ResendPolicy())
+    body = api.get("/api/abha/otp/state", params={"txnId": "fresh"}).json()
+    assert body["resends_used"] == 0
+    assert body["resends_remaining"] == 2
+
+
+# --------------------------------------------------------------------------
+# ABHA <-> patient tagging
+# --------------------------------------------------------------------------
+
+
+@pytest.fixture
+def link_store(tmp_path, monkeypatch):
+    import backend.abha_link as abha_link
+
+    store = abha_link.AbhaLinkStore(tmp_path / "links.json")
+    monkeypatch.setattr(abha_link, "_default_store", store)
+    return store
+
+
+def _a_real_patient_id() -> str:
+    from backend.data_layer import list_patients
+
+    patients = list_patients()
+    if not patients:
+        pytest.skip("no patient corpus available")
+    return patients[0].patient_id
+
+
+def test_tagging_works_without_abdm_credentials(api: TestClient, link_store):
+    """The only M1 item with no ABDM API behind it, so unlike every other
+    route it must work with nothing configured."""
+    patient_id = _a_real_patient_id()
+    response = api.post(
+        "/api/abha/link",
+        json={"abhaNumber": "91-1234-5678-9012", "patientId": patient_id},
+    )
+    assert response.status_code == 200
+    assert response.json()["patient_id"] == patient_id
+
+
+def test_tagging_an_unknown_patient_is_404(api: TestClient, link_store):
+    """A tag pointing at a patient that does not exist reads as a verified
+    identity and resolves to nothing."""
+    response = api.post(
+        "/api/abha/link",
+        json={"abhaNumber": "91-1234-5678-9012", "patientId": "no-such-patient"},
+    )
+    assert response.status_code == 404
+
+
+def test_a_second_patient_for_one_abha_is_409(api: TestClient, link_store):
+    """409, not 400: the request is well-formed and the refusal is about
+    state the caller can inspect and resolve."""
+    patient_id = _a_real_patient_id()
+    link_store.link(abha_number="91-1234-5678-9012", patient_id=patient_id)
+
+    from backend.data_layer import list_patients
+
+    others = [p.patient_id for p in list_patients() if p.patient_id != patient_id]
+    if not others:
+        pytest.skip("need two patients")
+
+    response = api.post(
+        "/api/abha/link",
+        json={"abhaNumber": "91-1234-5678-9012", "patientId": others[0]},
+    )
+    assert response.status_code == 409
+    assert "already tagged" in response.json()["detail"]
+
+
+def test_lookup_by_abha_before_creating_a_record(api: TestClient, link_store):
+    patient_id = _a_real_patient_id()
+    body = api.get("/api/abha/link/by-abha/91-1234-5678-9012").json()
+    assert body["patient_id"] is None
+
+    link_store.link(abha_number="91-1234-5678-9012", patient_id=patient_id)
+    body = api.get("/api/abha/link/by-abha/91-1234-5678-9012").json()
+    assert body["patient_id"] == patient_id
+
+
+def test_a_masked_abha_number_is_422(api: TestClient, link_store):
+    response = api.get("/api/abha/link/by-abha/91-****-****-9012")
+    assert response.status_code == 422

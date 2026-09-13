@@ -1,13 +1,21 @@
 """Verifying an existing ABHA, and finding one. Section 7 of the v1.4 guide.
 
-Four credentials can start a login -- Aadhaar, mobile, ABHA number, ABHA
-address -- and each needs a different combination of three fields: `scope`,
+Three credentials start a login on this host -- Aadhaar, mobile and ABHA
+number -- and each needs a different combination of three fields: `scope`,
 `loginHint` and `otpSystem`. The combinations are not derivable from the
 credential; `otpSystem` in particular flips between `aadhaar` (UIDAI sends
 the OTP) and `abdm` (ABDM sends it) in a way that does not follow from which
 identifier the patient typed.
 
 Getting one of the three wrong produces a 400 that names none of them.
+
+A fourth credential, the **ABHA address**, is not here. It is not a variant
+of ABHA-number login but a separate family on the PHR host, and this host
+rejects it outright -- see `abha/phr.py`. Every row below was confirmed
+against the sandbox: Aadhaar reaches UIDAI (ABDM-1204), mobile and ABHA
+number reach ABDM's account lookup (ABDM-1115, ABDM-1114). Reaching the
+lookup and being told "not found" is the pass condition; it means the
+scope/hint/otpSystem triple was accepted.
 
 So the combinations are a table -- `_METHODS` -- rather than an if-chain
 spread through the call sites. The table *is* the specification for this
@@ -36,10 +44,18 @@ from abha.models import AbhaAccount, LoginResult, OtpChallenge
 
 
 class LoginMethod(str, Enum):
+    """The three credentials the ABHA host accepts.
+
+    ABHA *address* is deliberately absent. It looks like it belongs here and
+    it does not: the ABHA host rejects it with "Invalid Scope" and "Invalid
+    Login Hint", because address verification is a separate family on the PHR
+    host. It lives in `abha/phr.py`. Adding a fourth row here is the mistake
+    that module's docstring exists to prevent.
+    """
+
     AADHAAR = "aadhaar"
     MOBILE = "mobile"
     ABHA_NUMBER = "abha-number"
-    ABHA_ADDRESS = "abha-address"
 
 
 @dataclass(frozen=True)
@@ -74,11 +90,6 @@ _METHODS: dict[LoginMethod, _MethodSpec] = {
         otp_system="aadhaar",
         scope=("abha-login", "aadhaar-verify"),
     ),
-    LoginMethod.ABHA_ADDRESS: _MethodSpec(
-        login_hint="abha-address",
-        otp_system="abdm",
-        scope=("abha-address-login", "mobile-verify"),
-    ),
 }
 
 
@@ -89,15 +100,27 @@ def _require(value: str | None, name: str) -> str:
 
 
 def request_login_otp(
-    client: AbhaClient, *, identifier: str, method: LoginMethod
+    client: AbhaClient,
+    *,
+    identifier: str,
+    method: LoginMethod,
+    txn_id: str | None = None,
 ) -> OtpChallenge:
-    """Send a login OTP for whichever credential the patient offered."""
+    """Send a login OTP for whichever credential the patient offered.
+
+    `txn_id` carries an existing transaction on a resend -- ABDM has no
+    separate resend endpoint. The two-per-minute limit is policy and lives in
+    `abha/otp_policy.py`.
+    """
     spec = _METHODS[method]
-    login_id = _require(identifier, "identifier").strip()
+    login_id = _require((identifier or "").strip(), "identifier")
+    body: dict[str, Any] = {"scope": list(spec.scope)}
+    if txn_id:
+        body["txnId"] = txn_id
     payload = client.post(
         endpoints.LOGIN_REQUEST_OTP,
         {
-            "scope": list(spec.scope),
+            **body,
             "loginHint": spec.login_hint,
             "loginId": client.encrypt(login_id) if spec.encrypt_login_id else login_id,
             "otpSystem": spec.otp_system,
@@ -174,7 +197,7 @@ def find_abha(client: AbhaClient, *, abha_address: str) -> list[AbhaAccount]:
     """
     payload = client.post(
         endpoints.SEARCH_ABHA,
-        {"abhaAddress": _require(abha_address, "abha_address").strip()},
+        {"abhaAddress": _require((abha_address or "").strip(), "abha_address")},
     )
     raw: Any = payload.get("accounts") or payload.get("account") or []
     if isinstance(raw, dict):
