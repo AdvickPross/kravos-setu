@@ -115,6 +115,13 @@ export type AbhaAccount = {
   gender?: string | null;
   date_of_birth?: string | null;
   mobile?: string | null;
+  email?: string | null;
+  state?: string | null;
+  district?: string | null;
+  kyc_verified?: boolean | null;
+  status?: string | null;
+  /** Only populated on a multi-account login response; it is what
+   *  `selectAccount` sends back to disambiguate. */
   index?: string | null;
 };
 

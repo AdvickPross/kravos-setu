@@ -173,6 +173,26 @@ backend/abha_link.py     one ABHA <-> one patient ID (the mandatory non-API item
 backend/abha_routes.py   25 routes under /api/abha
 ```
 
+### Signing in
+
+`http://localhost:3000` opens on **Sign in with ABHA** — ABHA number, mobile,
+Aadhaar, or ABHA address (which runs against the PHR host, so it is a separate
+tab rather than a fourth option). After the OTP it shows the ABHA profile, then
+resolves the ABHA to a patient record through `backend/abha_link.py` and opens
+the clinical view on it. A returning patient whose ABHA is already tagged goes
+straight through.
+
+The identity lives in `sessionStorage` and dies with the tab — this is meant to
+run on a shared registration terminal, where `localStorage` would leave one
+patient's identity waiting for the next person. The transaction token is held
+in memory only and never written to storage at all.
+
+**Sign-in is skippable, visibly.** The corpus is 952 synthetic Synthea
+patients and none of them holds a real ABHA, so a hard gate would make the
+product impossible to demonstrate. The escape hatch marks the session
+`demo: true` and every screen after it carries a "demo — no ABHA verified"
+badge.
+
 ### The M1 test console
 
 `http://localhost:3000/m1` walks NHA's checklist by hand. Each step names the
