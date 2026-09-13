@@ -153,29 +153,51 @@ ABHA numbers are health identifiers.
 
 ## Summary
 
-**Every Mandatory item applicable to a private integrator is implemented at
-the API layer.** Three carry a caveat, and none of the three is a missing
-endpoint:
+**Every Mandatory item applicable to a private integrator is implemented, and
+the creation and verification paths have been walked end to end against the
+live sandbox by hand.** One real gap remains, and it is not an endpoint.
+
+### Proven by hand, not only by test
+
+A real ABHA was created through the product UI and then used to sign in:
+
+| | |
+|---|---|
+| ABHA number | `91-7366-1108-3337` |
+| ABHA address | `91736611083337@sbx` |
+| Tagged to | patient `01607992-…` (6 allergy facts, 57 medications) |
+
+That single run is evidence for CRT_ABHA_104, 105, 106, 107, 112, 113;
+VRFY_ABHA_101 and 401/404; and TAGGING_UNIQUEPATIENTID_UNIQUEABHANUMBER,
+whose duplicate case was confirmed separately (a second patient against the
+same ABHA is refused with HTTP 409).
 
 ## Outstanding
 
 1. **Consent language (CRT_ABHA_102) — Mandatory, and the one real gap.**
-   The consent *artefact* is sent correctly. The requirement is that the
-   patient is shown NHA's **approved consent text** before Aadhaar is
-   collected. That text is not in this repo, and writing an approximation
-   would be worse than leaving it out: consent wording is what the checklist
-   is auditing, and a paraphrase would pass review by looking right. Obtain
-   the approved language from NHA and render it on the enrolment screen.
+   The consent *artefact* is sent correctly and the sign-up flow shows the
+   consent as its own step before Aadhaar is collected, which is the
+   behaviour the row requires. What is missing is the **wording**: the screen
+   carries a placeholder, explicitly labelled as such. NHA's approved text is
+   not in this repo, and writing an approximation would be worse than leaving
+   it out — consent wording is exactly what this row audits, and a paraphrase
+   would pass review by looking right. Obtain the approved language and drop
+   it into `SignUpFlow`.
 
-2. **UI screens (CRT_ABHA_113, and the display half of 102 and 112).** The
-   API returns everything these rows need; no frontend renders the enrolment
-   or verification flow yet. Functional testing is done through a UI, so
-   these cannot be signed off from the backend alone.
+2. **ABHA card (CRT_ABHA_114) — blocked on ABDM, not on us.** The sandbox
+   answers `/v3/profile/account/abha-card` with **501**, so the card cannot
+   render there. The code path is built and the profile fields the row also
+   asks for do come through. Re-test against production, or ask ABDM
+   integration support whether the sandbox implements it at all.
 
 3. **Driving Licence / PAN (section 4)** and **demo auth (section 3)** are
    unbuilt. Both are Optional for a private integrator and Mandatory for a
    Government one — worth settling which class applies before scheduling
    certification.
+
+Everything the previous revision listed as "no UI yet" is now built: sign-in,
+sign-up, profile and tagging all have product screens, and `/m1` keeps the
+raw request/response view for a tester.
 
 ## Reproducing the live checks
 
