@@ -11,6 +11,7 @@ import {
   ErrorLine,
   Failure,
   Labelled,
+  OtpAge,
   OtpInput,
   Primary,
   Resend,
@@ -57,6 +58,7 @@ export function SignUpFlow({
   const [result, setResult] = useState<EnrolmentResult | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [address, setAddress] = useState("");
+  const [otpSentAt, setOtpSentAt] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<Explained | null>(null);
   // Local validation failures are separate: they are ours, not ABDM's, and
@@ -88,7 +90,11 @@ export function SignUpFlow({
     setLocalError(null);
     const call = await abha.enrolRequestOtp(digits, resend ? txnId : undefined);
     if (call.ok) {
-      setTxnId(call.body.txn_id);
+      // Only when ABDM actually sent one. A resend response that omits txnId
+      // parses to "" upstream, and storing that would silently destroy the
+      // transaction in progress -- every later verify would carry an empty id.
+      if (call.body.txn_id) setTxnId(call.body.txn_id);
+      setOtpSentAt(Date.now());
       setSentTo(call.body.masked_identifier ?? null);
       setStep("otp");
     } else {
@@ -226,6 +232,7 @@ export function SignUpFlow({
           >
             <OtpInput value={otp} onChange={setOtp} onEnter={() => otp.length === 6 && create()} />
           </Labelled>
+          <OtpAge sentAt={otpSentAt} onRefresh={restart} />
           {error && (
             <Failure
               explained={error}

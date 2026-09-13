@@ -240,17 +240,25 @@ export function Resend({ txnId, onResend }: { txnId: string; onResend: () => voi
   useEffect(() => {
     if (!txnId) return;
     let cancelled = false;
+    let handle: ReturnType<typeof setInterval> | undefined;
+
     const read = async () => {
       const call = await abha.otpState(txnId);
       if (cancelled || !call.ok) return;
-      setLeft(Math.ceil(call.body.seconds_until_allowed));
+      const seconds = Math.ceil(call.body.seconds_until_allowed);
+      setLeft(seconds);
       setRemaining(call.body.resends_remaining);
+      // Stop once there is nothing left to count down. Polling every second
+      // for as long as the screen is open produced 466 requests against one
+      // transaction in a single session, all of them answering the same thing.
+      if (seconds <= 0 && handle) clearInterval(handle);
     };
+
     read();
-    const handle = setInterval(read, 1000);
+    handle = setInterval(read, 1000);
     return () => {
       cancelled = true;
-      clearInterval(handle);
+      if (handle) clearInterval(handle);
     };
   }, [txnId]);
 
@@ -331,6 +339,53 @@ export function Failure({
           Try again
         </button>
       )}
+    </div>
+  );
+}
+
+/**
+ * How long this OTP has been sitting unused.
+ *
+ * ABDM closes an enrolment transaction after a few minutes and does not say
+ * how many. What it says when you verify against a closed one is *"Maximum
+ * number of attempts for OTP match is exceeded **or OTP is not generated**"* —
+ * one error code covering two unrelated situations, the second of which reads
+ * exactly like a lockout and is not one. Waiting makes it worse.
+ *
+ * So the screen shows the age instead of pretending to know the deadline, and
+ * nudges toward a fresh OTP once it is old enough to be the likely cause.
+ */
+export function OtpAge({ sentAt, onRefresh }: { sentAt: number | null; onRefresh: () => void }) {
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (!sentAt) return;
+    const handle = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(handle);
+  }, [sentAt]);
+
+  if (!sentAt) return null;
+  const seconds = Math.floor((now - sentAt) / 1000);
+  if (seconds < 120) return null;
+
+  const minutes = Math.floor(seconds / 60);
+  return (
+    <div className="rounded-lg border border-warn-line bg-warn-bg px-3.5 py-3">
+      <p className="text-xs font-semibold text-warn">
+        This OTP is {minutes} minute{minutes === 1 ? "" : "s"} old
+      </p>
+      <p className="mt-1 text-xs leading-relaxed text-warn/90">
+        ABDM closes a verification after a few minutes, and verifying against a
+        closed one fails with a message about attempt limits that has nothing
+        to do with attempts. Get a fresh code and enter it straight away.
+      </p>
+      <button
+        type="button"
+        onClick={onRefresh}
+        className="mt-2.5 rounded-md border border-current px-2.5 py-1 text-xs font-semibold text-warn transition hover:bg-current/10"
+      >
+        Start over with a fresh OTP
+      </button>
     </div>
   );
 }

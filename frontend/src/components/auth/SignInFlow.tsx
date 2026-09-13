@@ -14,6 +14,7 @@ import { setLiveToken, type AbhaSession } from "@/lib/session";
 import {
   Failure,
   Labelled,
+  OtpAge,
   OtpInput,
   Primary,
   Resend,
@@ -77,6 +78,7 @@ export function SignInFlow({
   const [accounts, setAccounts] = useState<AbhaAccount[]>([]);
   const [tToken, setTToken] = useState<string | null>(null);
   const [step, setStep] = useState<Step>("credential");
+  const [otpSentAt, setOtpSentAt] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<Explained | null>(null);
 
@@ -111,7 +113,11 @@ export function SignInFlow({
       ? await abha.addressOtp(identifier.trim(), channel)
       : await abha.loginOtp(identifier.trim(), method, resend ? txnId : undefined);
     if (call.ok) {
-      setTxnId(call.body.txn_id);
+      // Only when ABDM actually sent one. A resend response that omits txnId
+      // parses to "" upstream, and storing that would silently destroy the
+      // transaction in progress -- every later verify would carry an empty id.
+      if (call.body.txn_id) setTxnId(call.body.txn_id);
+      setOtpSentAt(Date.now());
       setSentTo(call.body.masked_identifier ?? null);
       setStep("otp");
     } else {
@@ -218,6 +224,7 @@ export function SignInFlow({
         >
           <OtpInput value={otp} onChange={setOtp} onEnter={() => otp.length === 6 && verify()} />
         </Labelled>
+        <OtpAge sentAt={otpSentAt} onRefresh={restart} />
         {error && (
           <Failure
             explained={error}

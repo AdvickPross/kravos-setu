@@ -43,19 +43,27 @@ export function explain(call: AbhaCall): Explained {
     call.fields?.map((f) => `${f.attribute} ${f.message}`).join(" ") ?? ""
   }`.toLowerCase();
 
-  // UIDAI locks an Aadhaar after repeated OTP failures. Nothing on our side
-  // clears it and no amount of retrying helps, so this must not look like the
-  // wrong-OTP case that it otherwise resembles.
-  // Matched on the phrase, not on a bare "403" -- three digits are far too
-  // common in identifiers and transaction ids to key a lockout on.
+  // UIDAI error 403 reads as a lockout and usually is not one. Its own text
+  // gives the game away: "Maximum number of attempts for OTP match is exceeded
+  // **or OTP is not generated**". Two unrelated situations, one code.
+  //
+  // Observed against the sandbox: while verification was failing this way,
+  // OTP *generation* on the same Aadhaar kept returning 200. A genuinely
+  // locked Aadhaar cannot issue OTPs, so the failing branch was the second
+  // one -- verifying against a transaction ABDM had already closed. Telling
+  // that person to wait is the worst possible advice, because the transaction
+  // only gets more expired.
+  //
+  // Matched on the phrase rather than a bare "403": three digits are far too
+  // common inside transaction ids to key this on.
   if (
     has(text, "maximum number of attempts", "uidai error code : 403", "number of attempts for otp")
   ) {
     return {
-      title: "Too many OTP attempts",
+      title: "That verification is no longer open",
       detail:
-        "UIDAI has temporarily blocked verification for this Aadhaar. Wait a few minutes, then request a fresh OTP — entering another code now will keep failing.",
-      recovery: "wait",
+        "UIDAI reports this as an attempt limit, but the same error covers an OTP that was never generated or has expired — which is the usual cause. Request a fresh OTP and enter it straight away. If a new OTP also fails to send, then the Aadhaar really is rate-limited and needs a few minutes.",
+      recovery: "restart",
     };
   }
 
