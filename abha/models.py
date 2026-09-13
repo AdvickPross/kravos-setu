@@ -39,6 +39,24 @@ def _first(payload: dict[str, Any], *keys: str) -> Any:
     return None
 
 
+def _one(value: Any) -> Any:
+    """First element when ABDM sends an array where one value is expected.
+
+    `phrAddress` is the case that caught this: an ABHA number may carry up to
+    six addresses, so ABDM returns `["91736611083337@sbx"]` from enrolment
+    even though every example in the guide shows a bare string. Assigning that
+    list to a `str | None` field raises inside pydantic, which -- because the
+    exception escapes the route -- reaches the browser as a CORS failure with
+    no CORS cause whatsoever.
+
+    The scalar is what `AbhaAccount.abha_address` means: the preferred one.
+    `AbhaProfile.abha_addresses` keeps the full list.
+    """
+    if isinstance(value, (list, tuple)):
+        return value[0] if value else None
+    return value
+
+
 def _as_list(value: Any) -> list[Any]:
     """Coerce a field ABDM sends as either a scalar or an array.
 
@@ -143,21 +161,23 @@ class AbhaAccount(_Loose):
     @classmethod
     def from_payload(cls, payload: dict[str, Any]) -> "AbhaAccount":
         return cls(
-            abha_number=_first(payload, "ABHANumber", "abhaNumber", "healthIdNumber"),
-            abha_address=_first(
-                payload,
-                "preferredAbhaAddress",
-                "abhaAddress",
-                "phrAddress",
-                "healthId",
+            abha_number=_one(_first(payload, "ABHANumber", "abhaNumber", "healthIdNumber")),
+            abha_address=_one(
+                _first(
+                    payload,
+                    "preferredAbhaAddress",
+                    "abhaAddress",
+                    "phrAddress",
+                    "healthId",
+                )
             ),
-            name=_first(payload, "name", "fullName"),
+            name=_one(_first(payload, "name", "fullName")),
             gender=payload.get("gender"),
-            date_of_birth=_first(payload, "dob", "dateOfBirth", "birthdate"),
-            mobile=payload.get("mobile"),
-            email=payload.get("email"),
-            state=_first(payload, "stateName", "state"),
-            district=_first(payload, "districtName", "district"),
+            date_of_birth=_one(_first(payload, "dob", "dateOfBirth", "birthdate")),
+            mobile=_one(payload.get("mobile")),
+            email=_one(payload.get("email")),
+            state=_one(_first(payload, "stateName", "state")),
+            district=_one(_first(payload, "districtName", "district")),
             kyc_verified=_first(payload, "kycVerified", "kycStatus"),
             status=payload.get("status"),
             auth_methods=[str(m) for m in _as_list(_first(payload, "authMethods", "authMethod"))],

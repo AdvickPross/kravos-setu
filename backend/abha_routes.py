@@ -32,6 +32,7 @@ first.
 
 from __future__ import annotations
 
+import logging
 import threading
 from typing import Annotated, Any
 
@@ -55,6 +56,8 @@ from abha.otp_policy import ResendState, default_policy
 from abha.profile import get_abha_card, get_profile, get_qr_code
 from backend.abha_link import AbhaLink, AbhaLinkError, default_store
 from backend.data_layer import get_patient
+
+log = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/abha", tags=["abha"])
 
@@ -185,6 +188,11 @@ def _handle(call: "Any") -> Any:
     """
     try:
         return call()
+    except HTTPException:
+        # Already shaped, and already correct -- `_client()` raises 503 this
+        # way when credentials are absent. The broad handler below would
+        # otherwise rewrite that into an unhandled 500.
+        raise
     except AbhaFlowError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except AbhaApiError as exc:
@@ -207,6 +215,30 @@ def _handle(call: "Any") -> Any:
         raise HTTPException(status_code=502, detail=f"ABDM unreachable: {exc}") from exc
     except AbhaError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+    except Exception as exc:  # noqa: BLE001 - see below; this must not escape
+        # Anything unforeseen -- a pydantic ValidationError on a response shape
+        # ABDM changed, most likely -- must still leave as an HTTPException.
+        #
+        # An exception that escapes a route is handled by Starlette's
+        # ServerErrorMiddleware, which sits *outside* CORSMiddleware. The 500
+        # it produces therefore carries no Access-Control-Allow-Origin header,
+        # and the browser reports a CORS failure: the one error message that
+        # says nothing about the actual fault and sends everyone looking at
+        # origins and headers instead. That happened -- ABDM returned
+        # `phrAddress` as an array, pydantic refused it, and a successful ABHA
+        # enrolment surfaced in the UI as "Failed to fetch".
+        #
+        # Converting it here keeps it inside the middleware stack, so the
+        # response gets CORS headers and the real cause reaches the console.
+        log.exception("unhandled error in %s", call)
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "code": "KRAVOS-UNHANDLED",
+                "message": f"{type(exc).__name__}: {exc}",
+                "source": "kravos",
+            },
+        ) from exc
 
 
 def _require_x_token(token: str | None) -> str:

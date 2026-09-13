@@ -404,3 +404,61 @@ def test_lookup_by_abha_before_creating_a_record(api: TestClient, link_store):
 def test_a_masked_abha_number_is_422(api: TestClient, link_store):
     response = api.get("/api/abha/link/by-abha/91-****-****-9012")
     assert response.status_code == 422
+
+
+# --------------------------------------------------------------------------
+# response shapes ABDM changes under us
+# --------------------------------------------------------------------------
+
+
+def test_an_address_returned_as_an_array_does_not_500(api: TestClient, monkeypatch):
+    """ABDM returns `phrAddress` as a list from enrolment -- an ABHA number can
+    carry six addresses -- even though the guide shows a bare string.
+
+    Assigning that to a `str | None` field raised inside pydantic, escaped the
+    route, and reached the browser as a CORS error, because Starlette's
+    server-error handler sits outside CORSMiddleware. A successfully created
+    ABHA looked like a network failure.
+    """
+    _wire(
+        monkeypatch,
+        FakeAbdm(
+            {
+                "/v3/enrollment/enrol/byAadhaar": {
+                    "ABHAProfile": {
+                        "ABHANumber": "91-7366-1108-3337",
+                        "phrAddress": ["91736611083337@sbx"],
+                        "mobile": None,
+                    },
+                    "tokens": {"token": "x-tok"},
+                    "new": True,
+                }
+            }
+        ),
+    )
+    response = api.post(
+        "/api/abha/enrol/aadhaar/verify", json={"txnId": "t", "otp": "123456"}
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["account"]["abha_address"] == "91736611083337@sbx"
+    assert body["account"]["abha_number"] == "91-7366-1108-3337"
+
+
+def test_an_unforeseen_error_stays_an_http_exception(api: TestClient, monkeypatch):
+    """The systemic half. Whatever ABDM sends, the failure must leave the app
+    through the middleware stack so the response carries CORS headers and the
+    cause is readable -- not as a bare 500 the browser blames on origins."""
+    import backend.abha_routes as routes
+
+    def explode():
+        raise ValueError("something nobody predicted")
+
+    monkeypatch.setattr(routes, "request_aadhaar_otp", lambda *a, **k: explode())
+    _wire(monkeypatch, FakeAbdm({"/v3/enrollment/request/otp": {"txnId": "t"}}))
+
+    response = api.post("/api/abha/enrol/aadhaar/otp", json={"aadhaar": "9" * 12})
+    assert response.status_code == 500
+    detail = response.json()["detail"]
+    assert detail["code"] == "KRAVOS-UNHANDLED"
+    assert "something nobody predicted" in detail["message"]
