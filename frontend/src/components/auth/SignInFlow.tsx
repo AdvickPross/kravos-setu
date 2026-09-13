@@ -9,9 +9,10 @@ import {
   type AddressChannel,
   type LoginMethod,
 } from "@/lib/abha";
+import { explain, type Explained } from "@/lib/abha-errors";
 import { setLiveToken, type AbhaSession } from "@/lib/session";
 import {
-  ErrorLine,
+  Failure,
   Labelled,
   OtpInput,
   Primary,
@@ -77,15 +78,15 @@ export function SignInFlow({
   const [tToken, setTToken] = useState<string | null>(null);
   const [step, setStep] = useState<Step>("credential");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Explained | null>(null);
 
   const active = METHODS[method];
 
+  // Not the raw message. ABDM answers a locked Aadhaar, a wrong OTP and an
+  // unregistered mobile with three sentences that look alike and need three
+  // different actions; `explain` picks the action and the words together.
   function fail(call: AbhaCall) {
-    // One line, in the patient's terms. The field-by-field breakdown that /m1
-    // renders is right for a tester and noise for someone holding a phone.
-    const fields = call.fields?.map((f) => f.message).filter(Boolean);
-    setError(fields?.length ? fields.join(" ") : (call.message ?? "Something went wrong."));
+    setError(explain(call));
   }
 
   function finish(account: AbhaAccount, token: string | null) {
@@ -139,7 +140,12 @@ export function SignInFlow({
       setTToken(result.t_token);
       setStep("choose");
     } else {
-      setError("Verified, but no account came back. Please try again.");
+      setError({
+        title: "Verification went through, but no account came back",
+        detail:
+          "ABDM accepted the OTP and returned neither a session nor a list to choose from. Start again.",
+        recovery: "restart",
+      });
     }
     setBusy(false);
   }
@@ -191,7 +197,7 @@ export function SignInFlow({
             </button>
           ))}
         </div>
-        {error && <ErrorLine>{error}</ErrorLine>}
+        {error && <Failure explained={error} onRestart={restart} onCreate={onSwitchToSignUp} />}
         <button
           type="button"
           onClick={restart}
@@ -212,7 +218,17 @@ export function SignInFlow({
         >
           <OtpInput value={otp} onChange={setOtp} onEnter={() => otp.length === 6 && verify()} />
         </Labelled>
-        {error && <ErrorLine>{error}</ErrorLine>}
+        {error && (
+          <Failure
+            explained={error}
+            onRetry={() => {
+              setOtp("");
+              setError(null);
+            }}
+            onRestart={restart}
+            onCreate={onSwitchToSignUp}
+          />
+        )}
         <Primary onClick={verify} busy={busy} disabled={otp.length < 6}>
           Verify and continue
         </Primary>
@@ -305,7 +321,14 @@ export function SignInFlow({
         />
       </Labelled>
 
-      {error && <ErrorLine>{error}</ErrorLine>}
+      {error && (
+        <Failure
+          explained={error}
+          onRetry={() => setError(null)}
+          onRestart={restart}
+          onCreate={onSwitchToSignUp}
+        />
+      )}
 
       <Primary onClick={() => sendOtp()} busy={busy} disabled={!identifier.trim() || disabled}>
         Send OTP

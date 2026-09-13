@@ -270,3 +270,67 @@ export function Resend({ txnId, onResend }: { txnId: string; onResend: () => voi
     </button>
   );
 }
+
+/**
+ * A failure, with the one action that resolves it.
+ *
+ * Replaces the single red line. The line was honest and inert: it repeated
+ * ABDM's sentence and left the person facing the same screen with the same
+ * buttons, which for a UIDAI lockout means retrying into a wall. What is
+ * offered here comes from `explain()`, so the recovery and the wording cannot
+ * drift apart.
+ */
+export function Failure({
+  explained,
+  onRetry,
+  onRestart,
+  onCreate,
+}: {
+  explained: import("@/lib/abha-errors").Explained;
+  onRetry?: () => void;
+  onRestart?: () => void;
+  onCreate?: () => void;
+}) {
+  const { title, detail, recovery } = explained;
+  // A lockout is the only one that is not the user's mistake to correct, so it
+  // is the only one styled as information rather than as an error.
+  const tone =
+    recovery === "wait" || recovery === "create"
+      ? "border-warn-line bg-warn-bg text-warn"
+      : "border-danger-line bg-danger-bg text-danger";
+
+  return (
+    <div role="alert" className={`rounded-lg border px-3.5 py-3 ${tone}`}>
+      <p className="text-xs font-semibold">{title}</p>
+      <p className="mt-1 text-xs leading-relaxed opacity-90">{detail}</p>
+
+      {recovery === "create" && onCreate && (
+        <button
+          type="button"
+          onClick={onCreate}
+          className="mt-2.5 rounded-md border border-current px-2.5 py-1 text-xs font-semibold transition hover:bg-current/10"
+        >
+          Create an ABHA
+        </button>
+      )}
+      {(recovery === "restart" || recovery === "wait") && onRestart && (
+        <button
+          type="button"
+          onClick={onRestart}
+          className="mt-2.5 rounded-md border border-current px-2.5 py-1 text-xs font-semibold transition hover:bg-current/10"
+        >
+          {recovery === "wait" ? "Start over" : "Request a new OTP"}
+        </button>
+      )}
+      {recovery === "retry" && onRetry && (
+        <button
+          type="button"
+          onClick={onRetry}
+          className="mt-2.5 rounded-md border border-current px-2.5 py-1 text-xs font-semibold transition hover:bg-current/10"
+        >
+          Try again
+        </button>
+      )}
+    </div>
+  );
+}

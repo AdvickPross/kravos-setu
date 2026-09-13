@@ -3,11 +3,13 @@
 import { useState } from "react";
 
 import { abha, type AbhaCall, type EnrolmentResult } from "@/lib/abha";
+import { explain, type Explained } from "@/lib/abha-errors";
 import { abhaAddressProblem } from "@/lib/m1-cases";
 import { setLiveToken, type AbhaSession } from "@/lib/session";
 import {
   Banner,
   ErrorLine,
+  Failure,
   Labelled,
   OtpInput,
   Primary,
@@ -56,23 +58,34 @@ export function SignUpFlow({
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [address, setAddress] = useState("");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Explained | null>(null);
+  // Local validation failures are separate: they are ours, not ABDM's, and
+  // routing them through `explain` would dress a typo as a protocol failure.
+  const [localError, setLocalError] = useState<string | null>(null);
 
   const digits = aadhaar.replace(/\D/g, "");
   const addressProblem = address ? abhaAddressProblem(address) : null;
 
   function fail(call: AbhaCall) {
-    const fields = call.fields?.map((f) => f.message).filter(Boolean);
-    setError(fields?.length ? fields.join(" ") : (call.message ?? "Something went wrong."));
+    setError(explain(call));
+  }
+
+  function restart() {
+    setStep("aadhaar");
+    setOtp("");
+    setTxnId("");
+    setError(null);
+    setLocalError(null);
   }
 
   async function sendOtp(resend = false) {
     if (digits.length !== 12) {
-      setError("Aadhaar number is not valid — it must be 12 digits.");
+      setLocalError("Aadhaar number is not valid — it must be 12 digits.");
       return;
     }
     setBusy(true);
     setError(null);
+    setLocalError(null);
     const call = await abha.enrolRequestOtp(digits, resend ? txnId : undefined);
     if (call.ok) {
       setTxnId(call.body.txn_id);
@@ -192,7 +205,8 @@ export function SignUpFlow({
               maxLength={10}
             />
           </Labelled>
-          {error && <ErrorLine>{error}</ErrorLine>}
+          {localError && <ErrorLine>{localError}</ErrorLine>}
+          {error && <Failure explained={error} onRetry={() => setError(null)} onRestart={restart} />}
           <Primary onClick={() => sendOtp()} busy={busy} disabled={digits.length !== 12}>
             Send OTP
           </Primary>
@@ -212,7 +226,16 @@ export function SignUpFlow({
           >
             <OtpInput value={otp} onChange={setOtp} onEnter={() => otp.length === 6 && create()} />
           </Labelled>
-          {error && <ErrorLine>{error}</ErrorLine>}
+          {error && (
+            <Failure
+              explained={error}
+              onRetry={() => {
+                setOtp("");
+                setError(null);
+              }}
+              onRestart={restart}
+            />
+          )}
           <Primary onClick={create} busy={busy} disabled={otp.length < 6}>
             Create my ABHA
           </Primary>
@@ -289,7 +312,7 @@ export function SignUpFlow({
           </Labelled>
 
           {addressProblem && <ErrorLine>{addressProblem}</ErrorLine>}
-          {error && <ErrorLine>{error}</ErrorLine>}
+          {error && <Failure explained={error} onRetry={() => setError(null)} />}
 
           <Primary onClick={claim} busy={busy} disabled={!address || Boolean(addressProblem)}>
             Claim address
