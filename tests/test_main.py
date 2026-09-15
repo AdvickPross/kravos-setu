@@ -1,20 +1,17 @@
 """backend.main -- FastAPI routes.
 
 Isolated from the real corpus the same way test_data_layer.py is: each test
-points backend.data_layer at a tmp_path fixture before hitting the app
+inserts rows into kravos_test (see tests/conftest.py) before hitting the app
 through TestClient, so responses are deterministic.
 """
 
 from __future__ import annotations
 
-import json
-from pathlib import Path
-
 import pytest
 from fastapi.testclient import TestClient
 
-from backend import data_layer
 from backend.main import app
+from tests.conftest import insert_facts, insert_patients
 
 PATIENT_ID = "patient-1"
 
@@ -42,19 +39,14 @@ def _fact(fact_id: str, **overrides) -> dict:
     return base
 
 
-def _write_jsonl(path: Path, records: list[dict]) -> None:
-    with path.open("w", encoding="utf-8") as handle:
-        for record in records:
-            handle.write(json.dumps(record) + "\n")
+@pytest.fixture(autouse=True)
+def _isolated_db(use_test_db):
+    pass
 
 
 @pytest.fixture(autouse=True)
-def _isolated_storage(monkeypatch, tmp_path):
-    facts_dir = tmp_path / "facts_by_patient"
-    facts_dir.mkdir()
-    patients_path = tmp_path / "patients.jsonl"
-    _write_jsonl(
-        patients_path,
+def _seed_patients(_isolated_db):
+    insert_patients(
         [
             {
                 "patient_id": PATIENT_ID,
@@ -74,18 +66,12 @@ def _isolated_storage(monkeypatch, tmp_path):
                 "_source_file": "y.json",
                 "_n_facts": 0,
             },
-        ],
+        ]
     )
-
-    monkeypatch.setattr(data_layer, "FACTS_BY_PATIENT_DIR", facts_dir)
-    monkeypatch.setattr(data_layer, "PATIENTS_PATH", patients_path)
-    monkeypatch.setattr(data_layer, "_patient_facts_cache", {})
-    monkeypatch.setattr(data_layer, "_patients_cache", None)
-    return facts_dir, patients_path
 
 
 @pytest.fixture
-def client(_isolated_storage) -> TestClient:
+def client() -> TestClient:
     return TestClient(app)
 
 
@@ -114,9 +100,8 @@ def test_get_patient_404_for_unknown_id(client: TestClient):
     assert response.status_code == 404
 
 
-def test_query_endpoint_returns_full_response_shape(client: TestClient, _isolated_storage):
-    facts_dir, _ = _isolated_storage
-    _write_jsonl(facts_dir / f"{PATIENT_ID}.jsonl", [_fact("f1")])
+def test_query_endpoint_returns_full_response_shape(client: TestClient):
+    insert_facts([_fact("f1")])
 
     response = client.post(
         "/api/query", json={"patient_id": PATIENT_ID, "query": "any allergies?"}
@@ -153,9 +138,8 @@ def test_query_endpoint_404_for_unknown_patient(client: TestClient):
     assert response.status_code == 404
 
 
-def test_query_endpoint_finds_the_allergy_fact(client: TestClient, _isolated_storage):
-    facts_dir, _ = _isolated_storage
-    _write_jsonl(facts_dir / f"{PATIENT_ID}.jsonl", [_fact("f1")])
+def test_query_endpoint_finds_the_allergy_fact(client: TestClient):
+    insert_facts([_fact("f1")])
 
     response = client.post(
         "/api/query", json={"patient_id": PATIENT_ID, "query": "aspirin allergy"}

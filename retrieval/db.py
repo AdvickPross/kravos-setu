@@ -52,6 +52,47 @@ CREATE INDEX IF NOT EXISTS facts_date_idx
     ON facts (date);
 CREATE INDEX IF NOT EXISTS facts_patient_date_idx
     ON facts (patient_id, date DESC);
+
+-- One row of patients.jsonl. Mirrors backend.models.PatientSummary exactly.
+CREATE TABLE IF NOT EXISTS patients (
+    patient_id  TEXT PRIMARY KEY,
+    name        TEXT,
+    birth_date  DATE,
+    gender      TEXT,
+    deceased    TIMESTAMPTZ,
+    n_facts     INTEGER NOT NULL DEFAULT 0,
+    source_file TEXT
+);
+
+-- Conversational RAG (backend/conversation.py). No clinician identity
+-- exists in this system -- ABHA sign-in identifies the patient, not the
+-- doctor asking questions -- so a conversation is keyed by patient_id and
+-- its own generated id, not by clinician.
+CREATE TABLE IF NOT EXISTS conversations (
+    conversation_id TEXT PRIMARY KEY,
+    patient_id      TEXT NOT NULL,
+    started_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    last_turn_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS conversations_patient_last_turn_idx
+    ON conversations (patient_id, last_turn_at DESC);
+
+CREATE TABLE IF NOT EXISTS conversation_turns (
+    turn_id         TEXT PRIMARY KEY,
+    conversation_id TEXT NOT NULL REFERENCES conversations (conversation_id),
+    turn_index      INTEGER NOT NULL,
+    role            TEXT NOT NULL CHECK (role IN ('user', 'assistant')),
+    text            TEXT NOT NULL,
+    -- Which facts (backend.models.Fact.fact_id) and narrative chunks this
+    -- assistant turn's answer actually cited -- provenance is not optional
+    -- anywhere else in this system and stays that way here.
+    cited_fact_ids  JSONB,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS conversation_turns_conv_idx
+    ON conversation_turns (conversation_id, turn_index);
 """
 
 COLUMNS = (
@@ -75,6 +116,21 @@ COLUMNS = (
     "hi_type",
     "hip_id",
 )
+
+PATIENT_COLUMNS = (
+    "patient_id",
+    "name",
+    "birth_date",
+    "gender",
+    "deceased",
+    "n_facts",
+    "source_file",
+)
+
+# tests/conftest.py points at this database instead of DbSettings.load()'s
+# default -- never the one scripts/load_facts.py populates with the real
+# 1,083,231-row corpus, so a test run can never truncate real data.
+TEST_DBNAME = "kravos_test"
 
 
 @dataclass(frozen=True)

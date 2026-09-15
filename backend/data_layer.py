@@ -1,78 +1,110 @@
 """The only module that touches fact storage.
 
-Backed by pre-split per-patient JSON now (``facts_by_patient/{patient_id}.jsonl``,
-produced by ``scripts/split_facts.py``). The function signatures here are
-deliberately the same shape a Postgres-backed version would take -- filter
-kwargs in, ``Fact``/``PatientSummary`` objects out -- so swapping the body for
-SQL later is a single-file change nothing else notices. No caller may read
-``facts.jsonl``, ``facts_by_patient/``, or ``patients.jsonl`` directly.
+Backed by Postgres now (``facts`` and ``patients`` tables, loaded by
+``scripts/load_facts.py``). The function signatures here are unchanged from
+the JSON-backed version this replaced -- filter kwargs in, ``Fact`` /
+``PatientSummary`` objects out -- so nothing above this module (``retrieve``,
+``brief``, the FastAPI routes) needed to change for the swap.
 
-Per-patient facts are cached in a plain dict, populated lazily on first
-access. 952 patients x ~1,100 facts is fine in memory once warm; nothing is
-preloaded at import time or startup.
+Connection settings come from ``retrieval.db.DbSettings``, which reads
+``data/db.json`` and honours ``KRAVOS_*`` environment overrides -- including
+``KRAVOS_DBNAME``, which is how ``tests/conftest.py`` points every test at
+``kravos_test`` instead of the real corpus.
+
+One connection, opened lazily and reused. Reconnects once on failure (the
+container restarting during a long dev session) rather than raising.
 """
 
 from __future__ import annotations
 
-import json
-from datetime import date, datetime, timezone
-from pathlib import Path
+from datetime import date
+
+import psycopg
 
 from backend.models import Fact, PatientSummary
+from retrieval.db import DbSettings
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-FACTS_BY_PATIENT_DIR = REPO_ROOT / "facts_by_patient"
-PATIENTS_PATH = REPO_ROOT / "patients.jsonl"
-
-_MIN_DATETIME = datetime.min.replace(tzinfo=timezone.utc)
-
-_patient_facts_cache: dict[str, list[Fact]] = {}
-_patients_cache: dict[str, PatientSummary] | None = None
+_conn: psycopg.Connection | None = None
 
 
-def _load_patients() -> dict[str, PatientSummary]:
-    global _patients_cache
-    if _patients_cache is not None:
-        return _patients_cache
-
-    patients: dict[str, PatientSummary] = {}
-    with PATIENTS_PATH.open(encoding="utf-8") as handle:
-        for line in handle:
-            if not line.strip():
-                continue
-            summary = PatientSummary.model_validate(json.loads(line))
-            patients[summary.patient_id] = summary
-
-    _patients_cache = patients
-    return patients
+def _connection() -> psycopg.Connection:
+    global _conn
+    if _conn is None or _conn.closed:
+        _conn = DbSettings.load().connect()
+        _conn.autocommit = True
+    return _conn
 
 
-def _load_patient_facts(patient_id: str) -> list[Fact]:
-    if patient_id in _patient_facts_cache:
-        return _patient_facts_cache[patient_id]
+def connection() -> psycopg.Connection:
+    """The shared connection, for the other Postgres-backed tables this
+    module doesn't own (conversations / conversation_turns --
+    backend/conversation.py). Same lazy-reconnect instance ``get_patient*``
+    uses, not a second connection to the same database."""
+    return _connection()
 
-    facts: list[Fact] = []
-    path = FACTS_BY_PATIENT_DIR / f"{patient_id}.jsonl"
-    if path.exists():
-        with path.open(encoding="utf-8") as handle:
-            for line in handle:
-                if not line.strip():
-                    continue
-                facts.append(Fact.model_validate_json(line))
 
-    _patient_facts_cache[patient_id] = facts
-    return facts
+def _fact_from_row(row: tuple, columns: list[str]) -> Fact:
+    data = dict(zip(columns, row))
+    return Fact.model_validate(data)
+
+
+def _patient_from_row(row: tuple, columns: list[str]) -> PatientSummary:
+    data = dict(zip(columns, row))
+    return PatientSummary.model_validate(
+        {
+            "patient_id": data["patient_id"],
+            "name": data["name"],
+            "birth_date": data["birth_date"],
+            "gender": data["gender"],
+            "deceased": data["deceased"],
+            "_n_facts": data["n_facts"],
+            "_source_file": data["source_file"],
+        }
+    )
 
 
 def list_patients() -> list[PatientSummary]:
-    return list(_load_patients().values())
+    with _connection().cursor() as cur:
+        cur.execute(
+            "SELECT patient_id, name, birth_date, gender, deceased, n_facts, source_file "
+            "FROM patients"
+        )
+        columns = [d.name for d in cur.description]
+        return [_patient_from_row(row, columns) for row in cur.fetchall()]
 
 
 def get_patient(patient_id: str) -> PatientSummary:
-    patients = _load_patients()
-    if patient_id not in patients:
-        raise KeyError(f"unknown patient_id: {patient_id}")
-    return patients[patient_id]
+    with _connection().cursor() as cur:
+        cur.execute(
+            "SELECT patient_id, name, birth_date, gender, deceased, n_facts, source_file "
+            "FROM patients WHERE patient_id = %s",
+            (patient_id,),
+        )
+        row = cur.fetchone()
+        if row is None:
+            raise KeyError(f"unknown patient_id: {patient_id}")
+        columns = [d.name for d in cur.description]
+        return _patient_from_row(row, columns)
+
+
+_FACT_COLUMNS = (
+    "fact_id",
+    "patient_id",
+    "category",
+    "safety_class",
+    "text",
+    "code_system",
+    "code",
+    "display",
+    "value",
+    "unit",
+    "date",
+    "status",
+    "source_resource_type",
+    "source_resource_id",
+    "encounter_id",
+    "also_in",
+)
 
 
 def get_patient_facts(
@@ -89,21 +121,33 @@ def get_patient_facts(
     ignored -- safety-critical retrieval returns the complete set, never
     top-k.
     """
-    category_set = set(categories) if categories else None
-    code_set = set(codes) if codes else None
+    where = ["patient_id = %s"]
+    params: list = [patient_id]
 
-    matches = [
-        fact
-        for fact in _load_patient_facts(patient_id)
-        if (category_set is None or fact.category in category_set)
-        and (code_set is None or fact.code in code_set)
-        and (date_from is None or (fact.date is not None and fact.date.date() >= date_from))
-        and (date_to is None or (fact.date is not None and fact.date.date() <= date_to))
-    ]
-    matches.sort(key=lambda f: f.date or _MIN_DATETIME, reverse=True)
+    if categories:
+        where.append("category = ANY(%s)")
+        params.append(list(categories))
+    if codes:
+        where.append("code = ANY(%s)")
+        params.append(list(codes))
+    if date_from is not None:
+        where.append("date >= %s")
+        params.append(date_from)
+    if date_to is not None:
+        where.append("date <= %s")
+        params.append(date_to)
 
-    is_allergy_query = category_set is not None and "ALLERGY" in category_set
+    is_allergy_query = bool(categories) and "ALLERGY" in categories
+    sql = (
+        f"SELECT {', '.join(_FACT_COLUMNS)} FROM facts "
+        f"WHERE {' AND '.join(where)} "
+        "ORDER BY date DESC NULLS LAST"
+    )
     if limit is not None and not is_allergy_query:
-        matches = matches[:limit]
+        sql += " LIMIT %s"
+        params.append(limit)
 
-    return matches
+    with _connection().cursor() as cur:
+        cur.execute(sql, params)
+        columns = [d.name for d in cur.description]
+        return [_fact_from_row(row, columns) for row in cur.fetchall()]

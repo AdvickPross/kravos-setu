@@ -1,7 +1,8 @@
 """backend.retrieve -- entity-driven retrieval and the missingness checklist.
 
 Isolated from the real corpus the same way test_data_layer.py is: each test
-points backend.data_layer at a tmp_path fixture so results are deterministic.
+inserts facts into kravos_test (see tests/conftest.py) rather than relying
+on whatever the real corpus happens to contain.
 """
 
 from __future__ import annotations
@@ -12,11 +13,17 @@ from pathlib import Path
 
 import pytest
 
-from backend import data_layer, retrieve
+from backend import retrieve
 from backend.models import MissingReason, NarrativeMatch, RetrievalOutcome
 from retrieval.models import MatchQuality, ParsedQuery, ResolvedEntity
+from tests.conftest import insert_facts
 
 PATIENT = "patient-1"
+
+
+@pytest.fixture(autouse=True)
+def _isolated_db(use_test_db):
+    pass
 
 
 def _fact(fact_id: str, **overrides) -> dict:
@@ -42,12 +49,6 @@ def _fact(fact_id: str, **overrides) -> dict:
     return base
 
 
-def _write_jsonl(path: Path, records: list[dict]) -> None:
-    with path.open("w", encoding="utf-8") as handle:
-        for record in records:
-            handle.write(json.dumps(record) + "\n")
-
-
 def _entity(span: str, quality: MatchQuality, **overrides) -> ResolvedEntity:
     base = dict(
         span=span,
@@ -64,30 +65,11 @@ def _entity(span: str, quality: MatchQuality, **overrides) -> ResolvedEntity:
     return ResolvedEntity(**base)
 
 
-@pytest.fixture(autouse=True)
-def _isolated_storage(monkeypatch, tmp_path):
-    facts_dir = tmp_path / "facts_by_patient"
-    facts_dir.mkdir()
-    patients_path = tmp_path / "patients.jsonl"
-    _write_jsonl(patients_path, [])
-
-    monkeypatch.setattr(data_layer, "FACTS_BY_PATIENT_DIR", facts_dir)
-    monkeypatch.setattr(data_layer, "PATIENTS_PATH", patients_path)
-    monkeypatch.setattr(data_layer, "_patient_facts_cache", {})
-    monkeypatch.setattr(data_layer, "_patients_cache", None)
-    return facts_dir, patients_path
-
-
-def _put_patient_facts(facts_dir: Path, patient_id: str, records: list[dict]) -> None:
-    _write_jsonl(facts_dir / f"{patient_id}.jsonl", records)
-
-
 # -------------------------------------------------------------------- retrieve
 
 
-def test_resolved_entity_returns_facts_with_found_outcome(_isolated_storage):
-    facts_dir, _ = _isolated_storage
-    _put_patient_facts(facts_dir, PATIENT, [_fact("f1")])
+def test_resolved_entity_returns_facts_with_found_outcome():
+    insert_facts([_fact("f1")])
     parsed = ParsedQuery(raw="glucose?", entities=[_entity("glucose", MatchQuality.EXACT)])
 
     result = retrieve.retrieve(parsed, PATIENT)
@@ -99,7 +81,7 @@ def test_resolved_entity_returns_facts_with_found_outcome(_isolated_storage):
     assert result.resolved is True
 
 
-def test_resolved_entity_with_no_matching_facts_is_found_none(_isolated_storage):
+def test_resolved_entity_with_no_matching_facts_is_found_none():
     parsed = ParsedQuery(raw="glucose?", entities=[_entity("glucose", MatchQuality.EXACT)])
 
     result = retrieve.retrieve(parsed, PATIENT)
@@ -108,9 +90,8 @@ def test_resolved_entity_with_no_matching_facts_is_found_none(_isolated_storage)
     assert result.entities[0].facts == []
 
 
-def test_fuzzy_and_unresolved_entities_are_not_queried(_isolated_storage):
-    facts_dir, _ = _isolated_storage
-    _put_patient_facts(facts_dir, PATIENT, [_fact("f1")])
+def test_fuzzy_and_unresolved_entities_are_not_queried():
+    insert_facts([_fact("f1")])
     parsed = ParsedQuery(
         raw="glucoze thingy?",
         entities=[
@@ -126,11 +107,8 @@ def test_fuzzy_and_unresolved_entities_are_not_queried(_isolated_storage):
     assert result.resolved is False
 
 
-def test_negated_entity_still_retrieves_facts_and_is_flagged(_isolated_storage):
-    facts_dir, _ = _isolated_storage
-    _put_patient_facts(
-        facts_dir, PATIENT, [_fact("f1", category="ALLERGY", code="1191")]
-    )
+def test_negated_entity_still_retrieves_facts_and_is_flagged():
+    insert_facts([_fact("f1", category="ALLERGY", code="1191")])
     parsed = ParsedQuery(
         raw="no known allergies",
         entities=[
@@ -150,17 +128,14 @@ def test_negated_entity_still_retrieves_facts_and_is_flagged(_isolated_storage):
     assert [f.fact_id for f in result.entities[0].facts] == ["f1"]
 
 
-def test_overlapping_entities_at_same_span_get_separate_results(_isolated_storage):
+def test_overlapping_entities_at_same_span_get_separate_results():
     """aspirin -> ALLERGY substance + MEDICATION products, two entities
     sharing a span; each gets its own EntityFacts, not a merged pile."""
-    facts_dir, _ = _isolated_storage
-    _put_patient_facts(
-        facts_dir,
-        PATIENT,
+    insert_facts(
         [
             _fact("allergy-1", category="ALLERGY", code="1191"),
             _fact("med-1", category="MEDICATION", code="243670"),
-        ],
+        ]
     )
     parsed = ParsedQuery(
         raw="aspirin",
@@ -184,15 +159,12 @@ def test_overlapping_entities_at_same_span_get_separate_results(_isolated_storag
     assert by_category == {"ALLERGY": ["allergy-1"], "MEDICATION": ["med-1"]}
 
 
-def test_date_window_from_parsed_query_is_applied(_isolated_storage):
-    facts_dir, _ = _isolated_storage
-    _put_patient_facts(
-        facts_dir,
-        PATIENT,
+def test_date_window_from_parsed_query_is_applied():
+    insert_facts(
         [
             _fact("old", date="2019-01-01T00:00:00+05:30"),
             _fact("recent", date="2021-06-01T00:00:00+05:30"),
-        ],
+        ]
     )
     parsed = ParsedQuery(
         raw="glucose last year",
@@ -206,16 +178,15 @@ def test_date_window_from_parsed_query_is_applied(_isolated_storage):
     assert [f.fact_id for f in result.entities[0].facts] == ["recent"]
 
 
-def test_timings_are_populated(_isolated_storage):
+def test_timings_are_populated():
     parsed = ParsedQuery(raw="glucose?", entities=[_entity("glucose", MatchQuality.EXACT)])
     result = retrieve.retrieve(parsed, PATIENT)
     assert result.timings.retrieve_ms is not None
     assert result.timings.retrieve_ms >= 0
 
 
-def test_all_facts_deduplicates_across_entities_sharing_a_fact(_isolated_storage):
-    facts_dir, _ = _isolated_storage
-    _put_patient_facts(facts_dir, PATIENT, [_fact("shared", code="1234-5")])
+def test_all_facts_deduplicates_across_entities_sharing_a_fact():
+    insert_facts([_fact("shared", code="1234-5")])
     parsed = ParsedQuery(
         raw="glucose glucose",
         entities=[
@@ -246,7 +217,7 @@ def test_missing_item_is_absent_when_nothing_on_file(tmp_path):
     assert missing[0].reason is MissingReason.ABSENT
 
 
-def test_missing_item_absent_for_category_only_check_with_no_facts(tmp_path, _isolated_storage):
+def test_missing_item_absent_for_category_only_check_with_no_facts(tmp_path):
     expected_path = _expected_facts_file(
         tmp_path,
         [{"key": "meds", "label": "Meds", "categories": ["MEDICATION"], "codes": [], "window_days": None}],
@@ -256,11 +227,8 @@ def test_missing_item_absent_for_category_only_check_with_no_facts(tmp_path, _is
     assert missing[0].reason is MissingReason.ABSENT
 
 
-def test_missing_item_not_flagged_when_category_only_check_has_any_fact(
-    tmp_path, _isolated_storage
-):
-    facts_dir, _ = _isolated_storage
-    _put_patient_facts(facts_dir, PATIENT, [_fact("f1", category="MEDICATION")])
+def test_missing_item_not_flagged_when_category_only_check_has_any_fact(tmp_path):
+    insert_facts([_fact("f1", category="MEDICATION")])
     expected_path = _expected_facts_file(
         tmp_path,
         [{"key": "meds", "label": "Meds", "categories": ["MEDICATION"], "codes": [], "window_days": None}],
@@ -269,13 +237,8 @@ def test_missing_item_not_flagged_when_category_only_check_has_any_fact(
     assert missing == []
 
 
-def test_missing_item_is_stale_when_outside_recency_window(tmp_path, _isolated_storage):
-    facts_dir, _ = _isolated_storage
-    _put_patient_facts(
-        facts_dir,
-        PATIENT,
-        [_fact("old", category="LAB", code="1234-5", date="2020-01-01T00:00:00+05:30")],
-    )
+def test_missing_item_is_stale_when_outside_recency_window(tmp_path):
+    insert_facts([_fact("old", category="LAB", code="1234-5", date="2020-01-01T00:00:00+05:30")])
     expected_path = _expected_facts_file(
         tmp_path,
         [{"key": "cbc", "label": "CBC", "categories": ["LAB"], "codes": ["1234-5"], "window_days": 90}],
@@ -288,13 +251,8 @@ def test_missing_item_is_stale_when_outside_recency_window(tmp_path, _isolated_s
     assert missing[0].last_seen is not None
 
 
-def test_missing_item_not_flagged_when_recent_fact_exists(tmp_path, _isolated_storage):
-    facts_dir, _ = _isolated_storage
-    _put_patient_facts(
-        facts_dir,
-        PATIENT,
-        [_fact("recent", category="LAB", code="1234-5", date="2025-12-15T00:00:00+05:30")],
-    )
+def test_missing_item_not_flagged_when_recent_fact_exists(tmp_path):
+    insert_facts([_fact("recent", category="LAB", code="1234-5", date="2025-12-15T00:00:00+05:30")])
     expected_path = _expected_facts_file(
         tmp_path,
         [{"key": "cbc", "label": "CBC", "categories": ["LAB"], "codes": ["1234-5"], "window_days": 90}],
@@ -319,10 +277,9 @@ def test_real_expected_facts_file_loads_and_is_well_shaped():
 # ---------------------------------------------------------- narrative fallback
 
 
-def test_vector_fallback_not_attempted_when_something_resolved(monkeypatch, _isolated_storage):
+def test_vector_fallback_not_attempted_when_something_resolved(monkeypatch):
     """Fallback only, per the spec -- never runs alongside a coded match."""
-    facts_dir, _ = _isolated_storage
-    _put_patient_facts(facts_dir, PATIENT, [_fact("f1")])
+    insert_facts([_fact("f1")])
     called = []
     monkeypatch.setattr(retrieve, "vector_search_enabled", lambda: True)
     monkeypatch.setattr(retrieve, "_narrative_fallback", lambda *a, **k: called.append(1) or [])
@@ -335,7 +292,7 @@ def test_vector_fallback_not_attempted_when_something_resolved(monkeypatch, _iso
     assert result.timings.vector_ms is None
 
 
-def test_vector_fallback_not_attempted_when_flag_disabled(monkeypatch, _isolated_storage):
+def test_vector_fallback_not_attempted_when_flag_disabled(monkeypatch):
     monkeypatch.setattr(retrieve, "vector_search_enabled", lambda: False)
 
     def _boom(*a, **k):
@@ -350,7 +307,7 @@ def test_vector_fallback_not_attempted_when_flag_disabled(monkeypatch, _isolated
     assert result.timings.vector_ms is None
 
 
-def test_vector_fallback_attempted_when_nothing_resolved_and_flag_on(monkeypatch, _isolated_storage):
+def test_vector_fallback_attempted_when_nothing_resolved_and_flag_on(monkeypatch):
     monkeypatch.setattr(retrieve, "vector_search_enabled", lambda: True)
 
     class _FakeHit:
@@ -385,7 +342,7 @@ def test_vector_fallback_attempted_when_nothing_resolved_and_flag_on(monkeypatch
     assert result.timings.vector_ms is not None
 
 
-def test_vector_fallback_degrades_gracefully_when_store_raises(monkeypatch, _isolated_storage):
+def test_vector_fallback_degrades_gracefully_when_store_raises(monkeypatch):
     monkeypatch.setattr(retrieve, "vector_search_enabled", lambda: True)
 
     class _RaisingStore:
@@ -403,7 +360,7 @@ def test_vector_fallback_degrades_gracefully_when_store_raises(monkeypatch, _iso
     assert result.narrative_matches == []
 
 
-def test_vector_fallback_attempted_when_query_has_no_entities_at_all(monkeypatch, _isolated_storage):
+def test_vector_fallback_attempted_when_query_has_no_entities_at_all(monkeypatch):
     """Empty entities list (nothing even attempted to resolve) is still
     'nothing resolved' -- the fallback should still get a chance."""
     monkeypatch.setattr(retrieve, "vector_search_enabled", lambda: True)

@@ -1,22 +1,27 @@
 """backend.data_layer -- the only module allowed to touch fact storage.
 
-Isolated from the real corpus: each test points the module at a tmp_path
-fixture so filtering, ordering, and the allergy safety rule are verified
-deterministically rather than against whatever facts_by_patient/ happens to
-contain.
+Isolated from the real corpus: every test inserts rows into ``kravos_test``
+(see tests/conftest.py) instead of the ``kravos`` database
+scripts/load_facts.py populates with the real corpus, so filtering,
+ordering, and the allergy safety rule are verified deterministically rather
+than against whatever happens to be loaded for real.
 """
 
 from __future__ import annotations
 
-import json
 from datetime import date
-from pathlib import Path
 
 import pytest
 
 from backend import data_layer
+from tests.conftest import insert_facts, insert_patients
 
 PATIENT = "patient-1"
+
+
+@pytest.fixture(autouse=True)
+def _isolated_db(use_test_db):
+    pass
 
 
 def _fact(fact_id: str, **overrides) -> dict:
@@ -42,67 +47,30 @@ def _fact(fact_id: str, **overrides) -> dict:
     return base
 
 
-def _write_jsonl(path: Path, records: list[dict]) -> None:
-    with path.open("w", encoding="utf-8") as handle:
-        for record in records:
-            handle.write(json.dumps(record) + "\n")
-
-
-@pytest.fixture(autouse=True)
-def _isolated_storage(monkeypatch, tmp_path):
-    facts_dir = tmp_path / "facts_by_patient"
-    facts_dir.mkdir()
-    patients_path = tmp_path / "patients.jsonl"
-    _write_jsonl(patients_path, [])
-
-    monkeypatch.setattr(data_layer, "FACTS_BY_PATIENT_DIR", facts_dir)
-    monkeypatch.setattr(data_layer, "PATIENTS_PATH", patients_path)
-    monkeypatch.setattr(data_layer, "_patient_facts_cache", {})
-    monkeypatch.setattr(data_layer, "_patients_cache", None)
-    return facts_dir, patients_path
-
-
-def _put_patient_facts(facts_dir: Path, patient_id: str, records: list[dict]) -> None:
-    _write_jsonl(facts_dir / f"{patient_id}.jsonl", records)
-
-
 # --------------------------------------------------------------------- facts
 
 
-def test_filters_by_category(_isolated_storage):
-    facts_dir, _ = _isolated_storage
-    _put_patient_facts(
-        facts_dir,
-        PATIENT,
-        [_fact("f1", category="LAB"), _fact("f2", category="MEDICATION")],
-    )
+def test_filters_by_category():
+    insert_facts([_fact("f1", category="LAB"), _fact("f2", category="MEDICATION")])
     results = data_layer.get_patient_facts(PATIENT, categories=["LAB"])
     assert [f.fact_id for f in results] == ["f1"]
 
 
-def test_filters_by_code_in_list_not_equality(_isolated_storage):
+def test_filters_by_code_in_list_not_equality():
     """Multi-code resolution is normal upstream; the store must filter
     ``code IN (...)``-style, never on a single code."""
-    facts_dir, _ = _isolated_storage
-    _put_patient_facts(
-        facts_dir,
-        PATIENT,
-        [_fact("f1", code="A"), _fact("f2", code="B"), _fact("f3", code="C")],
-    )
+    insert_facts([_fact("f1", code="A"), _fact("f2", code="B"), _fact("f3", code="C")])
     results = data_layer.get_patient_facts(PATIENT, codes=["A", "B"])
     assert {f.fact_id for f in results} == {"f1", "f2"}
 
 
-def test_filters_by_date_range_inclusive(_isolated_storage):
-    facts_dir, _ = _isolated_storage
-    _put_patient_facts(
-        facts_dir,
-        PATIENT,
+def test_filters_by_date_range_inclusive():
+    insert_facts(
         [
             _fact("early", date="2020-01-01T00:00:00+05:30"),
             _fact("in_range", date="2020-06-01T00:00:00+05:30"),
             _fact("late", date="2021-01-01T00:00:00+05:30"),
-        ],
+        ]
     )
     results = data_layer.get_patient_facts(
         PATIENT, date_from=date(2020, 3, 1), date_to=date(2020, 9, 1)
@@ -110,83 +78,52 @@ def test_filters_by_date_range_inclusive(_isolated_storage):
     assert [f.fact_id for f in results] == ["in_range"]
 
 
-def test_undated_facts_excluded_by_date_range(_isolated_storage):
-    facts_dir, _ = _isolated_storage
-    _put_patient_facts(
-        facts_dir,
-        PATIENT,
-        [_fact("dated", date="2020-06-01T00:00:00+05:30"), _fact("undated", date=None)],
-    )
+def test_undated_facts_excluded_by_date_range():
+    insert_facts([_fact("dated", date="2020-06-01T00:00:00+05:30"), _fact("undated", date=None)])
     results = data_layer.get_patient_facts(PATIENT, date_from=date(2020, 1, 1))
     assert [f.fact_id for f in results] == ["dated"]
 
 
-def test_orders_most_recent_first_with_undated_last(_isolated_storage):
-    facts_dir, _ = _isolated_storage
-    _put_patient_facts(
-        facts_dir,
-        PATIENT,
+def test_orders_most_recent_first_with_undated_last():
+    insert_facts(
         [
             _fact("older", date="2019-01-01T00:00:00+05:30"),
             _fact("newer", date="2021-01-01T00:00:00+05:30"),
             _fact("undated", date=None),
-        ],
+        ]
     )
     results = data_layer.get_patient_facts(PATIENT)
     assert [f.fact_id for f in results] == ["newer", "older", "undated"]
 
 
-def test_limit_truncates_ranked_results(_isolated_storage):
-    facts_dir, _ = _isolated_storage
-    _put_patient_facts(
-        facts_dir,
-        PATIENT,
+def test_limit_truncates_ranked_results():
+    insert_facts(
         [
             _fact("a", date="2019-01-01T00:00:00+05:30"),
             _fact("b", date="2020-01-01T00:00:00+05:30"),
             _fact("c", date="2021-01-01T00:00:00+05:30"),
-        ],
+        ]
     )
     results = data_layer.get_patient_facts(PATIENT, limit=2)
     assert [f.fact_id for f in results] == ["c", "b"]
 
 
-def test_allergy_category_ignores_limit(_isolated_storage):
-    facts_dir, _ = _isolated_storage
-    _put_patient_facts(
-        facts_dir,
-        PATIENT,
-        [_fact(f"f{i}", category="ALLERGY") for i in range(5)],
-    )
+def test_allergy_category_ignores_limit():
+    insert_facts([_fact(f"f{i}", category="ALLERGY") for i in range(5)])
     results = data_layer.get_patient_facts(PATIENT, categories=["ALLERGY"], limit=1)
     assert len(results) == 5
 
 
-def test_unknown_patient_returns_empty_list_not_error(_isolated_storage):
+def test_unknown_patient_returns_empty_list_not_error():
     results = data_layer.get_patient_facts("no-such-patient")
     assert results == []
-
-
-def test_facts_are_cached_after_first_load(_isolated_storage):
-    facts_dir, _ = _isolated_storage
-    _put_patient_facts(facts_dir, PATIENT, [_fact("f1")])
-    first = data_layer.get_patient_facts(PATIENT)
-    assert len(first) == 1
-
-    # Mutate on disk after the first read; the cached in-memory copy must
-    # be what's served, proving the second call didn't re-hit the file.
-    _put_patient_facts(facts_dir, PATIENT, [_fact("f1"), _fact("f2")])
-    second = data_layer.get_patient_facts(PATIENT)
-    assert len(second) == 1
 
 
 # ------------------------------------------------------------------ patients
 
 
-def test_list_and_get_patient(_isolated_storage):
-    _, patients_path = _isolated_storage
-    _write_jsonl(
-        patients_path,
+def test_list_and_get_patient():
+    insert_patients(
         [
             {
                 "patient_id": PATIENT,
@@ -197,7 +134,7 @@ def test_list_and_get_patient(_isolated_storage):
                 "_source_file": "x.json",
                 "_n_facts": 3,
             }
-        ],
+        ]
     )
     listed = data_layer.list_patients()
     assert [p.patient_id for p in listed] == [PATIENT]
@@ -207,6 +144,6 @@ def test_list_and_get_patient(_isolated_storage):
     assert fetched.n_facts == 3
 
 
-def test_get_patient_unknown_raises_keyerror(_isolated_storage):
+def test_get_patient_unknown_raises_keyerror():
     with pytest.raises(KeyError):
         data_layer.get_patient("no-such-patient")
