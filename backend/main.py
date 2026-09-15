@@ -25,9 +25,18 @@ load_dotenv()
 
 from backend.abha_routes import router as abha_router  # noqa: E402
 from backend.brief import build_brief  # noqa: E402
+from backend.conversation import ConversationNotFoundError, answer as answer_chat
 from backend.data_layer import get_patient, list_patients
 from backend.llm_polish import polish_brief
-from backend.models import BriefSource, PatientSummary, QueryRequest, QueryResponse, StageTimings
+from backend.models import (
+    BriefSource,
+    ChatRequest,
+    ChatResponse,
+    PatientSummary,
+    QueryRequest,
+    QueryResponse,
+    StageTimings,
+)
 from backend.retrieve import retrieve
 from retrieval.ner import parse_query
 
@@ -112,3 +121,18 @@ def api_query(request: QueryRequest) -> QueryResponse:
         result=result,
         timings=timings,
     )
+
+
+@app.post("/api/chat")
+def api_chat(request: ChatRequest) -> ChatResponse:
+    """Conversational RAG: NER + retrieval, same as /api/query, plus
+    conversation memory and a Groq-generated reply instead of the fixed
+    template. See backend/conversation.py."""
+    try:
+        return answer_chat(request.patient_id, request.message, request.conversation_id)
+    except KeyError:
+        raise HTTPException(
+            status_code=404, detail=f"unknown patient_id: {request.patient_id}"
+        )
+    except ConversationNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))

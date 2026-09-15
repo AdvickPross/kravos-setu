@@ -33,6 +33,8 @@ __all__ = [
     "BriefLine",
     "BriefSection",
     "BriefSource",
+    "ChatRequest",
+    "ChatResponse",
     "EntityFacts",
     "Fact",
     "MissingItem",
@@ -341,4 +343,35 @@ class QueryResponse(BaseModel):
     parsed: ParsedQuery
     brief: Brief
     result: RetrievalResult
+    timings: StageTimings = Field(default_factory=StageTimings)
+
+
+class ChatRequest(BaseModel):
+    """POST /api/chat. ``conversation_id`` omitted or null starts a new
+    conversation; passing one back threads the next turn onto it."""
+
+    patient_id: str
+    conversation_id: str | None = None
+    message: str
+
+
+class ChatResponse(BaseModel):
+    """What POST /api/chat returns.
+
+    Same NER (`parse_query`) and retrieval (`retrieve`) as `/api/query` --
+    `result` here is the same `RetrievalResult` shape, so nothing that
+    already renders one needs a second code path. `answer` is the
+    conversational reply; `cited_fact_ids` is every fact and narrative chunk
+    that was actually shown to the model for this turn, not a parse of its
+    output -- provenance the same way `BriefLine.fact_ids` is, attached to
+    what was surfaced rather than claimed after the fact.
+    """
+
+    conversation_id: str
+    patient: PatientSummary
+    message: str
+    answer: str
+    cited_fact_ids: list[str] = Field(default_factory=list)
+    result: RetrievalResult
+    turn_index: int
     timings: StageTimings = Field(default_factory=StageTimings)
