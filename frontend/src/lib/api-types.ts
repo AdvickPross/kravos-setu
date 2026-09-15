@@ -532,6 +532,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/chat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Api Chat
+         * @description Conversational RAG: NER + retrieval, same as /api/query, plus
+         *     conversation memory and a Groq-generated reply instead of the fixed
+         *     template. See backend/conversation.py.
+         */
+        post: operations["api_chat_api_chat_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -737,6 +759,46 @@ export interface components {
          * @enum {string}
          */
         BriefSource: "template" | "llm_polished";
+        /**
+         * ChatRequest
+         * @description POST /api/chat. ``conversation_id`` omitted or null starts a new
+         *     conversation; passing one back threads the next turn onto it.
+         */
+        ChatRequest: {
+            /** Patient Id */
+            patient_id: string;
+            /** Conversation Id */
+            conversation_id?: string | null;
+            /** Message */
+            message: string;
+        };
+        /**
+         * ChatResponse
+         * @description What POST /api/chat returns.
+         *
+         *     Same NER (`parse_query`) and retrieval (`retrieve`) as `/api/query` --
+         *     `result` here is the same `RetrievalResult` shape, so nothing that
+         *     already renders one needs a second code path. `answer` is the
+         *     conversational reply; `cited_fact_ids` is every fact and narrative chunk
+         *     that was actually shown to the model for this turn, not a parse of its
+         *     output -- provenance the same way `BriefLine.fact_ids` is, attached to
+         *     what was surfaced rather than claimed after the fact.
+         */
+        ChatResponse: {
+            /** Conversation Id */
+            conversation_id: string;
+            patient: components["schemas"]["PatientSummary"];
+            /** Message */
+            message: string;
+            /** Answer */
+            answer: string;
+            /** Cited Fact Ids */
+            cited_fact_ids?: string[];
+            result: components["schemas"]["RetrievalResult"];
+            /** Turn Index */
+            turn_index: number;
+            timings?: components["schemas"]["StageTimings"];
+        };
         /**
          * EnrolmentResult
          * @description The outcome of `enrol/byAadhaar`.
@@ -1077,7 +1139,10 @@ export interface components {
             result: components["schemas"]["RetrievalResult"];
             timings?: components["schemas"]["StageTimings"];
         };
-        /** ResendState */
+        /**
+         * ResendState
+         * @description What a UI needs to render the button, from the authority that enforces it.
+         */
         ResendState: {
             /** Resends Used */
             resends_used: number;
@@ -1175,6 +1240,10 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+            /** Input */
+            input?: unknown;
+            /** Context */
+            ctx?: Record<string, never>;
         };
     };
     responses: never;
@@ -2083,6 +2152,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["QueryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    api_chat_api_chat_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChatRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatResponse"];
                 };
             };
             /** @description Validation Error */

@@ -1301,6 +1301,45 @@
           }
         }
       }
+    },
+    "/api/chat": {
+      "post": {
+        "summary": "Api Chat",
+        "description": "Conversational RAG: NER + retrieval, same as /api/query, plus\nconversation memory and a Groq-generated reply instead of the fixed\ntemplate. See backend/conversation.py.",
+        "operationId": "api_chat_api_chat_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1853,6 +1892,83 @@
           "llm_polished"
         ],
         "title": "BriefSource"
+      },
+      "ChatRequest": {
+        "properties": {
+          "patient_id": {
+            "type": "string",
+            "title": "Patient Id"
+          },
+          "conversation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conversation Id"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "patient_id",
+          "message"
+        ],
+        "title": "ChatRequest",
+        "description": "POST /api/chat. ``conversation_id`` omitted or null starts a new\nconversation; passing one back threads the next turn onto it."
+      },
+      "ChatResponse": {
+        "properties": {
+          "conversation_id": {
+            "type": "string",
+            "title": "Conversation Id"
+          },
+          "patient": {
+            "$ref": "#/components/schemas/PatientSummary"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "answer": {
+            "type": "string",
+            "title": "Answer"
+          },
+          "cited_fact_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Cited Fact Ids"
+          },
+          "result": {
+            "$ref": "#/components/schemas/RetrievalResult"
+          },
+          "turn_index": {
+            "type": "integer",
+            "title": "Turn Index"
+          },
+          "timings": {
+            "$ref": "#/components/schemas/StageTimings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "conversation_id",
+          "patient",
+          "message",
+          "answer",
+          "result",
+          "turn_index"
+        ],
+        "title": "ChatResponse",
+        "description": "What POST /api/chat returns.\n\nSame NER (`parse_query`) and retrieval (`retrieve`) as `/api/query` --\n`result` here is the same `RetrievalResult` shape, so nothing that\nalready renders one needs a second code path. `answer` is the\nconversational reply; `cited_fact_ids` is every fact and narrative chunk\nthat was actually shown to the model for this turn, not a parse of its\noutput -- provenance the same way `BriefLine.fact_ids` is, attached to\nwhat was surfaced rather than claimed after the fact."
       },
       "EnrolmentResult": {
         "properties": {
@@ -2770,7 +2886,8 @@
           "resends_remaining",
           "seconds_until_allowed"
         ],
-        "title": "ResendState"
+        "title": "ResendState",
+        "description": "What a UI needs to render the button, from the authority that enforces it."
       },
       "ResolvedEntity": {
         "properties": {
@@ -3025,6 +3142,13 @@
           "type": {
             "type": "string",
             "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
           }
         },
         "type": "object",

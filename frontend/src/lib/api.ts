@@ -14,6 +14,7 @@ export type MissingItem = components["schemas"]["MissingItem"];
 export type StageTimings = components["schemas"]["StageTimings"];
 export type NarrativeMatch = components["schemas"]["NarrativeMatch"];
 export type QueryResponse = components["schemas"]["QueryResponse"];
+export type ChatResponse = components["schemas"]["ChatResponse"];
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
@@ -51,6 +52,24 @@ export function postQuery(patientId: string, query: string): Promise<QueryRespon
   return request("/api/query", {
     method: "POST",
     body: JSON.stringify({ patient_id: patientId, query }),
+  });
+}
+
+/** POST /api/chat. Same NER and retrieval as postQuery, plus conversation
+ *  memory: pass back the `conversation_id` a previous response returned to
+ *  thread the next message onto it, or omit it to start a new thread. */
+export function postChat(
+  patientId: string,
+  message: string,
+  conversationId?: string | null,
+): Promise<ChatResponse> {
+  return request("/api/chat", {
+    method: "POST",
+    body: JSON.stringify({
+      patient_id: patientId,
+      message,
+      conversation_id: conversationId ?? null,
+    }),
   });
 }
 

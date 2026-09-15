@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { BriefView } from "./BriefView";
+import { ChatPanel } from "./ChatPanel";
 import { LatencyFooter } from "./LatencyFooter";
 import { MissingSection } from "./MissingSection";
 import { NarrativeMatches } from "./NarrativeMatches";
@@ -44,6 +45,12 @@ export function Workspace({
   const [response, setResponse] = useState<QueryResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // "Ask" is the original single-shot /api/query path, unchanged; "Conversation"
+  // is the new threaded /api/chat path (backend/conversation.py). Kept as
+  // separate modes rather than merged -- a doctor who wants one quick coded
+  // fact shouldn't have to wait on an LLM call, and a doctor mid-conversation
+  // shouldn't lose that thread's context to a stateless query.
+  const [mode, setMode] = useState<"ask" | "chat">("ask");
 
   async function handleQuery(query: string) {
     if (!patient) return;
@@ -82,7 +89,16 @@ export function Workspace({
         />
       </aside>
 
-      <main className="flex min-w-0 flex-1 flex-col gap-4 overflow-y-auto">
+      {/* Chat mode owns its own internal scroll region (ChatPanel), so the
+          page-level scroll that "ask" mode relies on would just add a second,
+          fighting scrollbar -- min-h-0 without overflow-y-auto lets the flex
+          child size to the available height instead. */}
+      <main
+        className={`flex min-h-0 min-w-0 flex-1 flex-col gap-4 ${
+          mode === "chat" ? "" : "overflow-y-auto"
+        }`}
+      >
+
         {!patient ? (
           <EmptyState
             picker={
@@ -101,36 +117,76 @@ export function Workspace({
         ) : (
           <>
             <PatientHeader patient={patient} />
-            <QueryBox disabled={loading} onSubmit={handleQuery} />
+            <ModeToggle mode={mode} onChange={setMode} />
 
-            {error && (
-              <Panel tone="danger" className="px-4 py-3">
-                <p className="text-sm text-danger">{error}</p>
-                <p className="mt-1 text-[11px] text-danger/80">
-                  The API should be running on port 8000 —{" "}
-                  <code className="font-mono">uvicorn backend.main:app --port 8000</code>
-                </p>
-              </Panel>
-            )}
+            {mode === "ask" ? (
+              <>
+                <QueryBox disabled={loading} onSubmit={handleQuery} />
 
-            {loading && <LoadingState />}
+                {error && (
+                  <Panel tone="danger" className="px-4 py-3">
+                    <p className="text-sm text-danger">{error}</p>
+                    <p className="mt-1 text-[11px] text-danger/80">
+                      The API should be running on port 8000 —{" "}
+                      <code className="font-mono">uvicorn backend.main:app --port 8000</code>
+                    </p>
+                  </Panel>
+                )}
 
-            {!loading && response && (
-              <div className="space-y-3 pb-4">
-                <ParsedQueryView parsed={response.parsed} />
-                {/* Missingness sits above the retrieved facts on purpose: a
-                    reader who stops at the top must still learn what is
-                    unknown, which is the product's whole claim. */}
-                <MissingSection items={response.brief.missing ?? []} />
-                <BriefView brief={response.brief} factsById={factsById} />
-                <NarrativeMatches matches={response.result.narrative_matches ?? []} />
-                <LatencyFooter timings={response.timings ?? {}} />
-              </div>
+                {loading && <LoadingState />}
+
+                {!loading && response && (
+                  <div className="space-y-3 pb-4">
+                    <ParsedQueryView parsed={response.parsed} />
+                    {/* Missingness sits above the retrieved facts on purpose: a
+                        reader who stops at the top must still learn what is
+                        unknown, which is the product's whole claim. */}
+                    <MissingSection items={response.brief.missing ?? []} />
+                    <BriefView brief={response.brief} factsById={factsById} />
+                    <NarrativeMatches matches={response.result.narrative_matches ?? []} />
+                    <LatencyFooter timings={response.timings ?? {}} />
+                  </div>
+                )}
+              </>
+            ) : (
+              <ChatPanel key={patient.patient_id} patient={patient} />
             )}
           </>
         )}
       </main>
       </div>
+    </div>
+  );
+}
+
+function ModeToggle({
+  mode,
+  onChange,
+}: {
+  mode: "ask" | "chat";
+  onChange: (mode: "ask" | "chat") => void;
+}) {
+  const tabs = [
+    { id: "ask" as const, label: "Ask" },
+    { id: "chat" as const, label: "Conversation" },
+  ];
+  return (
+    <div className="inline-flex w-fit rounded-md border border-line bg-surface p-0.5">
+      {tabs.map((tab) => (
+        <button
+          key={tab.id}
+          type="button"
+          onClick={() => onChange(tab.id)}
+          aria-pressed={mode === tab.id}
+          className={`rounded px-3 py-1 text-xs font-medium transition-colors ${
+            mode === tab.id
+              ? "bg-ink text-bg"
+              : "text-ink-muted hover:text-ink"
+          }`}
+        >
+          {tab.label}
+        </button>
+      ))}
     </div>
   );
 }
