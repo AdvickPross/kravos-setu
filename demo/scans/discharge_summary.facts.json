@@ -1,0 +1,343 @@
+{
+  "source_file": "discharge_summary.png",
+  "extracted_at": "2026-09-16T12:07:59+05:30",
+  "sections_seen": [
+    "CONDITION",
+    "ALLERGY",
+    "MEDICATION",
+    "LAB",
+    "PROCEDURE"
+  ],
+  "counts": {
+    "facts": 12,
+    "unmatched_lines": 12,
+    "ambiguous_lines": 0,
+    "low_confidence_lines": 0
+  },
+  "facts": [
+    {
+      "fact_id": "58aedacc13ab2442",
+      "patient_id": "01607992-4fd3-45d8-8fbe-04c961dd73ac",
+      "category": "CONDITION",
+      "safety_class": "CLINICAL",
+      "text": "Condition: Essential hypertension (disorder) (scanned, OCR 90%)",
+      "code_system": "http://snomed.info/sct",
+      "code": "59621000",
+      "display": "Essential hypertension (disorder)",
+      "value": null,
+      "unit": null,
+      "date": "2026-03-09T00:00:00+05:30",
+      "status": "active",
+      "source_resource_type": "ScannedDocument",
+      "source_resource_id": "discharge_summary.png#p1L12",
+      "encounter_id": null,
+      "also_in": [],
+      "_ocr": {
+        "confidence": 0.898,
+        "page": 1,
+        "line_no": 12,
+        "line_text": "Essential.hypertension"
+      }
+    },
+    {
+      "fact_id": "6baed024f7d43395",
+      "patient_id": "01607992-4fd3-45d8-8fbe-04c961dd73ac",
+      "category": "CONDITION",
+      "safety_class": "CLINICAL",
+      "text": "Condition: End-stage renal disease (disorder) (scanned, OCR 85%)",
+      "code_system": "http://snomed.info/sct",
+      "code": "46177005",
+      "display": "End-stage renal disease (disorder)",
+      "value": null,
+      "unit": null,
+      "date": "2026-03-09T00:00:00+05:30",
+      "status": "active",
+      "source_resource_type": "ScannedDocument",
+      "source_resource_id": "discharge_summary.png#p1L13",
+      "encounter_id": null,
+      "also_in": [
+        "431855005",
+        "431856006",
+        "433144002",
+        "431857002"
+      ],
+      "_ocr": {
+        "confidence": 0.852,
+        "page": 1,
+        "line_no": 13,
+        "line_text": "Chronic kidney' disease"
+      }
+    },
+    {
+      "fact_id": "eb0cda6ba85e07d7",
+      "patient_id": "01607992-4fd3-45d8-8fbe-04c961dd73ac",
+      "category": "ALLERGY",
+      "safety_class": "SAFETY",
+      "text": "Allergy: Penicillin V (scanned, OCR 82%)",
+      "code_system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+      "code": "7984",
+      "display": "Penicillin V",
+      "value": null,
+      "unit": null,
+      "date": "2026-03-09T00:00:00+05:30",
+      "status": "active",
+      "source_resource_type": "ScannedDocument",
+      "source_resource_id": "discharge_summary.png#p1L15",
+      "encounter_id": null,
+      "also_in": [],
+      "_ocr": {
+        "confidence": 0.825,
+        "page": 1,
+        "line_no": 15,
+        "line_text": "Penicillin"
+      }
+    },
+    {
+      "fact_id": "77e4fc31b7a0a366",
+      "patient_id": "01607992-4fd3-45d8-8fbe-04c961dd73ac",
+      "category": "ALLERGY",
+      "safety_class": "SAFETY",
+      "text": "Allergy: Aspirin (scanned, OCR 87%)",
+      "code_system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+      "code": "1191",
+      "display": "Aspirin",
+      "value": null,
+      "unit": null,
+      "date": "2026-03-09T00:00:00+05:30",
+      "status": "active",
+      "source_resource_type": "ScannedDocument",
+      "source_resource_id": "discharge_summary.png#p1L16",
+      "encounter_id": null,
+      "also_in": [],
+      "_ocr": {
+        "confidence": 0.874,
+        "page": 1,
+        "line_no": 16,
+        "line_text": "Aspirin"
+      }
+    },
+    {
+      "fact_id": "1eb997dd945faaa2",
+      "patient_id": "01607992-4fd3-45d8-8fbe-04c961dd73ac",
+      "category": "MEDICATION",
+      "safety_class": "CLINICAL",
+      "text": "Medication: 24 HR Metformin hydrochloride 500 MG Extended Release Oral Tablet (scanned, OCR 83%)",
+      "code_system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+      "code": "860975",
+      "display": "24 HR Metformin hydrochloride 500 MG Extended Release Oral Tablet",
+      "value": "500",
+      "unit": "mg",
+      "date": "2026-03-09T00:00:00+05:30",
+      "status": "active",
+      "source_resource_type": "ScannedDocument",
+      "source_resource_id": "discharge_summary.png#p1L18",
+      "encounter_id": null,
+      "also_in": [],
+      "_ocr": {
+        "confidence": 0.833,
+        "page": 1,
+        "line_no": 18,
+        "line_text": "Metformin' 500'mg"
+      }
+    },
+    {
+      "fact_id": "44d2c5ce72affbe2",
+      "patient_id": "01607992-4fd3-45d8-8fbe-04c961dd73ac",
+      "category": "MEDICATION",
+      "safety_class": "CLINICAL",
+      "text": "Medication: amLODIPine 2.5 MG Oral Tablet (scanned, OCR 88%)",
+      "code_system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+      "code": "308136",
+      "display": "amLODIPine 2.5 MG Oral Tablet",
+      "value": "5",
+      "unit": "mg",
+      "date": "2026-03-09T00:00:00+05:30",
+      "status": "active",
+      "source_resource_type": "ScannedDocument",
+      "source_resource_id": "discharge_summary.png#p1L19",
+      "encounter_id": null,
+      "also_in": [],
+      "_ocr": {
+        "confidence": 0.878,
+        "page": 1,
+        "line_no": 19,
+        "line_text": "Amlodipine 5 mg"
+      }
+    },
+    {
+      "fact_id": "24ba1caa1021ce97",
+      "patient_id": "01607992-4fd3-45d8-8fbe-04c961dd73ac",
+      "category": "MEDICATION",
+      "safety_class": "CLINICAL",
+      "text": "Medication: atorvastatin 10 MG Oral Tablet (scanned, OCR 89%)",
+      "code_system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+      "code": "617312",
+      "display": "atorvastatin 10 MG Oral Tablet",
+      "value": "20",
+      "unit": "mg",
+      "date": "2026-03-09T00:00:00+05:30",
+      "status": "active",
+      "source_resource_type": "ScannedDocument",
+      "source_resource_id": "discharge_summary.png#p1L20",
+      "encounter_id": null,
+      "also_in": [
+        "617310",
+        "617311",
+        "259255",
+        "617320"
+      ],
+      "_ocr": {
+        "confidence": 0.892,
+        "page": 1,
+        "line_no": 20,
+        "line_text": "Atorvastatin20mg"
+      }
+    },
+    {
+      "fact_id": "85dee2e08c302615",
+      "patient_id": "01607992-4fd3-45d8-8fbe-04c961dd73ac",
+      "category": "MEDICATION",
+      "safety_class": "CLINICAL",
+      "text": "Medication: Furosemide 40 MG Oral Tablet (scanned, OCR 85%)",
+      "code_system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+      "code": "313988",
+      "display": "Furosemide 40 MG Oral Tablet",
+      "value": "40",
+      "unit": "mg",
+      "date": "2026-03-09T00:00:00+05:30",
+      "status": "active",
+      "source_resource_type": "ScannedDocument",
+      "source_resource_id": "discharge_summary.png#p1L21",
+      "encounter_id": null,
+      "also_in": [
+        "1719286"
+      ],
+      "_ocr": {
+        "confidence": 0.851,
+        "page": 1,
+        "line_no": 21,
+        "line_text": "Furosemide :40 :mg"
+      }
+    },
+    {
+      "fact_id": "1aa2e5df4f283aec",
+      "patient_id": "01607992-4fd3-45d8-8fbe-04c961dd73ac",
+      "category": "LAB",
+      "safety_class": "CLINICAL",
+      "text": "Lab: Hemoglobin [Mass/volume] in Blood (scanned, OCR 88%)",
+      "code_system": "http://loinc.org",
+      "code": "718-7",
+      "display": "Hemoglobin [Mass/volume] in Blood",
+      "value": null,
+      "unit": null,
+      "date": "2026-03-09T00:00:00+05:30",
+      "status": "active",
+      "source_resource_type": "ScannedDocument",
+      "source_resource_id": "discharge_summary.png#p1L23",
+      "encounter_id": null,
+      "also_in": [
+        "5794-3"
+      ],
+      "_ocr": {
+        "confidence": 0.877,
+        "page": 1,
+        "line_no": 23,
+        "line_text": "Hemoglobin"
+      }
+    },
+    {
+      "fact_id": "f86386cf80e5ed26",
+      "patient_id": "01607992-4fd3-45d8-8fbe-04c961dd73ac",
+      "category": "LAB",
+      "safety_class": "CLINICAL",
+      "text": "Lab: Creatinine [Mass/volume] in Blood (scanned, OCR 87%)",
+      "code_system": "http://loinc.org",
+      "code": "38483-4",
+      "display": "Creatinine [Mass/volume] in Blood",
+      "value": null,
+      "unit": null,
+      "date": "2026-03-09T00:00:00+05:30",
+      "status": "active",
+      "source_resource_type": "ScannedDocument",
+      "source_resource_id": "discharge_summary.png#p1L24",
+      "encounter_id": null,
+      "also_in": [
+        "2160-0"
+      ],
+      "_ocr": {
+        "confidence": 0.87,
+        "page": 1,
+        "line_no": 24,
+        "line_text": "Creatinine"
+      }
+    },
+    {
+      "fact_id": "00771e134a676fbf",
+      "patient_id": "01607992-4fd3-45d8-8fbe-04c961dd73ac",
+      "category": "LAB",
+      "safety_class": "CLINICAL",
+      "text": "Lab: Potassium [Moles/volume] in Blood (scanned, OCR 90%)",
+      "code_system": "http://loinc.org",
+      "code": "6298-4",
+      "display": "Potassium [Moles/volume] in Blood",
+      "value": null,
+      "unit": null,
+      "date": "2026-03-09T00:00:00+05:30",
+      "status": "active",
+      "source_resource_type": "ScannedDocument",
+      "source_resource_id": "discharge_summary.png#p1L25",
+      "encounter_id": null,
+      "also_in": [
+        "2823-3"
+      ],
+      "_ocr": {
+        "confidence": 0.897,
+        "page": 1,
+        "line_no": 25,
+        "line_text": "Potassium"
+      }
+    },
+    {
+      "fact_id": "62a85c740a7ae717",
+      "patient_id": "01607992-4fd3-45d8-8fbe-04c961dd73ac",
+      "category": "PROCEDURE",
+      "safety_class": "CLINICAL",
+      "text": "Procedure: Renal dialysis (procedure) (scanned, OCR 79%)",
+      "code_system": "http://snomed.info/sct",
+      "code": "265764009",
+      "display": "Renal dialysis (procedure)",
+      "value": null,
+      "unit": null,
+      "date": "2026-03-09T00:00:00+05:30",
+      "status": "active",
+      "source_resource_type": "ScannedDocument",
+      "source_resource_id": "discharge_summary.png#p1L27",
+      "encounter_id": null,
+      "also_in": [],
+      "_ocr": {
+        "confidence": 0.789,
+        "page": 1,
+        "line_no": 27,
+        "line_text": "Renal. :dialysis"
+      }
+    }
+  ],
+  "not_extracted": {
+    "unmatched": [
+      "SUNRISE:MULTISPECIALITY'HOSPITAL",
+      "Bengaluru,: Karnataka",
+      "DISCHARGE'SUMMARY",
+      "PatientName..Ramesh .Kumar",
+      "IP.Number ::: : IP-2026-04417",
+      "Admitted:",
+      ":: 02-03-2026",
+      "Discharged.",
+      "::09-03-2026",
+      "Type .2: diabetes. mellitus",
+      "Advised.review after:two:weeks.",
+      "Dr.. S.. Iyer', MD"
+    ],
+    "ambiguous": [],
+    "low_confidence": []
+  }
+}
