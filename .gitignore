@@ -2,6 +2,7 @@
 # and over GitHub's file-size limits. patients.jsonl and lexicon.csv stay
 # tracked: small, and useful without regenerating anything.
 facts.jsonl
+facts.zip
 facts_by_patient/
 synthea-with-dependencies.jar
 

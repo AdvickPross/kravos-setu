@@ -14,7 +14,7 @@ cryptography>=42.0
 # no system binary like Tesseract, no PyTorch like EasyOCR/PaddleOCR,
 # and no API key -- a scan is a patient record and should not leave
 # the machine by default.
-rapidocr-onnxruntime>=1.3
+rapidocr-onnxruntime>=1.2.3
 # Multipart uploads for POST /api/ocr/extract and /commit.
 python-multipart>=0.0.9
 # Rendering PDF pages to images, and the demo scan generator.

@@ -110,7 +110,17 @@ export default function Home() {
   return (
     <Workspace
       initialPatient={patient}
-      header={<SessionBar session={session} onSignOut={signOut} />}
+      header={
+        <SessionBar
+          session={session}
+          onSignOut={signOut}
+          onBackToPatients={
+            session.demo
+              ? () => update({ ...session, patientId: null, recordsDone: false })
+              : undefined
+          }
+        />
+      }
     />
   );
 }
@@ -118,9 +128,11 @@ export default function Home() {
 function SessionBar({
   session,
   onSignOut,
+  onBackToPatients,
 }: {
   session: AbhaSession;
   onSignOut: () => void;
+  onBackToPatients?: () => void;
 }) {
   const name = session.account.name;
   const number = session.account.abha_number ?? session.account.abha_address;
@@ -148,6 +160,15 @@ function SessionBar({
       )}
 
       <nav className="ml-auto flex items-center gap-2">
+        {onBackToPatients && (
+          <button
+            type="button"
+            onClick={onBackToPatients}
+            className="text-xs font-medium text-ink-muted underline-offset-2 hover:underline"
+          >
+            ← Choose patient
+          </button>
+        )}
         <Link
           href="/m1"
           className="text-xs font-medium text-ink-muted underline-offset-2 hover:underline"
