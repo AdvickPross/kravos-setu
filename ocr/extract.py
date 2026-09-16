@@ -201,9 +201,19 @@ def _heading_category(line: str) -> tuple[str | None, str]:
 def _fact_id(*parts: object) -> str:
     """Same scheme as `extract.py`: sha1 of the joined parts, 16 chars.
 
-    Keyed on the source file, page and line rather than on the text, so
-    re-ingesting the same scan is idempotent while two different scans that
-    happen to share a line stay distinct.
+    Keyed on **patient**, source file, page, line and code -- not on the text.
+    Every part of that is load-bearing:
+
+    * the file, page and line make re-ingesting an unchanged scan idempotent,
+      and keep two different scans that happen to share a line distinct;
+    * the **patient id** stops one person's document colliding with another's.
+      Without it, uploading the same discharge summary for a second patient
+      produced ids that already existed, `ON CONFLICT DO NOTHING` swallowed
+      every row, and the second patient's chart came back empty with the API
+      reporting a cheerful "inserted 0 of 12". A shared document between two
+      patients is not exotic -- a family brings in one folder, or the same
+      template is scanned twice -- and the failure is silent on the side that
+      matters.
     """
     return hashlib.sha1("|".join(str(p) for p in parts).encode()).hexdigest()[:16]
 
@@ -310,7 +320,9 @@ def _fact_from_item(
 
     entry, alternates = _pick_code(in_category)
     return OcrFact(
-        fact_id=_fact_id(document.source.name, line.page, line.line_no, entry.code),
+        fact_id=_fact_id(
+            patient_id, document.source.name, line.page, line.line_no, entry.code
+        ),
         patient_id=patient_id,
         category=category,
         safety_class="SAFETY" if category == "ALLERGY" else "CLINICAL",

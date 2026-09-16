@@ -213,3 +213,21 @@ def test_the_report_names_what_it_could_not_extract():
     report = run("ALLERGIES:", "Penicillin", "Ward 4B Bed 12")
     assert report.unmatched
     assert "matched no concept" in report.summary()
+
+
+def test_the_same_scan_for_two_patients_produces_different_facts():
+    """The bug that made a second patient's upload silently do nothing.
+
+    Fact ids did not include the patient, so uploading one discharge summary
+    for patient B produced ids already written for patient A. `ON CONFLICT DO
+    NOTHING` swallowed every row and the API reported "inserted 0 of 12" while
+    B's chart stayed empty. A shared document is not exotic -- a family brings
+    in one folder, the same template is scanned twice -- and the failure is
+    silent on exactly the side that matters.
+    """
+    a = extract_facts(doc("ALLERGIES:", "Penicillin"), "patient-a", document_date=WHEN)
+    b = extract_facts(doc("ALLERGIES:", "Penicillin"), "patient-b", document_date=WHEN)
+
+    assert a.facts[0].fact_id != b.facts[0].fact_id
+    assert a.facts[0].patient_id == "patient-a"
+    assert b.facts[0].patient_id == "patient-b"

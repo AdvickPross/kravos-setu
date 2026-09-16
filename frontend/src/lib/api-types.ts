@@ -540,7 +540,11 @@ export interface paths {
          */
         get: operations["api_list_patients_api_patients_get"];
         put?: never;
-        post?: never;
+        /**
+         * Api Create Patient
+         * @description Create an empty patient record, ready for records to be attached.
+         */
+        post: operations["api_create_patient_api_patients_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1165,6 +1169,15 @@ export interface components {
             text: string;
             /** Score */
             score: number;
+        };
+        /** NewPatient */
+        NewPatient: {
+            /** Name */
+            name: string;
+            /** Birthdate */
+            birthDate?: string | null;
+            /** Gender */
+            gender?: string | null;
         };
         /**
          * OcrFactOut
@@ -2297,6 +2310,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PatientSummary"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    api_create_patient_api_patients_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewPatient"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientSummary"];
                 };
             };
             /** @description Validation Error */

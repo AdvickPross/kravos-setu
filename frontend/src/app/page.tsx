@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import { AuthScreen } from "@/components/auth/AuthScreen";
 import { ProfileGate } from "@/components/auth/ProfileGate";
+import { DemoGate } from "@/components/records/DemoGate";
 import { RecordsGate } from "@/components/records/RecordsGate";
 import { Workspace } from "@/components/Workspace";
 import { getPatient, type PatientSummary } from "@/lib/api";
@@ -78,6 +79,20 @@ export default function Home() {
   }
 
   if (loadingPatient) return <Splash />;
+
+  // The demo path has no ABHA to identify anyone, so the same question --
+  // whose records are these? -- is answered locally: pick a synthetic
+  // patient, or create one and give it a history from a scan.
+  if (session.demo && !session.patientId) {
+    return (
+      <DemoGate
+        onReady={(chosen) => {
+          setPatient(chosen);
+          update({ ...session, patientId: chosen.patient_id, recordsDone: true });
+        }}
+      />
+    );
+  }
 
   // Between an identity and a question sits the records the question will be
   // answered from. Offered once per session, then remembered.

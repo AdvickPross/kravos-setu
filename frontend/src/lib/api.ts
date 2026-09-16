@@ -74,3 +74,22 @@ export function postChat(
 }
 
 export { ApiError };
+
+/** Create a patient by hand.
+ *
+ * The only write in this client. Used by the demo path, where there is no
+ * ABHA to identify anyone, and by the walk-in case -- someone whose history
+ * is a paper folder and who has no digital record yet. The server generates
+ * the id; a caller-supplied one would be a way to overwrite an existing
+ * record by guessing a UUID.
+ */
+export function createPatient(patient: {
+  name: string;
+  birthDate?: string;
+  gender?: string;
+}): Promise<PatientSummary> {
+  return request<PatientSummary>("/api/patients", {
+    method: "POST",
+    body: JSON.stringify(patient),
+  });
+}

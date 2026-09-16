@@ -67,7 +67,11 @@ def list_patients() -> list[PatientSummary]:
     with _connection().cursor() as cur:
         cur.execute(
             "SELECT patient_id, name, birth_date, gender, deceased, n_facts, source_file "
-            "FROM patients"
+            "FROM patients "
+            # Hand-created records first. Someone who just added a patient is
+            # about to look for them in a list of 952 Synthea ones, and the
+            # table has no natural order to fall back on.
+            "ORDER BY (source_file = 'manual') DESC NULLS LAST, name"
         )
         columns = [d.name for d in cur.description]
         return [_patient_from_row(row, columns) for row in cur.fetchall()]

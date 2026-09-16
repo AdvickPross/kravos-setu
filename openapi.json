@@ -1259,6 +1259,46 @@
       }
     },
     "/api/patients": {
+      "post": {
+        "tags": [
+          "patients"
+        ],
+        "summary": "Api Create Patient",
+        "description": "Create an empty patient record, ready for records to be attached.",
+        "operationId": "api_create_patient_api_patients_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewPatient"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientSummary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
       "get": {
         "summary": "Api List Patients",
         "description": "List patients, optionally filtered by a case-insensitive name substring.",
@@ -2903,6 +2943,42 @@
         ],
         "title": "NarrativeMatch",
         "description": "One hit from the REPORT-note vector-search fallback.\n\nStage 2 only, and a fallback only: ``retrieve()`` attempts this path\nsolely when nothing in the query resolved to a code at all. Never a\nreplacement for coded retrieval -- REPORT is the ~5% of the corpus with\nno code to filter on, everything else stays on the structured path."
+      },
+      "NewPatient": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "birthDate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Birthdate"
+          },
+          "gender": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gender"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "NewPatient"
       },
       "OcrFactOut": {
         "properties": {
