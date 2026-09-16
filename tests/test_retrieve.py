@@ -16,7 +16,13 @@ import pytest
 from backend import retrieve
 from backend.models import MissingReason, NarrativeMatch, RetrievalOutcome
 from retrieval.models import MatchQuality, ParsedQuery, ResolvedEntity
-from tests.conftest import insert_facts
+# Imported as a bare module, not as `tests.conftest`. A third-party
+# package named `tests` is installed in site-packages on some machines,
+# and being a real package it shadows this directory -- so the dotted
+# form resolves to the wrong `tests` and finds no conftest. pytest puts
+# this directory on sys.path, which is also how `abha_support` is
+# imported by the ABHA tests.
+from conftest import insert_facts
 
 PATIENT = "patient-1"
 
