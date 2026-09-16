@@ -31,6 +31,9 @@ export type AbhaSession = {
   patientId: string | null;
   /** True when the user chose to explore the corpus without signing in. */
   demo?: boolean;
+  /** Set once the records step has been answered -- uploaded, or skipped.
+   *  Without it the gate would reappear on every render after tagging. */
+  recordsDone?: boolean;
 };
 
 const KEY = "kravos.abha.session";

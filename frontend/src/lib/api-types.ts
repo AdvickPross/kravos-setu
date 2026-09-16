@@ -478,6 +478,55 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ocr/extract": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Api Extract
+         * @description Recognise and propose. Writes nothing.
+         */
+        post: operations["api_extract_api_ocr_extract_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ocr/commit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Api Commit
+         * @description Re-read the same file and write only the approved facts.
+         *
+         *     The file is uploaded again rather than cached between the two calls. That
+         *     costs a second OCR pass and buys statelessness: there is no server-side
+         *     extraction sitting around half-approved, and no cache key to get wrong in
+         *     a way that commits one patient's facts against another's id.
+         *
+         *     Fact ids are deterministic over (file, page, line, code), so the second
+         *     pass reproduces exactly the ids the reviewer saw -- and any that it does
+         *     not reproduce are reported rather than written.
+         */
+        post: operations["api_commit_api_ocr_commit_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/patients": {
         parameters: {
             query?: never;
@@ -690,6 +739,32 @@ export interface components {
             /** @default aadhaar */
             channel: components["schemas"]["AddressOtpChannel"];
         };
+        /** Body_api_commit_api_ocr_commit_post */
+        Body_api_commit_api_ocr_commit_post: {
+            /**
+             * File
+             * Format: binary
+             */
+            file: string;
+            /** Patientid */
+            patientId: string;
+            /** Factids */
+            factIds: string;
+            /** Documentdate */
+            documentDate?: string | null;
+        };
+        /** Body_api_extract_api_ocr_extract_post */
+        Body_api_extract_api_ocr_extract_post: {
+            /**
+             * File
+             * Format: binary
+             */
+            file: string;
+            /** Patientid */
+            patientId: string;
+            /** Documentdate */
+            documentDate?: string | null;
+        };
         /**
          * Brief
          * @description The rendered answer.
@@ -799,6 +874,15 @@ export interface components {
             turn_index: number;
             timings?: components["schemas"]["StageTimings"];
         };
+        /** CommitResponse */
+        CommitResponse: {
+            /** Inserted */
+            inserted: number;
+            /** Requested */
+            requested: number;
+            /** Already Present */
+            already_present: number;
+        };
         /**
          * EnrolmentResult
          * @description The outcome of `enrol/byAadhaar`.
@@ -851,6 +935,29 @@ export interface components {
             limit_applied?: number | null;
             /** Coverage Note */
             coverage_note?: string | null;
+        };
+        /** ExtractResponse */
+        ExtractResponse: {
+            /** Source File */
+            source_file: string;
+            /** Engine */
+            engine: string;
+            /** Patient Id */
+            patient_id: string;
+            /** Mean Confidence */
+            mean_confidence: number;
+            /** Sections Seen */
+            sections_seen: string[];
+            /** Lines */
+            lines: components["schemas"]["OcrLineOut"][];
+            /** Facts */
+            facts: components["schemas"]["OcrFactOut"][];
+            /** Unmatched */
+            unmatched: string[];
+            /** Ambiguous */
+            ambiguous: string[];
+            /** Low Confidence */
+            low_confidence: string[];
         };
         /** FaceCompleteRequest */
         FaceCompleteRequest: {
@@ -1060,6 +1167,49 @@ export interface components {
             score: number;
         };
         /**
+         * OcrFactOut
+         * @description A proposed fact. Carries its own evidence so the UI can show why.
+         */
+        OcrFactOut: {
+            /** Fact Id */
+            fact_id: string;
+            /** Category */
+            category: string;
+            /** Display */
+            display: string | null;
+            /** Code */
+            code: string | null;
+            /** Code System */
+            code_system: string | null;
+            /** Value */
+            value: string | null;
+            /** Unit */
+            unit: string | null;
+            /** Confidence */
+            confidence: number;
+            /** Page */
+            page: number;
+            /** Line No */
+            line_no: number;
+            /** Line Text */
+            line_text: string;
+            /** Also In */
+            also_in?: string[];
+        };
+        /** OcrLineOut */
+        OcrLineOut: {
+            /** Text */
+            text: string;
+            /** Confidence */
+            confidence: number;
+            /** Page */
+            page: number;
+            /** Line No */
+            line_no: number;
+            /** Reliable */
+            reliable: boolean;
+        };
+        /**
          * OtpChallenge
          * @description The txnId returned by any `request/otp` call, plus what to show a user.
          *
@@ -1139,10 +1289,7 @@ export interface components {
             result: components["schemas"]["RetrievalResult"];
             timings?: components["schemas"]["StageTimings"];
         };
-        /**
-         * ResendState
-         * @description What a UI needs to render the button, from the authority that enforces it.
-         */
+        /** ResendState */
         ResendState: {
             /** Resends Used */
             resends_used: number;
@@ -1240,10 +1387,6 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
-            /** Input */
-            input?: unknown;
-            /** Context */
-            ctx?: Record<string, never>;
         };
     };
     responses: never;
@@ -2057,6 +2200,72 @@ export interface operations {
                     "application/json": {
                         [key: string]: boolean;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    api_extract_api_ocr_extract_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_api_extract_api_ocr_extract_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExtractResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    api_commit_api_ocr_commit_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_api_commit_api_ocr_commit_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommitResponse"];
                 };
             };
             /** @description Validation Error */

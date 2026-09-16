@@ -24,6 +24,7 @@ from backend.env_file import load_dotenv
 load_dotenv()
 
 from backend.abha_routes import router as abha_router  # noqa: E402
+from backend.ocr_routes import router as ocr_router  # noqa: E402
 from backend.brief import build_brief  # noqa: E402
 from backend.conversation import ConversationNotFoundError, answer as answer_chat
 from backend.data_layer import get_patient, list_patients
@@ -56,6 +57,10 @@ app.add_middleware(
 # a fixable message when ABDM credentials are absent, which is more useful to
 # the frontend than a 404 that reads as "this feature does not exist".
 app.include_router(abha_router)
+
+# Scanned-record ingestion. /extract proposes, /commit writes -- nothing
+# reaches the corpus without a second explicit call. See backend/ocr_routes.py.
+app.include_router(ocr_router)
 
 
 @app.get("/api/patients")

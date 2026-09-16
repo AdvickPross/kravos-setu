@@ -1174,6 +1174,90 @@
         }
       }
     },
+    "/api/ocr/extract": {
+      "post": {
+        "tags": [
+          "ocr"
+        ],
+        "summary": "Api Extract",
+        "description": "Recognise and propose. Writes nothing.",
+        "operationId": "api_extract_api_ocr_extract_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_api_extract_api_ocr_extract_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtractResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ocr/commit": {
+      "post": {
+        "tags": [
+          "ocr"
+        ],
+        "summary": "Api Commit",
+        "description": "Re-read the same file and write only the approved facts.\n\nThe file is uploaded again rather than cached between the two calls. That\ncosts a second OCR pass and buys statelessness: there is no server-side\nextraction sitting around half-approved, and no cache key to get wrong in\na way that commits one patient's facts against another's id.\n\nFact ids are deterministic over (file, page, line, code), so the second\npass reproduces exactly the ids the reviewer saw -- and any that it does\nnot reproduce are reported rather than written.",
+        "operationId": "api_commit_api_ocr_commit_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_api_commit_api_ocr_commit_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommitResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/patients": {
       "get": {
         "summary": "Api List Patients",
@@ -1734,6 +1818,71 @@
         ],
         "title": "AddressVerifyRequest"
       },
+      "Body_api_commit_api_ocr_commit_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File"
+          },
+          "patientId": {
+            "type": "string",
+            "title": "Patientid"
+          },
+          "factIds": {
+            "type": "string",
+            "title": "Factids"
+          },
+          "documentDate": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Documentdate"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file",
+          "patientId",
+          "factIds"
+        ],
+        "title": "Body_api_commit_api_ocr_commit_post"
+      },
+      "Body_api_extract_api_ocr_extract_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File"
+          },
+          "patientId": {
+            "type": "string",
+            "title": "Patientid"
+          },
+          "documentDate": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Documentdate"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file",
+          "patientId"
+        ],
+        "title": "Body_api_extract_api_ocr_extract_post"
+      },
       "Brief": {
         "properties": {
           "patient_id": {
@@ -1970,6 +2119,29 @@
         "title": "ChatResponse",
         "description": "What POST /api/chat returns.\n\nSame NER (`parse_query`) and retrieval (`retrieve`) as `/api/query` --\n`result` here is the same `RetrievalResult` shape, so nothing that\nalready renders one needs a second code path. `answer` is the\nconversational reply; `cited_fact_ids` is every fact and narrative chunk\nthat was actually shown to the model for this turn, not a parse of its\noutput -- provenance the same way `BriefLine.fact_ids` is, attached to\nwhat was surfaced rather than claimed after the fact."
       },
+      "CommitResponse": {
+        "properties": {
+          "inserted": {
+            "type": "integer",
+            "title": "Inserted"
+          },
+          "requested": {
+            "type": "integer",
+            "title": "Requested"
+          },
+          "already_present": {
+            "type": "integer",
+            "title": "Already Present"
+          }
+        },
+        "type": "object",
+        "required": [
+          "inserted",
+          "requested",
+          "already_present"
+        ],
+        "title": "CommitResponse"
+      },
       "EnrolmentResult": {
         "properties": {
           "txn_id": {
@@ -2091,6 +2263,82 @@
         ],
         "title": "EntityFacts",
         "description": "Facts retrieved for one resolved entity.\n\nKept per-entity rather than merged into one pile because entities can\nshare a span: `aspirin` resolves to both an ALLERGY substance and four\nMEDICATION products, and those are two different clinical answers."
+      },
+      "ExtractResponse": {
+        "properties": {
+          "source_file": {
+            "type": "string",
+            "title": "Source File"
+          },
+          "engine": {
+            "type": "string",
+            "title": "Engine"
+          },
+          "patient_id": {
+            "type": "string",
+            "title": "Patient Id"
+          },
+          "mean_confidence": {
+            "type": "number",
+            "title": "Mean Confidence"
+          },
+          "sections_seen": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Sections Seen"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/OcrLineOut"
+            },
+            "type": "array",
+            "title": "Lines"
+          },
+          "facts": {
+            "items": {
+              "$ref": "#/components/schemas/OcrFactOut"
+            },
+            "type": "array",
+            "title": "Facts"
+          },
+          "unmatched": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Unmatched"
+          },
+          "ambiguous": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Ambiguous"
+          },
+          "low_confidence": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Low Confidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source_file",
+          "engine",
+          "patient_id",
+          "mean_confidence",
+          "sections_seen",
+          "lines",
+          "facts",
+          "unmatched",
+          "ambiguous",
+          "low_confidence"
+        ],
+        "title": "ExtractResponse"
       },
       "FaceCompleteRequest": {
         "properties": {
@@ -2656,6 +2904,145 @@
         "title": "NarrativeMatch",
         "description": "One hit from the REPORT-note vector-search fallback.\n\nStage 2 only, and a fallback only: ``retrieve()`` attempts this path\nsolely when nothing in the query resolved to a code at all. Never a\nreplacement for coded retrieval -- REPORT is the ~5% of the corpus with\nno code to filter on, everything else stays on the structured path."
       },
+      "OcrFactOut": {
+        "properties": {
+          "fact_id": {
+            "type": "string",
+            "title": "Fact Id"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "display": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display"
+          },
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "code_system": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code System"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          },
+          "confidence": {
+            "type": "number",
+            "title": "Confidence"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "line_no": {
+            "type": "integer",
+            "title": "Line No"
+          },
+          "line_text": {
+            "type": "string",
+            "title": "Line Text"
+          },
+          "also_in": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Also In"
+          }
+        },
+        "type": "object",
+        "required": [
+          "fact_id",
+          "category",
+          "display",
+          "code",
+          "code_system",
+          "value",
+          "unit",
+          "confidence",
+          "page",
+          "line_no",
+          "line_text"
+        ],
+        "title": "OcrFactOut",
+        "description": "A proposed fact. Carries its own evidence so the UI can show why."
+      },
+      "OcrLineOut": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "confidence": {
+            "type": "number",
+            "title": "Confidence"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "line_no": {
+            "type": "integer",
+            "title": "Line No"
+          },
+          "reliable": {
+            "type": "boolean",
+            "title": "Reliable"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text",
+          "confidence",
+          "page",
+          "line_no",
+          "reliable"
+        ],
+        "title": "OcrLineOut"
+      },
       "OtpChallenge": {
         "properties": {
           "txn_id": {
@@ -2886,8 +3273,7 @@
           "resends_remaining",
           "seconds_until_allowed"
         ],
-        "title": "ResendState",
-        "description": "What a UI needs to render the button, from the authority that enforces it."
+        "title": "ResendState"
       },
       "ResolvedEntity": {
         "properties": {
@@ -3142,13 +3528,6 @@
           "type": {
             "type": "string",
             "title": "Error Type"
-          },
-          "input": {
-            "title": "Input"
-          },
-          "ctx": {
-            "type": "object",
-            "title": "Context"
           }
         },
         "type": "object",

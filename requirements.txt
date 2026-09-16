@@ -15,6 +15,8 @@ cryptography>=42.0
 # and no API key -- a scan is a patient record and should not leave
 # the machine by default.
 rapidocr-onnxruntime>=1.3
+# Multipart uploads for POST /api/ocr/extract and /commit.
+python-multipart>=0.0.9
 # Rendering PDF pages to images, and the demo scan generator.
 pillow>=10.0
 PyMuPDF>=1.24

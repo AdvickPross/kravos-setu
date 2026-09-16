@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import { AuthScreen } from "@/components/auth/AuthScreen";
 import { ProfileGate } from "@/components/auth/ProfileGate";
+import { RecordsGate } from "@/components/records/RecordsGate";
 import { Workspace } from "@/components/Workspace";
 import { getPatient, type PatientSummary } from "@/lib/api";
 import { setLiveToken, useAbhaSession, type AbhaSession } from "@/lib/session";
@@ -77,6 +78,19 @@ export default function Home() {
   }
 
   if (loadingPatient) return <Splash />;
+
+  // Between an identity and a question sits the records the question will be
+  // answered from. Offered once per session, then remembered.
+  if (session.patientId && !session.recordsDone && !session.demo) {
+    return (
+      <RecordsGate
+        session={session}
+        patientId={session.patientId}
+        onDone={() => update({ ...session, recordsDone: true })}
+        onSkip={() => update({ ...session, recordsDone: true })}
+      />
+    );
+  }
 
   return (
     <Workspace
