@@ -196,6 +196,19 @@ def _handle(call: "Any") -> Any:
     except AbhaFlowError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except AbhaApiError as exc:
+        # Logged, not just returned. uvicorn's access log records the status
+        # and nothing else, so an ABDM refusal that the browser shows to one
+        # person leaves no trace anyone can diagnose afterwards -- and these
+        # are the failures that actually need diagnosing. The message is
+        # already redacted: field names and ABDM's own text, never the OTP or
+        # the Aadhaar, which abha/transport.py masks before this point.
+        log.warning(
+            "ABDM refused: %s [%s] %s%s",
+            exc.status_code,
+            exc.code or "no code",
+            exc.message,
+            f" | fields: {exc.details}" if exc.details else "",
+        )
         # 4xx is passed through; 5xx from ABDM becomes 502, because it is not
         # this service that failed.
         status = exc.status_code if 400 <= exc.status_code < 500 else 502
