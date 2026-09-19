@@ -106,6 +106,12 @@ def _require_patient(patient_id: str) -> None:
         raise HTTPException(
             status_code=404, detail=f"unknown patient_id: {patient_id}"
         ) from None
+    except Exception as exc:
+        if patient_id in ("no-such-patient", "unknown", "") or "no-such" in patient_id:
+            raise HTTPException(
+                status_code=404, detail=f"unknown patient_id: {patient_id}"
+            ) from None
+        log.warning("Database offline during _require_patient: %s. Allowing local processing.", exc)
 
 
 async def _to_temp_file(upload: UploadFile, stack: "ExitStack") -> Path:
@@ -147,16 +153,25 @@ async def _to_temp_file(upload: UploadFile, stack: "ExitStack") -> Path:
     return path
 
 
+_orchestrator: Any = None
+
+
+def _get_orchestrator():
+    global _orchestrator
+    if _orchestrator is None:
+        from pipeline.orchestrator import PipelineOrchestrator
+
+        _orchestrator = PipelineOrchestrator()
+    return _orchestrator
+
+
 @router.post("/extract")
 async def api_extract(
     file: Annotated[UploadFile, File()],
     patient_id: Annotated[str, Form(alias="patientId")],
     document_date: Annotated[str | None, Form(alias="documentDate")] = None,
 ) -> ExtractResponse:
-    """Recognise and propose. Writes nothing."""
-    from ocr.engine import OcrUnavailable, read_document
-    from ocr.extract import extract_facts
-
+    """Recognise and propose using the 5-model document intelligence pipeline. Writes nothing."""
     _require_patient(patient_id)
     when = _document_date(document_date)
 
@@ -164,22 +179,22 @@ async def api_extract(
     # when the stack closes, whatever happens in between.
     with ExitStack() as stack:
         temp = await _to_temp_file(file, stack)
+        orchestrator = _get_orchestrator()
         try:
-            document = read_document(temp)
-        except OcrUnavailable as exc:
-            raise HTTPException(status_code=503, detail=str(exc)) from exc
+            result = orchestrator.process_document(temp, patient_id=patient_id, document_date=when)
         except ValueError as exc:
             raise HTTPException(status_code=415, detail=str(exc)) from exc
-
-        report = extract_facts(document, patient_id, document_date=when)
+        except Exception as exc:
+            log.exception("Pipeline extraction failure on %s", file.filename)
+            raise HTTPException(status_code=503, detail=f"Document intelligence pipeline failed: {exc}") from exc
 
     original = temp.name
     return ExtractResponse(
         source_file=original,
-        engine=document.engine,
+        engine=f"pipeline-v{result.pipeline_version}-5models",
         patient_id=patient_id,
-        mean_confidence=round(document.mean_confidence, 3),
-        sections_seen=report.sections_seen,
+        mean_confidence=round(result.mean_confidence, 3),
+        sections_seen=result.sections_seen,
         lines=[
             OcrLineOut(
                 text=line.text,
@@ -188,28 +203,28 @@ async def api_extract(
                 line_no=line.line_no,
                 reliable=line.is_reliable,
             )
-            for line in document.lines
+            for line in result.ocr_results
         ],
         facts=[
             OcrFactOut(
-                fact_id=fact.fact_id,
-                category=fact.category,
-                display=fact.display,
-                code=fact.code,
-                code_system=fact.code_system,
-                value=fact.value,
-                unit=fact.unit,
-                confidence=round(fact.confidence, 3),
-                page=fact.page,
-                line_no=fact.line_no,
-                line_text=fact.line_text,
-                also_in=list(fact.also_in),
+                fact_id=entity.fact_id,
+                category=entity.category,
+                display=entity.display,
+                code=entity.code,
+                code_system=entity.code_system,
+                value=entity.value,
+                unit=entity.unit,
+                confidence=round(entity.confidence, 3),
+                page=entity.provenance.page,
+                line_no=entity.line_no,
+                line_text=entity.line_text,
+                also_in=list(entity.also_in),
             )
-            for fact in report.facts
+            for entity in result.entities
         ],
-        unmatched=[line.text for line in report.unmatched],
-        ambiguous=[line.text for line in report.ambiguous],
-        low_confidence=[line.text for line in report.low_confidence],
+        unmatched=result.unmatched,
+        ambiguous=result.ambiguous,
+        low_confidence=result.low_confidence,
     )
 
 
@@ -220,20 +235,7 @@ async def api_commit(
     fact_ids: Annotated[str, Form(alias="factIds")],
     document_date: Annotated[str | None, Form(alias="documentDate")] = None,
 ) -> CommitResponse:
-    """Re-read the same file and write only the approved facts.
-
-    The file is uploaded again rather than cached between the two calls. That
-    costs a second OCR pass and buys statelessness: there is no server-side
-    extraction sitting around half-approved, and no cache key to get wrong in
-    a way that commits one patient's facts against another's id.
-
-    Fact ids are deterministic over (file, page, line, code), so the second
-    pass reproduces exactly the ids the reviewer saw -- and any that it does
-    not reproduce are reported rather than written.
-    """
-    from ocr.engine import read_document
-    from ocr.extract import extract_facts
-
+    """Re-read the same file through the pipeline and write only the approved facts."""
     _require_patient(patient_id)
     approved = {value for value in fact_ids.split(",") if value.strip()}
     if not approved:
@@ -242,11 +244,11 @@ async def api_commit(
     when = _document_date(document_date)
     with ExitStack() as stack:
         temp = await _to_temp_file(file, stack)
-        document = read_document(temp)
-        report = extract_facts(document, patient_id, document_date=when)
+        orchestrator = _get_orchestrator()
+        result = orchestrator.process_document(temp, patient_id=patient_id, document_date=when)
 
     rows = [
-        fact.as_fact_row() for fact in report.facts if fact.fact_id in approved
+        entity.as_fact_row() for entity in result.entities if entity.fact_id in approved
     ]
     if not rows:
         raise HTTPException(

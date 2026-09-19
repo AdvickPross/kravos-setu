@@ -1,0 +1,65 @@
+{
+  "evaluation_timestamp": "2026-09-19T11:59:44Z",
+  "target_document": "discharge_summary.png",
+  "runs": 2,
+  "ocr_metrics": {
+    "cer_percentage": 6.05,
+    "wer_percentage": 34.72,
+    "mean_confidence": 0.871,
+    "target_thresholds": {
+      "clean_printed_cer_target": "< 3%",
+      "degraded_printed_cer_target": "< 8%",
+      "handwritten_cer_target": "< 15-20%"
+    }
+  },
+  "detection_metrics": {
+    "total_regions_detected": 1,
+    "region_classes_found": [
+      "paragraph"
+    ]
+  },
+  "latency_metrics_ms": {
+    "p50": 11775.0,
+    "p95": 13668.22,
+    "stage_breakdown": {
+      "acquisition_ms": 35.258399904705584,
+      "p1_quality_ms": 158.32140005659312,
+      "p1_enhancement_ms": 449.43669997155666,
+      "p1_detection_ms": 112.54110001027584,
+      "p1_understanding_ms": 94.427700038068,
+      "p1_extraction_ms": 7903.6288999486715,
+      "normalization_ms": 1.3071999419480562,
+      "total_ms": 9878.510999958962,
+      "structuring_ms": 0.14700007159262896,
+      "validation_ms": 0.6213999586179852
+    }
+  },
+  "memory_metrics": {
+    "target_hardware": "Jetson Orin Nano (8GB unified memory)",
+    "device": "cpu",
+    "max_resident_models": 2,
+    "loaded_models": [
+      "trocr",
+      "ppocr"
+    ],
+    "loaded_count": 2,
+    "estimated_footprint_mb": 150.0,
+    "registered_models": [
+      "layoutlmv3",
+      "paddleocr",
+      "ppocr",
+      "restormer",
+      "rt-detr",
+      "rtdetr",
+      "trocr"
+    ]
+  },
+  "facts_extracted_count": 11,
+  "sections_seen": [
+    "CONDITION",
+    "ALLERGY",
+    "MEDICATION",
+    "LAB",
+    "PROCEDURE"
+  ]
+}

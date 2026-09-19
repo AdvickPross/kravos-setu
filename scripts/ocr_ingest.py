@@ -137,6 +137,11 @@ def main() -> int:
     )
     parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT_DIR)
     parser.add_argument(
+        "--legacy",
+        action="store_true",
+        help="use legacy RapidOCR engine instead of 5-model pipeline",
+    )
+    parser.add_argument(
         "--date",
         help="the date the document is about (YYYY-MM-DD). Defaults to today; "
         "a wrong date moves facts in and out of every recency window.",
@@ -151,50 +156,92 @@ def main() -> int:
     print(f"   {args.source.resolve()}")
     print(f"   {args.source.stat().st_size / 1024:.0f} KB")
 
-    try:
-        document = (
-            read_pdf_text_layer(args.source) if args.text_layer else read_document(args.source)
-        )
-    except OcrUnavailable as exc:
-        print(f"[FAIL] {exc}")
-        return 2
-
-    _rule(f"2. OCR  ({document.engine})")
-    print(f"   {len(document.lines)} lines | mean confidence {document.mean_confidence:.2f}")
-    for line in document.lines:
-        mark = "  " if line.is_reliable else "!!"
-        print(f"   {mark} {line.confidence:.2f}  {line.text}")
-
     document_date = (
         datetime.fromisoformat(args.date).astimezone() if args.date else None
     )
-    report = extract_facts(document, args.patient, document_date=document_date)
 
-    _rule("3. EXTRACTED FACTS")
-    print(f"   sections recognised: {', '.join(report.sections_seen) or 'none'}")
-    print(f"   {report.summary()}\n")
-    for fact in report.facts:
-        dose = f"{fact.value} {fact.unit}" if fact.value else ""
-        alt = f"  +{len(fact.also_in)} other code(s)" if fact.also_in else ""
-        print(f"   {fact.category:11} {(fact.display or '')[:42]:44} {dose:9} "
-              f"{fact.confidence:.2f}  {fact.source_resource_id}{alt}")
+    if args.legacy or args.text_layer:
+        try:
+            document = (
+                read_pdf_text_layer(args.source) if args.text_layer else read_document(args.source)
+            )
+        except OcrUnavailable as exc:
+            print(f"[FAIL] {exc}")
+            return 2
 
-    if report.unmatched or report.ambiguous or report.low_confidence:
-        _rule("   NOT EXTRACTED  (the part a summary would hide)")
-        for line in report.ambiguous:
-            print(f"   outside any section : {line.text}")
-        for line in report.low_confidence:
-            print(f"   below confidence    : {line.confidence:.2f}  {line.text}")
-        for line in report.unmatched:
-            print(f"   no matching concept : {line.text}")
+        _rule(f"2. OCR  ({document.engine})")
+        print(f"   {len(document.lines)} lines | mean confidence {document.mean_confidence:.2f}")
+        for line in document.lines:
+            mark = "  " if line.is_reliable else "!!"
+            print(f"   {mark} {line.confidence:.2f}  {line.text}")
 
-    json_path = _write_json(report, args.source, args.out_dir)
-    _rule("4. JSON")
+        report = extract_facts(document, args.patient, document_date=document_date)
+        rows = [fact.as_fact_row() for fact in report.facts]
+        json_path = _write_json(report, args.source, args.out_dir)
+        facts_count = len(report.facts)
+    else:
+        from pipeline.orchestrator import PipelineOrchestrator
+
+        orchestrator = PipelineOrchestrator()
+        result = orchestrator.process_document(args.source, patient_id=args.patient, document_date=document_date)
+
+        _rule(f"2. 5-MODEL PIPELINE  (v{result.pipeline_version})")
+        print(f"   {len(result.ocr_results)} lines | mean confidence {result.mean_confidence:.2f}")
+        print(f"   stages: {', '.join(k.replace('_ms', '') for k in result.stage_timings.keys())}")
+        for line in result.ocr_results:
+            mark = "  " if line.is_reliable else "!!"
+            hand = "[H]" if line.is_handwritten else "   "
+            print(f"   {mark} {hand} {line.confidence:.2f}  {line.text}")
+
+        _rule("3. EXTRACTED FACTS (with Provenance & Calibrated Confidence)")
+        print(f"   sections recognised: {', '.join(result.sections_seen) or 'none'}")
+        print(f"   {len(result.entities)} facts | {len(result.unmatched)} unmatched | {len(result.ambiguous)} ambiguous\n")
+        for fact in result.entities:
+            dose = f"{fact.value} {fact.unit}" if fact.value else ""
+            alt = f"  +{len(fact.also_in)} other code(s)" if fact.also_in else ""
+            print(f"   {fact.category:11} {(fact.display or '')[:42]:44} {dose:9} "
+                  f"{fact.confidence:.2f}  {fact.provenance.document_id}#p{fact.provenance.page}L{fact.line_no}{alt}")
+
+        # Reviewable JSON artifact
+        json_payload = {
+            "source_file": args.source.name,
+            "pipeline_version": result.pipeline_version,
+            "extracted_at": datetime.now().astimezone().isoformat(timespec="seconds"),
+            "sections_seen": result.sections_seen,
+            "mean_confidence": result.mean_confidence,
+            "stage_timings": result.stage_timings,
+            "stage_versions": result.stage_versions,
+            "counts": {
+                "facts": len(result.entities),
+                "unmatched_lines": len(result.unmatched),
+                "ambiguous_lines": len(result.ambiguous),
+                "low_confidence_lines": len(result.low_confidence),
+            },
+            "facts": [
+                {
+                    **e.as_fact_row(),
+                    "_provenance": e.provenance.to_dict(),
+                    "_calibrated_confidence": e.confidence,
+                }
+                for e in result.entities
+            ],
+            "not_extracted": {
+                "unmatched": result.unmatched,
+                "ambiguous": result.ambiguous,
+                "low_confidence": result.low_confidence,
+            },
+        }
+        args.out_dir.mkdir(parents=True, exist_ok=True)
+        json_path = args.out_dir / f"{args.source.stem}.facts.json"
+        json_path.write_text(json.dumps(json_payload, indent=2), encoding="utf-8")
+        rows = [e.as_fact_row() for e in result.entities]
+        facts_count = len(result.entities)
+
+    _rule("4. JSON ARTIFACT")
     print(f"   {json_path}")
-    print(f"   {json_path.stat().st_size / 1024:.1f} KB | {len(report.facts)} fact objects")
+    print(f"   {json_path.stat().st_size / 1024:.1f} KB | {facts_count} fact objects")
 
     _rule("5. CORPUS")
-    rows = [fact.as_fact_row() for fact in report.facts]
     if not args.commit:
         print(f"   dry run: {len(rows)} rows NOT written.")
         print("   Review the JSON above, then re-run with --commit.")

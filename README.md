@@ -53,15 +53,18 @@ paused, not abandoned — see [`PATH_B_STATUS.md`](PATH_B_STATUS.md).
 
 ```
 abha/         ABDM ABHA V3 identity integration (M1): session, crypto, enrolment, login, profile
+pipeline/     Modular 5-model medical document intelligence pipeline & edge orchestration
+models/       Base adapter, ModelManager (LRU/dynamic eviction), and 5 model adapters
+config/       Pipeline stage configs (pipeline.json) and Jetson edge policy (policy.json)
 retrieval/    Query-side NER (parse_query() -> ParsedQuery) and the Postgres schema (db.py)
 backend/      FastAPI app: data layer (Postgres), retrieval, missingness, brief templating,
-              LLM polish, vector search, conversational RAG (conversation.py, groq_client.py)
+              LLM polish, vector search, conversational RAG, and document intelligence endpoints
 frontend/     Next.js 16 UI
-scripts/      One-off/regenerable data pipeline scripts (see below)
-data/         Lexicon synonyms, query/category cues, the pre-op missingness checklist, the gold eval set
-tests/        pytest suite for retrieval/, backend/ and abha/ -- requires Postgres, see Setup
-demo/         Curated demo patients and rehearsed queries
-eval/         Generated evaluation report (scripts/run_eval.py)
+scripts/      One-off/regenerable data pipeline scripts & ocr_ingest.py CLI
+data/         Lexicon synonyms, query/category cues, the pre-op missingness checklist, gold eval set
+tests/        pytest suite for retrieval/, backend/, abha/, and 5-model pipeline/models
+demo/         Curated demo patients, rehearsed queries, and document scans
+eval/         Generated evaluation reports, pipeline benchmarks, and ocr_eval.py
 ```
 
 ## Prerequisites
@@ -369,6 +372,101 @@ time the thread opened, not something worth restating every follow-up.
 
 No router, no intent classifier: turn handling is a small set of explicit
 rules (`_looks_narrative`'s cue words), not a separate module.
+
+## Medical Document Intelligence Pipeline (5 Models)
+
+The document processing subsystem provides an edge-optimized, modular clinical document intelligence pipeline replacing legacy monolithic OCR. It is designed for clinical documents (discharge summaries, prescriptions, lab reports, referral notes) and optimized for low-power edge hardware (specifically NVIDIA Jetson Orin Nano with 8 GB unified memory).
+
+### The 5 Models
+
+1. **Restormer** (`models/restormer_adapter.py`): Transformer-based image restoration for degraded clinical scans. Executed conditionally only when quality assessment detects blur, noise, skew, or uneven illumination. Falls back gracefully to bilateral filtering, unsharp masking, and CLAHE when neural weights are unmounted.
+2. **RT-DETR** (`models/rtdetr_adapter.py`): Real-time transformer object detector for layout segmentation. Identifies clinical document regions: `header`, `patient_info`, `medications`, `allergies`, `vitals`, `lab_results`, `notes`, `footer`, `barcode`, `table`.
+3. **LayoutLMv3** (`models/layoutlmv3_adapter.py`): Multi-modal layout understanding. Establishes multi-column reading order and hierarchical relationships (e.g. section header -> child lines) without re-detecting bounding boxes.
+4. **PP-OCR v4** (`models/ppocr_adapter.py`): High-throughput printed text recognition using ONNX Runtime. Preserves absolute bounding-box coordinates with sub-millisecond character tokenization.
+5. **TrOCR** (`models/trocr_adapter.py`): Vision-encoder-decoder transformer specialized for handwritten clinical prescriptions and annotations. Emits per-token sequence confidence scores.
+
+### Pipeline Lifecycle & Stages
+
+```
+Input Scan (PDF/Image)
+  │
+  ▼
+[Stage 1: Ingestion & Validation] ─── MIME validation, PyMuPDF 300 DPI render
+  │
+  ▼
+[Stage 2: Quality Assessment]    ─── Laplacian blur, Hough deskew, contrast check
+  │                                   │
+  ├─── (Quality Pass) ───────────────┼─── (Quality Fail: blur/noise/skew)
+  │                                   ▼
+  │                             [Stage 3: Conditional Enhancement]
+  │                               Restormer / Classical CV restoration
+  ▼                                   │
+[Stage 4: Region Detection] ◄─────────┘
+  RT-DETR semantic region classification
+  │
+  ▼
+[Stage 5: Layout Understanding]
+  LayoutLMv3 2D spatial reading order & hierarchy
+  │
+  ▼
+[Stage 6: ROI Classification & Routing]
+  Gradient entropy + edge density classification
+  ├─── Printed (> 0.65)   ───► PP-OCR
+  ├─── Handwritten (> 0.65) ─► TrOCR
+  ├─── Mixed / Ambiguous  ───► Dual-Engine Fusion (confidence-weighted)
+  ├─── Barcode / QR       ───► PyZbar decoder
+  └─── Table              ───► Structured cell parser
+  │
+  ▼
+[Stage 7: Clinical Normalization]
+  Lexicon surface lookup, RxNorm, SNOMED CT, LOINC resolution
+  │
+  ▼
+[Stage 8: Structuring & Provenance]
+  Bounding box attribution, stage-minimum confidence propagation
+  │
+  ▼
+[Stage 9: Clinical Validation]
+  Dosage checks, date sanity, unit validation, contradiction rules
+  │
+  ▼
+[Stage 10: Edge Sync / Persistence]
+  Direct Postgres write (online) OR SQLite edge queue (offline)
+```
+
+### Edge Constraints (Jetson Orin Nano 8GB)
+
+The pipeline is governed by `models/manager.py` and `config/policy.json` to guarantee operation within tight memory budgets:
+- **Unified Memory Ceiling**: Peak GPU/CPU resident model allocation strictly capped.
+- **LRU Dynamic Eviction**: Maximum of 2 active resident models (`max_resident_models = 2`). When a third model is requested, the least recently used model is automatically unloaded with torch GPU cache flushed (`torch.cuda.empty_cache()` and `gc.collect()`).
+- **Idle Model Unloading**: Models idle for more than `idle_timeout_seconds` (default 300s) are evicted.
+- **Resident Memory**: Verified at **150.0 MB** across 2 resident models, well below edge budget limits.
+
+### Configuration
+
+Stage thresholds, engine fallbacks, and memory policies are declared declaratively in JSON:
+- `config/pipeline.json`: Controls blur thresholds (`blur_laplacian_var: 100.0`), deskew limits, engine routing entropy cutoffs (`printed_entropy_threshold: 4.2`), and fallback flags.
+- `config/policy.json`: Controls memory limits (`max_resident_models: 2`, `idle_timeout_seconds: 300`, `device: "auto"`), offline queue DB paths, and sync retry limits.
+- `config/loader.py`: Pydantic-validated type-safe configuration loader with environment variable overrides (`KRAVOS_MAX_RESIDENT_MODELS`, etc.).
+
+### CLI & Evaluation
+
+```pwsh
+# Process a document scan via CLI and ingest into patient record
+python scripts/ocr_ingest.py demo/scans/discharge_summary.png --patient <patient_id>
+
+# Run legacy engine for comparative debugging
+python scripts/ocr_ingest.py demo/scans/discharge_summary.png --patient <patient_id> --legacy
+
+# Run pipeline benchmark (evaluates CER, WER, latency P50/P95, and memory footprint)
+python eval/ocr_eval.py --image demo/scans/discharge_summary.png --device cpu --output eval/pipeline_benchmark.json
+```
+
+### HTTP Endpoints
+
+- `POST /api/ocr/extract`: Multipart upload (`file`, optional `patient_id`). Runs the 5-model pipeline and returns extracted clinical facts, quality assessment report, document regions, and execution latency.
+- `POST /api/ocr/commit`: Accepts user-reviewed/edited clinical facts and atomically commits them into Postgres with full provenance tracing.
+- `GET /api/ocr/queue/status`: Returns current count and health of pending offline documents in the edge sync queue.
 
 ## Optional features (all off by default, all degrade safely)
 
