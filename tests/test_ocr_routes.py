@@ -29,11 +29,14 @@ def api() -> TestClient:
     return TestClient(app)
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def patient_id() -> str:
     from backend.data_layer import list_patients
 
-    patients = list_patients()
+    try:
+        patients = list_patients()
+    except Exception:
+        pytest.skip("Postgres is not running or no patient corpus loaded")
     if not patients:
         pytest.skip("no patient corpus loaded")
     return patients[0].patient_id
@@ -59,7 +62,7 @@ def test_a_non_image_is_refused_by_type(api: TestClient, patient_id: str):
 
 
 @needs_scan
-def test_an_unknown_patient_is_refused_before_ocr(api: TestClient):
+def test_an_unknown_patient_is_refused_before_ocr(api: TestClient, patient_id: str):
     """A fact filed against a patient that does not exist reads as real
     history and resolves to nothing."""
     response = api.post(

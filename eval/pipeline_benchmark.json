@@ -1,0 +1,191 @@
+{
+  "benchmark_timestamp": "2026-09-19T12:30:53Z",
+  "target_document": "discharge_summary.png",
+  "hardware_profile": "laptop",
+  "requested_device": "auto",
+  "warm_runs_count": 2,
+  "legacy_rapidocr": {
+    "engine": "Legacy RapidOCR (Single Model)",
+    "cold_start_latency_ms": 7364.97,
+    "warm_latency_ms": {
+      "p50": 2715.43,
+      "p95": 2850.24,
+      "all_runs": [
+        2850.24,
+        2580.61
+      ]
+    },
+    "ocr_metrics": {
+      "cer_percentage": 4.91,
+      "wer_percentage": 20.83,
+      "mean_confidence": 0.98,
+      "lines_extracted": 32
+    },
+    "facts_extracted_count": 12,
+    "sections_seen": [
+      "CONDITION",
+      "ALLERGY",
+      "MEDICATION",
+      "LAB",
+      "PROCEDURE"
+    ]
+  },
+  "five_model_pipeline": {
+    "engine": "5-Model Pipeline (v2.0.0)",
+    "profile": "laptop",
+    "resolved_device": "cpu",
+    "resolved_precision": "fp32",
+    "cold_start_latency_ms": 8710.6,
+    "warm_latency_ms": {
+      "p50": 7333.45,
+      "p95": 7443.33,
+      "all_runs": [
+        7223.57,
+        7443.33
+      ]
+    },
+    "ocr_metrics": {
+      "cer_percentage": 6.05,
+      "wer_percentage": 34.72,
+      "mean_confidence": 0.871,
+      "lines_extracted": 29,
+      "handwritten_lines_count": 29
+    },
+    "detection_metrics": {
+      "total_regions_detected": 1,
+      "region_classes_found": [
+        "paragraph"
+      ]
+    },
+    "facts_extracted_count": 11,
+    "sections_seen": [
+      "CONDITION",
+      "ALLERGY",
+      "MEDICATION",
+      "LAB",
+      "PROCEDURE"
+    ],
+    "stage_timings_ms": {
+      "acquisition_ms": 35.97299999091774,
+      "p1_quality_ms": 128.89769999310374,
+      "p1_enhancement_ms": 215.93209996353835,
+      "p1_detection_ms": 15.22349996957928,
+      "p1_understanding_ms": 0.021900050342082977,
+      "p1_extraction_ms": 7043.698599911295,
+      "normalization_ms": 0.8938999380916357,
+      "total_ms": 7441.294300020672,
+      "structuring_ms": 0.3258000360801816,
+      "validation_ms": 0.5753999575972557
+    },
+    "memory_status": {
+      "target_hardware": "laptop",
+      "device": "cpu",
+      "precision": "fp32",
+      "eviction_enabled": false,
+      "max_resident_models": 5,
+      "loaded_models": [
+        "restormer",
+        "rt-detr",
+        "layoutlmv3",
+        "trocr",
+        "ppocr"
+      ],
+      "loaded_count": 5,
+      "estimated_footprint_mb": 170.0,
+      "registered_models": [
+        "layoutlmv3",
+        "paddleocr",
+        "ppocr",
+        "restormer",
+        "rt-detr",
+        "rtdetr",
+        "trocr"
+      ],
+      "cpu_rss_mb": 317.73,
+      "process_rss_mb": 317.73,
+      "cpu_threads": 8,
+      "cuda_vram": null
+    },
+    "models_metadata": {
+      "restormer": {
+        "model": "restormer",
+        "backend": "classical-cv-photographic",
+        "is_neural": false,
+        "weights_loaded": false,
+        "fallback_active": true,
+        "execution_device": "cpu",
+        "precision": "fp32",
+        "memory_footprint_mb": 5.0,
+        "version": "restormer-v1.0-cv-fallback"
+      },
+      "rt-detr": {
+        "model": "rt-detr",
+        "backend": "morphological-layout-heuristic",
+        "is_neural": false,
+        "weights_loaded": false,
+        "fallback_active": true,
+        "execution_device": "cpu",
+        "precision": "fp32",
+        "memory_footprint_mb": 10.0,
+        "version": "rtdetr-v1.0-base-layout-heuristic"
+      },
+      "layoutlmv3": {
+        "model": "layoutlmv3",
+        "backend": "spatial-topological-heuristic",
+        "is_neural": false,
+        "weights_loaded": false,
+        "fallback_active": true,
+        "execution_device": "cpu",
+        "precision": "fp32",
+        "memory_footprint_mb": 5.0,
+        "version": "layoutlmv3-v1.0-topological-heuristic"
+      },
+      "trocr": {
+        "model": "trocr",
+        "backend": "rapidocr-handwritten-heuristic",
+        "is_neural": true,
+        "weights_loaded": false,
+        "fallback_active": true,
+        "execution_device": "cpu",
+        "precision": "fp32",
+        "memory_footprint_mb": 10.0,
+        "version": "trocr-v1.0-offline-fallback"
+      },
+      "ppocr": {
+        "model": "ppocr",
+        "backend": "rapidocr-onnx",
+        "is_neural": true,
+        "weights_loaded": true,
+        "fallback_active": false,
+        "execution_device": "cpu",
+        "execution_provider": "CPUExecutionProvider",
+        "precision": "fp32",
+        "memory_footprint_mb": 140.0,
+        "version": "ppocr-v4-onnx"
+      },
+      "paddleocr": {
+        "model": "paddleocr",
+        "backend": "rapidocr-onnx",
+        "is_neural": true,
+        "weights_loaded": false,
+        "fallback_active": false,
+        "execution_device": "cpu",
+        "execution_provider": "unloaded",
+        "precision": "fp32",
+        "memory_footprint_mb": 0.0,
+        "version": "unloaded"
+      },
+      "rtdetr": {
+        "model": "rtdetr",
+        "backend": "morphological-layout-heuristic",
+        "is_neural": false,
+        "weights_loaded": false,
+        "fallback_active": true,
+        "execution_device": "cpu",
+        "precision": "fp32",
+        "memory_footprint_mb": 0.0,
+        "version": "unloaded"
+      }
+    }
+  }
+}

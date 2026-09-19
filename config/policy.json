@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "policy_version": "2.0.0",
+  "quality": {
+    "blur_threshold": 120.0,
+    "skew_threshold_degrees": 1.0,
+    "contrast_threshold": 0.35,
+    "brightness_min": 40.0,
+    "brightness_max": 240.0,
+    "noise_speckle_density_threshold": 0.04,
+    "min_line_confidence": 0.50
+  },
+  "enhancement": {
+    "enabled": true,
+    "trigger_on_blur": true,
+    "trigger_on_noise": true,
+    "trigger_on_low_contrast": true,
+    "always_deskew_first": true
+  },
+  "routing": {
+    "handwriting_threshold": 0.60,
+    "fusion_threshold": 0.35,
+    "fallback_to_printed": true,
+    "special_regions": {
+      "barcode": "barcode_decoder",
+      "table": "table_parser",
+      "signature": "signature_meta",
+      "stamp": "stamp_meta"
+    }
+  },
+  "default_profile": "laptop",
+  "memory": {
+    "target_hardware": "laptop",
+    "max_resident_models": 5,
+    "enable_eviction": false,
+    "idle_timeout_seconds": 1800,
+    "device_preference": "auto",
+    "fallback_to_cpu": true,
+    "precision": "auto",
+    "cpu_threads": "auto",
+    "pdf_dpi": 250
+  },
+  "validation": {
+    "confidence_floor": 0.40,
+    "strict_mode": false,
+    "reject_empty": true
+  }
+}

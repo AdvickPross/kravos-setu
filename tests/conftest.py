@@ -22,6 +22,9 @@ Requires a running Postgres: ``docker compose up -d`` before ``pytest``.
 
 from __future__ import annotations
 
+import os
+os.environ.setdefault("KRAVOS_CONNECT_TIMEOUT", "1")
+
 import pytest
 from psycopg.types.json import Jsonb
 
@@ -39,7 +42,13 @@ def _ensure_test_schema():
     # kravos_test may not exist yet on a fresh checkout -- create it against
     # the maintenance connection (the real 'kravos' db), then apply the
     # schema to it. Never touches kravos's own tables.
-    conn = base.connect()
+    try:
+        conn = base.connect()
+    except Exception as exc:
+        # Postgres is not running; tests that require a live database will fail
+        # at point of use or should be skipped. Non-DB tests can proceed.
+        return
+
     conn.autocommit = True
     try:
         with conn.cursor() as cur:

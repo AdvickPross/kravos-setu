@@ -20,6 +20,16 @@ __all__ = [
     "OcrFact",
     "OcrLine",
     "OcrUnavailable",
+    "PipelineOrchestrator",
     "extract_facts",
     "read_document",
 ]
+
+
+def __getattr__(name: str):
+    if name == "PipelineOrchestrator":
+        from pipeline.orchestrator import PipelineOrchestrator
+        return PipelineOrchestrator
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+

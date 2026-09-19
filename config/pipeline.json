@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "pipeline_version": "2.0.0",
+  "stages": [
+    "acquisition",
+    "quality",
+    "enhancement",
+    "detection",
+    "understanding",
+    "extraction",
+    "normalization",
+    "structuring",
+    "validation"
+  ],
+  "models": {
+    "enhancement": "restormer",
+    "detection": "rt-detr",
+    "understanding": "layoutlmv3",
+    "printed_ocr": "ppocr",
+    "handwritten_ocr": "trocr"
+  },
+  "document_types": {
+    "discharge_summary": {
+      "mandatory_sections": ["DIAGNOSIS", "MEDICATION"],
+      "allow_handwritten": true
+    },
+    "prescription": {
+      "mandatory_sections": ["MEDICATION"],
+      "allow_handwritten": true
+    },
+    "lab_report": {
+      "mandatory_sections": ["LAB"],
+      "allow_handwritten": false
+    },
+    "medical_bill": {
+      "mandatory_sections": ["PROCEDURE"],
+      "allow_handwritten": false
+    },
+    "insurance_form": {
+      "mandatory_sections": ["CONDITION"],
+      "allow_handwritten": true
+    }
+  }
+}
