@@ -41,11 +41,12 @@ class RTDetrAdapter(BaseModelAdapter):
         self,
         model_name: str = "rt-detr",
         device: str = "cpu",
+        precision: str = "auto",
         weights_path: str | Path | None = None,
         confidence_threshold: float = 0.30,
         config: dict[str, Any] | None = None,
     ) -> None:
-        super().__init__(model_name=model_name, device=device, config=config)
+        super().__init__(model_name=model_name, device=device, precision=precision, config=config)
         self.weights_path = Path(weights_path) if weights_path else None
         self.confidence_threshold = confidence_threshold
         self._model = None
@@ -56,6 +57,20 @@ class RTDetrAdapter(BaseModelAdapter):
         if self._has_custom_weights:
             return f"{self._version}-custom-checkpoint"
         return f"{self._version}-base-layout-heuristic"
+
+    def get_metadata(self) -> dict[str, Any]:
+        """Return truthful runtime metadata describing active execution backend and model state."""
+        return {
+            "model": self.model_name,
+            "backend": "ultralytics-rtdetr" if self._has_custom_weights else "morphological-layout-heuristic",
+            "is_neural": self._has_custom_weights,
+            "weights_loaded": self._is_loaded and self._has_custom_weights,
+            "fallback_active": not self._has_custom_weights,
+            "execution_device": self.device if self._has_custom_weights else "cpu",
+            "precision": self.resolved_precision,
+            "memory_footprint_mb": self.memory_footprint_mb,
+            "version": self.get_model_version() if self.is_loaded else "unloaded",
+        }
 
     def load(self) -> None:
         """Instantiate RT-DETR model weights or layout segmentation."""
@@ -118,7 +133,8 @@ class RTDetrAdapter(BaseModelAdapter):
     def _predict_neural(
         self, arr: np.ndarray, page: int, width: int, height: int, conf_thresh: float
     ) -> list[DocumentRegion]:
-        results = self._model.predict(arr, conf=conf_thresh, device=self.device)
+        use_half = bool(self.resolved_precision == "fp16" and self.device == "cuda")
+        results = self._model.predict(arr, conf=conf_thresh, device=self.device, half=use_half)
         regions: list[DocumentRegion] = []
         if not results:
             return regions

@@ -23,10 +23,18 @@ def has_local_hf_checkpoint(repo_or_path: str) -> bool:
 class BaseModelAdapter(abc.ABC):
     """Abstract base adapter establishing the common lifecycle contract for all models."""
 
-    def __init__(self, model_name: str, device: str = "cpu", config: dict[str, Any] | None = None) -> None:
+    def __init__(
+        self,
+        model_name: str,
+        device: str = "cpu",
+        config: dict[str, Any] | None = None,
+        precision: str = "auto",
+    ) -> None:
         self.model_name = model_name
         self._device = device
         self.config = config or {}
+        self.precision = precision
+        self._resolved_precision = "fp32"
         self._is_loaded = False
         self._last_used: float = time.time()
         self._memory_footprint_mb: float = 0.0
@@ -38,6 +46,10 @@ class BaseModelAdapter(abc.ABC):
     @property
     def device(self) -> str:
         return self._device
+
+    @property
+    def resolved_precision(self) -> str:
+        return self._resolved_precision
 
     @property
     def memory_footprint_mb(self) -> float:
@@ -69,6 +81,18 @@ class BaseModelAdapter(abc.ABC):
     def get_model_version(self) -> str:
         """Return semantic or checkpoint version string for provenance."""
         ...
+
+    def get_metadata(self) -> dict[str, Any]:
+        """Return truthful runtime metadata describing active execution backend and model state."""
+        return {
+            "model": self.model_name,
+            "backend": "base",
+            "weights_loaded": self.is_loaded,
+            "execution_device": self.device,
+            "precision": self.resolved_precision,
+            "memory_footprint_mb": self.memory_footprint_mb,
+            "version": self.get_model_version() if self.is_loaded else "unloaded",
+        }
 
     def ensure_loaded(self) -> None:
         """Helper to ensure the model is loaded before inference."""

@@ -142,6 +142,25 @@ def main() -> int:
         help="use legacy RapidOCR engine instead of 5-model pipeline",
     )
     parser.add_argument(
+        "--profile",
+        "-p",
+        default=None,
+        help="hardware execution profile (e.g. laptop, jetson)",
+    )
+    parser.add_argument(
+        "--device",
+        "-d",
+        choices=["auto", "cuda", "cpu"],
+        default=None,
+        help="execution device override (auto, cuda, cpu)",
+    )
+    parser.add_argument(
+        "--dpi",
+        type=int,
+        default=None,
+        help="PDF rasterization DPI (default: profile setting, e.g. 250)",
+    )
+    parser.add_argument(
         "--date",
         help="the date the document is about (YYYY-MM-DD). Defaults to today; "
         "a wrong date moves facts in and out of every recency window.",
@@ -180,12 +199,24 @@ def main() -> int:
         json_path = _write_json(report, args.source, args.out_dir)
         facts_count = len(report.facts)
     else:
+        from config.loader import PolicyConfig
+        from models.manager import ModelManager
         from pipeline.orchestrator import PipelineOrchestrator
 
-        orchestrator = PipelineOrchestrator()
-        result = orchestrator.process_document(args.source, patient_id=args.patient, document_date=document_date)
+        policy = PolicyConfig.load(profile=args.profile)
+        manager = ModelManager(policy=policy.memory, device=args.device)
+        orchestrator = PipelineOrchestrator(model_manager=manager, policy_config=policy)
+        result = orchestrator.process_document(
+            args.source,
+            patient_id=args.patient,
+            document_date=document_date,
+            dpi=args.dpi,
+        )
 
-        _rule(f"2. 5-MODEL PIPELINE  (v{result.pipeline_version})")
+        _rule(
+            f"2. 5-MODEL PIPELINE  (v{result.pipeline_version}) "
+            f"[{manager.device.upper()}:{manager.precision.upper()} | Profile: {policy.default_profile}]"
+        )
         print(f"   {len(result.ocr_results)} lines | mean confidence {result.mean_confidence:.2f}")
         print(f"   stages: {', '.join(k.replace('_ms', '') for k in result.stage_timings.keys())}")
         for line in result.ocr_results:
@@ -206,11 +237,16 @@ def main() -> int:
         json_payload = {
             "source_file": args.source.name,
             "pipeline_version": result.pipeline_version,
+            "profile": policy.default_profile,
+            "device": manager.device,
+            "precision": manager.precision,
             "extracted_at": datetime.now().astimezone().isoformat(timespec="seconds"),
             "sections_seen": result.sections_seen,
             "mean_confidence": result.mean_confidence,
             "stage_timings": result.stage_timings,
             "stage_versions": result.stage_versions,
+            "memory_status": result.memory_status,
+            "model_metadata": result.model_metadata,
             "counts": {
                 "facts": len(result.entities),
                 "unmatched_lines": len(result.unmatched),

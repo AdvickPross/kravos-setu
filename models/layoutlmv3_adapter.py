@@ -26,10 +26,11 @@ class LayoutLMv3Adapter(BaseModelAdapter):
         self,
         model_name: str = "layoutlmv3",
         device: str = "cpu",
+        precision: str = "auto",
         checkpoint: str = "microsoft/layoutlmv3-base",
         config: dict[str, Any] | None = None,
     ) -> None:
-        super().__init__(model_name=model_name, device=device, config=config)
+        super().__init__(model_name=model_name, device=device, precision=precision, config=config)
         self.checkpoint = checkpoint
         self._processor = None
         self._model = None
@@ -40,6 +41,20 @@ class LayoutLMv3Adapter(BaseModelAdapter):
         if self._has_hf_model:
             return f"{self._version}-hf-{self.checkpoint}"
         return f"{self._version}-topological-heuristic"
+
+    def get_metadata(self) -> dict[str, Any]:
+        """Return truthful runtime metadata describing active execution backend and model state."""
+        return {
+            "model": self.model_name,
+            "backend": "transformers-layoutlmv3" if self._has_hf_model else "spatial-topological-heuristic",
+            "is_neural": self._has_hf_model,
+            "weights_loaded": self._is_loaded and self._has_hf_model,
+            "fallback_active": not self._has_hf_model,
+            "execution_device": self.device if self._has_hf_model else "cpu",
+            "precision": self.resolved_precision,
+            "memory_footprint_mb": self.memory_footprint_mb,
+            "version": self.get_model_version() if self.is_loaded else "unloaded",
+        }
 
     def load(self) -> None:
         """Lazily load LayoutLMv3 processor & model if available."""
@@ -64,7 +79,11 @@ class LayoutLMv3Adapter(BaseModelAdapter):
 
             log.info("Loading LayoutLMv3 from %s on %s...", self.checkpoint, self.device)
             self._processor = LayoutLMv3Processor.from_pretrained(self.checkpoint, local_files_only=True)
-            self._model = LayoutLMv3Model.from_pretrained(self.checkpoint, local_files_only=True).to(self.device)
+            model = LayoutLMv3Model.from_pretrained(self.checkpoint, local_files_only=True).to(self.device)
+            model.eval()
+            if self.resolved_precision == "fp16" and self.device == "cuda":
+                model = model.half()
+            self._model = model
             self._has_hf_model = True
             self._memory_footprint_mb = 350.0
         except Exception as exc:

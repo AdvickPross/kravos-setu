@@ -33,7 +33,7 @@ from pipeline.validation import ValidationStage
 log = logging.getLogger(__name__)
 
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".webp"}
-PDF_RENDER_DPI = 200
+DEFAULT_PDF_RENDER_DPI = 250
 
 
 def structured_log(
@@ -74,7 +74,6 @@ class PipelineOrchestrator:
         self.policy_config = policy_config or PolicyConfig.load()
         self.model_manager = model_manager or ModelManager(policy=self.policy_config.memory, device=device)
 
-
         # Initialize stages
         self.quality_stage = QualityAssessmentEngine(policy=self.policy_config.quality)
         self.enhancement_stage = EnhancementStage(self.model_manager)
@@ -86,28 +85,36 @@ class PipelineOrchestrator:
         self.structuring_stage = StructuringStage()
         self.validation_stage = ValidationStage(policy=self.policy_config.validation)
 
-    def load_pages(self, path: Path | str) -> list[np.ndarray]:
+    def load_pages(self, path: Path | str, dpi: int | None = None) -> list[np.ndarray]:
         """Rasterize PDF pages or load image into list of 3-channel RGB numpy arrays."""
         p = Path(path)
         if not p.exists():
             raise FileNotFoundError(f"Document file does not exist: {p}")
 
+        effective_dpi = dpi or getattr(self.policy_config, "pdf_dpi", DEFAULT_PDF_RENDER_DPI)
         suffix = p.suffix.lower()
         if suffix == ".pdf":
             import fitz
 
-            zoom = PDF_RENDER_DPI / 72.0
+            zoom = effective_dpi / 72.0
             pages: list[np.ndarray] = []
             with fitz.open(p) as doc:
                 for page in doc:
                     pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom))
                     arr = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width, pix.n)
-                    pages.append(arr[:, :, :3] if pix.n == 4 else arr)
+                    if pix.n == 4:
+                        rgb = arr[:, :, :3]
+                    elif pix.n == 1:
+                        rgb = np.repeat(arr, 3, axis=-1)
+                    else:
+                        rgb = arr
+                    pages.append(np.ascontiguousarray(rgb, dtype=np.uint8))
             return pages
 
         elif suffix in IMAGE_SUFFIXES:
             with Image.open(p) as handle:
-                return [np.array(handle.convert("RGB"))]
+                arr = np.array(handle.convert("RGB"))
+                return [np.ascontiguousarray(arr, dtype=np.uint8)]
 
         else:
             raise ValueError(
@@ -120,6 +127,7 @@ class PipelineOrchestrator:
         patient_id: str = "patient-unknown",
         document_date: datetime | None = None,
         document_type: str = "discharge_summary",
+        dpi: int | None = None,
     ) -> PipelineResult:
         """Run complete document intelligence pipeline over all pages of the document."""
         path = Path(file_path)
@@ -134,7 +142,7 @@ class PipelineOrchestrator:
 
         # 1. Acquisition
         acq_start = time.perf_counter()
-        pages = self.load_pages(path)
+        pages = self.load_pages(path, dpi=dpi)
         stage_timings["acquisition_ms"] = (time.perf_counter() - acq_start) * 1000
         structured_log("acquisition", doc_id, stage_timings["acquisition_ms"])
 
@@ -267,6 +275,8 @@ class PipelineOrchestrator:
             low_confidence_lines=norm_res.low_confidence_lines,
             stage_timings=stage_timings,
             stage_versions=stage_versions,
+            model_metadata=self.model_manager.get_all_metadata(),
+            memory_status=self.model_manager.get_memory_status(),
         )
         stage_timings["structuring_ms"] = (time.perf_counter() - struct_start) * 1000
         structured_log(

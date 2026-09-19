@@ -375,47 +375,45 @@ rules (`_looks_narrative`'s cue words), not a separate module.
 
 ## Medical Document Intelligence Pipeline (5 Models)
 
-The document processing subsystem provides an edge-optimized, modular clinical document intelligence pipeline replacing legacy monolithic OCR. It is designed for clinical documents (discharge summaries, prescriptions, lab reports, referral notes) and optimized for low-power edge hardware (specifically NVIDIA Jetson Orin Nano with 8 GB unified memory).
+The document processing subsystem provides a modular clinical document intelligence pipeline replacing legacy monolithic OCR. It is designed for clinical documents (discharge summaries, prescriptions, lab reports, referral notes) and architected with a **laptop-first, hardware-agnostic execution engine** supporting CPU fallback, automatic NVIDIA CUDA GPU acceleration when available, and zero eviction for instant warm inference across multi-page documents.
 
 ### The 5 Models
 
-1. **Restormer** (`models/restormer_adapter.py`): Transformer-based image restoration for degraded clinical scans. Executed conditionally only when quality assessment detects blur, noise, skew, or uneven illumination. Falls back gracefully to bilateral filtering, unsharp masking, and CLAHE when neural weights are unmounted.
-2. **RT-DETR** (`models/rtdetr_adapter.py`): Real-time transformer object detector for layout segmentation. Identifies clinical document regions: `header`, `patient_info`, `medications`, `allergies`, `vitals`, `lab_results`, `notes`, `footer`, `barcode`, `table`.
+1. **Restormer** (`models/restormer_adapter.py`): Transformer-based photographic restoration for degraded clinical scans. Executed conditionally only when quality assessment detects blur, noise, skew, or uneven illumination. Uses `torch.inference_mode()` and mixed precision (FP16) on CUDA; falls back gracefully to bilateral filtering, unsharp masking, and contrast normalization when neural weights are unmounted.
+2. **RT-DETR** (`models/rtdetr_adapter.py`): Real-time transformer object detector for document layout and region segmentation. Identifies clinical document regions: `header`, `paragraph`, `table`, `signature`, `stamp`, `barcode`, `footer`, `roi`.
 3. **LayoutLMv3** (`models/layoutlmv3_adapter.py`): Multi-modal layout understanding. Establishes multi-column reading order and hierarchical relationships (e.g. section header -> child lines) without re-detecting bounding boxes.
-4. **PP-OCR v4** (`models/ppocr_adapter.py`): High-throughput printed text recognition using ONNX Runtime. Preserves absolute bounding-box coordinates with sub-millisecond character tokenization.
-5. **TrOCR** (`models/trocr_adapter.py`): Vision-encoder-decoder transformer specialized for handwritten clinical prescriptions and annotations. Emits per-token sequence confidence scores.
+4. **PP-OCR v4** (`models/ppocr_adapter.py`): High-throughput printed text detection and recognition using ONNX Runtime. Queries active execution providers (`CUDAExecutionProvider` or `CPUExecutionProvider`) and preserves canonical bounding box coordinates.
+5. **TrOCR** (`models/trocr_adapter.py`): Vision-encoder-decoder transformer specialized for handwritten clinical prescriptions, annotations, and sign-offs. Emits calibrated confidence scores.
 
-### Pipeline Lifecycle & Stages
+### Pipeline Architecture & Stages
 
 ```
-Input Scan (PDF/Image)
+Input Scan (PDF / Image)
   │
   ▼
-[Stage 1: Ingestion & Validation] ─── MIME validation, PyMuPDF 300 DPI render
+[Stage 1: Ingestion & Validation] ─── MIME validation, PyMuPDF 250 DPI contiguous rasterization
   │
   ▼
-[Stage 2: Quality Assessment]    ─── Laplacian blur, Hough deskew, contrast check
+[Stage 2: Quality Assessment]    ─── Laplacian blur, Hough deskew, contrast metrics
   │                                   │
   ├─── (Quality Pass) ───────────────┼─── (Quality Fail: blur/noise/skew)
   │                                   ▼
   │                             [Stage 3: Conditional Enhancement]
-  │                               Restormer / Classical CV restoration
+  │                               Restormer (CUDA FP16/CPU FP32) / Classical CV
   ▼                                   │
 [Stage 4: Region Detection] ◄─────────┘
   RT-DETR semantic region classification
   │
   ▼
 [Stage 5: Layout Understanding]
-  LayoutLMv3 2D spatial reading order & hierarchy
+  LayoutLMv3 spatial topological sorting & hierarchy linking
   │
   ▼
 [Stage 6: ROI Classification & Routing]
   Gradient entropy + edge density classification
-  ├─── Printed (> 0.65)   ───► PP-OCR
-  ├─── Handwritten (> 0.65) ─► TrOCR
-  ├─── Mixed / Ambiguous  ───► Dual-Engine Fusion (confidence-weighted)
-  ├─── Barcode / QR       ───► PyZbar decoder
-  └─── Table              ───► Structured cell parser
+  ├─── Printed (> 0.65)   ───► PP-OCR (ONNX)
+  ├─── Handwritten (> 0.65) ─► TrOCR (Inference Mode / Autocast)
+  └─── Mixed / Ambiguous  ───► Dual-Engine Fusion (confidence-weighted)
   │
   ▼
 [Stage 7: Clinical Normalization]
@@ -430,43 +428,78 @@ Input Scan (PDF/Image)
   Dosage checks, date sanity, unit validation, contradiction rules
   │
   ▼
-[Stage 10: Edge Sync / Persistence]
-  Direct Postgres write (online) OR SQLite edge queue (offline)
+[Stage 10: Persistence / Review]
+  Structured PipelineResult with truthful metadata & reviewable JSON
 ```
 
-### Edge Constraints (Jetson Orin Nano 8GB)
+### Laptop-First Runtime & Hardware Profiles
 
-The pipeline is governed by `models/manager.py` and `config/policy.json` to guarantee operation within tight memory budgets:
-- **Unified Memory Ceiling**: Peak GPU/CPU resident model allocation strictly capped.
-- **LRU Dynamic Eviction**: Maximum of 2 active resident models (`max_resident_models = 2`). When a third model is requested, the least recently used model is automatically unloaded with torch GPU cache flushed (`torch.cuda.empty_cache()` and `gc.collect()`).
-- **Idle Model Unloading**: Models idle for more than `idle_timeout_seconds` (default 300s) are evicted.
-- **Resident Memory**: Verified at **150.0 MB** across 2 resident models, well below edge budget limits.
+The pipeline decouples hardware-independent stages from execution policies via declarative profiles in `config/profiles/`:
 
-### Configuration
+- **Laptop Profile (`config/profiles/laptop.json` - Active Default)**:
+  - `device`: `"auto"` (automatically selects NVIDIA CUDA GPU when present, otherwise safe CPU fallback)
+  - `precision`: `"auto"` (`fp16` on CUDA for 2-3x speedup, `fp32` on CPU for numerical stability)
+  - `max_resident_models`: `5` (keeps all pipeline models resident in RAM/VRAM to eliminate reloading overhead across documents)
+  - `enable_eviction`: `false` (LRU eviction disabled)
+  - `idle_timeout_seconds`: `1800` (30 minutes)
+  - `cpu_threads`: `"auto"` (dynamically sets PyTorch & OpenCV threads up to `min(8, os.cpu_count())`)
+  - `pdf_dpi`: `250` (optimized rasterization resolution balancing OCR fidelity and memory)
+- **Jetson Profile (`config/profiles/jetson.json` - Future Roadmap)**:
+  - Preserves memory-constrained edge deployment parameters (`max_resident_models = 2`, `enable_eviction = true`, `idle_timeout_seconds = 300`) without modifying pipeline code.
 
-Stage thresholds, engine fallbacks, and memory policies are declared declaratively in JSON:
-- `config/pipeline.json`: Controls blur thresholds (`blur_laplacian_var: 100.0`), deskew limits, engine routing entropy cutoffs (`printed_entropy_threshold: 4.2`), and fallback flags.
-- `config/policy.json`: Controls memory limits (`max_resident_models: 2`, `idle_timeout_seconds: 300`, `device: "auto"`), offline queue DB paths, and sync retry limits.
-- `config/loader.py`: Pydantic-validated type-safe configuration loader with environment variable overrides (`KRAVOS_MAX_RESIDENT_MODELS`, etc.).
+#### Configuration Precedence
+1. **Hardcoded Defaults** (safe fallbacks in `config/loader.py`)
+2. **Profile Configuration** (`config/profiles/<profile>.json`)
+3. **Environment Variables** (`KRAVOS_DEFAULT_PROFILE`, `KRAVOS_DEVICE`, `KRAVOS_PRECISION`, `KRAVOS_MAX_RESIDENT_MODELS`, `KRAVOS_ENABLE_EVICTION`, `KRAVOS_PDF_DPI`)
+4. **Runtime Constructor / CLI Arguments** (`--profile`, `--device`, `--dpi`)
 
-### CLI & Evaluation
+### Runtime Diagnostics CLI
+
+Inspect the active runtime environment, PyTorch CUDA availability, ONNX Runtime execution providers, active hardware profile, process memory (RSS), and registered model truthfulness:
 
 ```pwsh
-# Process a document scan via CLI and ingest into patient record
+# Formatted console summary
+python scripts/ocr_system_info.py
+
+# Machine-readable JSON output
+python scripts/ocr_system_info.py --json
+```
+
+### Document Ingestion CLI
+
+```pwsh
+# Process a document with 5-model pipeline (laptop profile)
 python scripts/ocr_ingest.py demo/scans/discharge_summary.png --patient <patient_id>
 
-# Run legacy engine for comparative debugging
+# Ingest with explicit device, profile, and DPI overrides
+python scripts/ocr_ingest.py demo/scans/discharge_summary.png --patient <patient_id> --profile laptop --device auto --dpi 250
+
+# Commit extracted facts directly to Postgres
+python scripts/ocr_ingest.py demo/scans/discharge_summary.png --patient <patient_id> --commit
+
+# Run legacy single-model RapidOCR engine for baseline comparison
 python scripts/ocr_ingest.py demo/scans/discharge_summary.png --patient <patient_id> --legacy
 
-# Run pipeline benchmark (evaluates CER, WER, latency P50/P95, and memory footprint)
-python eval/ocr_eval.py --image demo/scans/discharge_summary.png --device cpu --output eval/pipeline_benchmark.json
+# Extract text directly from born-digital PDF text layer
+python scripts/ocr_ingest.py document.pdf --patient <patient_id> --text-layer
+```
+
+### Comparative Benchmarking & Evaluation
+
+Benchmark **Legacy RapidOCR** vs the **5-Model Document Intelligence Pipeline**, measuring cold-start latency, warm latency (P50, P95), Character Error Rate (CER), Word Error Rate (WER), and process RSS / CUDA VRAM:
+
+```pwsh
+# Run full comparative benchmark (outputs eval/pipeline_benchmark.json)
+python eval/ocr_eval.py --runs 3 --device auto --profile laptop
+
+# Benchmark only the 5-model pipeline
+python eval/ocr_eval.py --runs 3 --pipeline-only
 ```
 
 ### HTTP Endpoints
 
-- `POST /api/ocr/extract`: Multipart upload (`file`, optional `patient_id`). Runs the 5-model pipeline and returns extracted clinical facts, quality assessment report, document regions, and execution latency.
+- `POST /api/ocr/extract`: Multipart upload (`file`, required `patientId`, optional `documentDate`). Runs the 5-model pipeline with resident models and returns extracted clinical facts, quality assessment report, document regions, and execution latency.
 - `POST /api/ocr/commit`: Accepts user-reviewed/edited clinical facts and atomically commits them into Postgres with full provenance tracing.
-- `GET /api/ocr/queue/status`: Returns current count and health of pending offline documents in the edge sync queue.
 
 ## Optional features (all off by default, all degrade safely)
 

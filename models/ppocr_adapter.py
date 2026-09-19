@@ -21,14 +21,45 @@ class PPOCRAdapter(BaseModelAdapter):
         self,
         model_name: str = "ppocr",
         device: str = "cpu",
+        precision: str = "auto",
         config: dict[str, Any] | None = None,
     ) -> None:
-        super().__init__(model_name=model_name, device=device, config=config)
+        super().__init__(model_name=model_name, device=device, precision=precision, config=config)
         self._reader = None
         self._version = "ppocr-v4-onnx"
 
     def get_model_version(self) -> str:
         return self._version
+
+    def _get_active_provider(self) -> str:
+        if self._reader is not None:
+            try:
+                det = getattr(self._reader, "text_det", None)
+                infer = getattr(det, "infer", None)
+                sess = getattr(infer, "session", None)
+                if sess and hasattr(sess, "get_providers"):
+                    providers = sess.get_providers()
+                    if providers:
+                        return str(providers[0])
+            except Exception:
+                pass
+        return "CUDAExecutionProvider" if self.device == "cuda" else "CPUExecutionProvider"
+
+    def get_metadata(self) -> dict[str, Any]:
+        """Return truthful runtime metadata describing active execution backend and model state."""
+        active_ep = self._get_active_provider() if self._is_loaded else "unloaded"
+        return {
+            "model": self.model_name,
+            "backend": "rapidocr-onnx",
+            "is_neural": True,
+            "weights_loaded": self._is_loaded and (self._reader is not None),
+            "fallback_active": False,
+            "execution_device": self.device,
+            "execution_provider": active_ep,
+            "precision": self.resolved_precision,
+            "memory_footprint_mb": self.memory_footprint_mb,
+            "version": self.get_model_version() if self.is_loaded else "unloaded",
+        }
 
     def load(self) -> None:
         if self._is_loaded:
@@ -36,8 +67,9 @@ class PPOCRAdapter(BaseModelAdapter):
         try:
             from rapidocr_onnxruntime import RapidOCR
 
-            log.info("Loading RapidOCR (PP-OCR ONNX models)...")
-            self._reader = RapidOCR()
+            use_cuda = (self.device == "cuda")
+            log.info("Loading RapidOCR (PP-OCR ONNX models, use_cuda=%s)...", use_cuda)
+            self._reader = RapidOCR(use_cuda=use_cuda)
             self._memory_footprint_mb = 140.0
         except ImportError as exc:
             raise RuntimeError(

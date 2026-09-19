@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "profile_name": "jetson",
+  "hardware": {
+    "device": "auto",
+    "fallback_to_cpu": true
+  },
+  "memory": {
+    "max_resident_models": 2,
+    "enable_eviction": true,
+    "idle_timeout_seconds": 120
+  },
+  "inference": {
+    "precision": "fp16",
+    "cpu_threads": 4
+  },
+  "pdf": {
+    "dpi": 200
+  }
+}

@@ -28,12 +28,17 @@
       "stamp": "stamp_meta"
     }
   },
+  "default_profile": "laptop",
   "memory": {
-    "target_hardware": "Jetson Orin Nano (8GB unified memory)",
-    "max_resident_models": 2,
-    "idle_timeout_seconds": 120,
+    "target_hardware": "laptop",
+    "max_resident_models": 5,
+    "enable_eviction": false,
+    "idle_timeout_seconds": 1800,
     "device_preference": "auto",
-    "fallback_to_cpu": true
+    "fallback_to_cpu": true,
+    "precision": "auto",
+    "cpu_threads": "auto",
+    "pdf_dpi": 250
   },
   "validation": {
     "confidence_floor": 0.40,

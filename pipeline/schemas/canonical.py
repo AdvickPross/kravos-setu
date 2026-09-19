@@ -262,6 +262,8 @@ class PipelineResult:
     stage_timings: dict[str, float] = field(default_factory=dict)
     stage_versions: dict[str, str] = field(default_factory=dict)
     mean_confidence: float = 0.0
+    model_metadata: dict[str, Any] = field(default_factory=dict)
+    memory_status: dict[str, Any] = field(default_factory=dict)
 
     @property
     def total_lines(self) -> int:

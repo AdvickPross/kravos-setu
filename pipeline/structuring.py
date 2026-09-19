@@ -35,6 +35,8 @@ class StructuringStage:
         low_confidence_lines: list[str],
         stage_timings: dict[str, float] | None = None,
         stage_versions: dict[str, str] | None = None,
+        model_metadata: dict[str, Any] | None = None,
+        memory_status: dict[str, Any] | None = None,
     ) -> PipelineResult:
         """Apply confidence propagation (min-across-stages) and assemble final PipelineResult."""
         quality_map = {q.page: q.overall_score for q in quality_reports}
@@ -97,4 +99,6 @@ class StructuringStage:
             stage_timings=stage_timings or {},
             stage_versions=stage_versions or {},
             mean_confidence=round(mean_conf, 3),
+            model_metadata=model_metadata or {},
+            memory_status=memory_status or {},
         )

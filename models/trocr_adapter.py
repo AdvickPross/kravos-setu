@@ -21,10 +21,11 @@ class TrOCRAdapter(BaseModelAdapter):
         self,
         model_name: str = "trocr",
         device: str = "cpu",
+        precision: str = "auto",
         checkpoint: str = "microsoft/trocr-small-handwritten",
         config: dict[str, Any] | None = None,
     ) -> None:
-        super().__init__(model_name=model_name, device=device, config=config)
+        super().__init__(model_name=model_name, device=device, precision=precision, config=config)
         self.checkpoint = checkpoint
         self._processor = None
         self._model = None
@@ -35,6 +36,20 @@ class TrOCRAdapter(BaseModelAdapter):
         if self._has_hf_model:
             return f"{self._version}-hf-{self.checkpoint}"
         return f"{self._version}-offline-fallback"
+
+    def get_metadata(self) -> dict[str, Any]:
+        """Return truthful runtime metadata describing active execution backend and model state."""
+        return {
+            "model": self.model_name,
+            "backend": "transformers-trocr" if self._has_hf_model else "rapidocr-handwritten-heuristic",
+            "is_neural": True,
+            "weights_loaded": self._is_loaded and self._has_hf_model,
+            "fallback_active": not self._has_hf_model,
+            "execution_device": self.device if self._has_hf_model else "cpu",
+            "precision": self.resolved_precision,
+            "memory_footprint_mb": self.memory_footprint_mb,
+            "version": self.get_model_version() if self.is_loaded else "unloaded",
+        }
 
     def load(self) -> None:
         if self._is_loaded:
@@ -58,9 +73,13 @@ class TrOCRAdapter(BaseModelAdapter):
 
             log.info("Loading TrOCR model from %s on %s...", self.checkpoint, self.device)
             self._processor = TrOCRProcessor.from_pretrained(self.checkpoint, local_files_only=True)
-            self._model = VisionEncoderDecoderModel.from_pretrained(
+            model = VisionEncoderDecoderModel.from_pretrained(
                 self.checkpoint, local_files_only=True
             ).to(self.device)
+            model.eval()
+            if self.resolved_precision == "fp16" and self.device == "cuda":
+                model = model.half()
+            self._model = model
             self._has_hf_model = True
             self._memory_footprint_mb = 320.0
         except Exception as exc:
@@ -121,8 +140,14 @@ class TrOCRAdapter(BaseModelAdapter):
         import torch
 
         pixel_values = self._processor(pil_img, return_tensors="pt").pixel_values.to(self.device)
-        with torch.no_grad():
-            outputs = self._model.generate(pixel_values, return_dict_in_generate=True, output_scores=True)
+        use_amp = bool(self.resolved_precision == "fp16" and self.device == "cuda")
+        with torch.inference_mode():
+            if use_amp:
+                with torch.autocast(device_type="cuda", dtype=torch.float16):
+                    outputs = self._model.generate(pixel_values, return_dict_in_generate=True, output_scores=True)
+            else:
+                outputs = self._model.generate(pixel_values, return_dict_in_generate=True, output_scores=True)
+
             generated_ids = outputs.sequences
             generated_text = self._processor.batch_decode(generated_ids, skip_special_tokens=True)[0].strip()
 

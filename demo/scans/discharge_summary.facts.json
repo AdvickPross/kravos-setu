@@ -1,6 +1,10 @@
 {
   "source_file": "discharge_summary.png",
-  "extracted_at": "2026-09-16T12:07:59+05:30",
+  "pipeline_version": "2.0.0",
+  "profile": "laptop",
+  "device": "cpu",
+  "precision": "fp32",
+  "extracted_at": "2026-09-19T18:00:13+05:30",
   "sections_seen": [
     "CONDITION",
     "ALLERGY",
@@ -8,49 +12,190 @@
     "LAB",
     "PROCEDURE"
   ],
+  "mean_confidence": 0.871,
+  "stage_timings": {
+    "acquisition_ms": 86.74669999163598,
+    "p1_quality_ms": 151.3101999880746,
+    "p1_enhancement_ms": 225.5286000436172,
+    "p1_detection_ms": 15.558999963104725,
+    "p1_understanding_ms": 1.2237000046297908,
+    "p1_extraction_ms": 7540.284699993208,
+    "normalization_ms": 1.756999990902841,
+    "total_ms": 9012.349999975413,
+    "structuring_ms": 25.057599996216595,
+    "validation_ms": 0.6417001131922007
+  },
+  "stage_versions": {
+    "pipeline_version": "2.0.0",
+    "policy_version": "2.0.0",
+    "enhancement": "restormer-v1.0-cv-fallback",
+    "detection": "rtdetr-v1.0-base-layout-heuristic",
+    "understanding": "layoutlmv3-v1.0-topological-heuristic",
+    "printed_ocr": "ppocr-v4-onnx",
+    "handwritten_ocr": "trocr-v1.0-offline-fallback"
+  },
+  "memory_status": {
+    "target_hardware": "laptop",
+    "device": "cpu",
+    "precision": "fp32",
+    "eviction_enabled": false,
+    "max_resident_models": 5,
+    "loaded_models": [
+      "restormer",
+      "rt-detr",
+      "layoutlmv3",
+      "trocr",
+      "ppocr"
+    ],
+    "loaded_count": 5,
+    "estimated_footprint_mb": 170.0,
+    "registered_models": [
+      "layoutlmv3",
+      "paddleocr",
+      "ppocr",
+      "restormer",
+      "rt-detr",
+      "rtdetr",
+      "trocr"
+    ],
+    "cpu_rss_mb": 296.31,
+    "process_rss_mb": 296.31,
+    "cpu_threads": 8,
+    "cuda_vram": null
+  },
+  "model_metadata": {
+    "restormer": {
+      "model": "restormer",
+      "backend": "classical-cv-photographic",
+      "is_neural": false,
+      "weights_loaded": false,
+      "fallback_active": true,
+      "execution_device": "cpu",
+      "precision": "fp32",
+      "memory_footprint_mb": 5.0,
+      "version": "restormer-v1.0-cv-fallback"
+    },
+    "rt-detr": {
+      "model": "rt-detr",
+      "backend": "morphological-layout-heuristic",
+      "is_neural": false,
+      "weights_loaded": false,
+      "fallback_active": true,
+      "execution_device": "cpu",
+      "precision": "fp32",
+      "memory_footprint_mb": 10.0,
+      "version": "rtdetr-v1.0-base-layout-heuristic"
+    },
+    "layoutlmv3": {
+      "model": "layoutlmv3",
+      "backend": "spatial-topological-heuristic",
+      "is_neural": false,
+      "weights_loaded": false,
+      "fallback_active": true,
+      "execution_device": "cpu",
+      "precision": "fp32",
+      "memory_footprint_mb": 5.0,
+      "version": "layoutlmv3-v1.0-topological-heuristic"
+    },
+    "trocr": {
+      "model": "trocr",
+      "backend": "rapidocr-handwritten-heuristic",
+      "is_neural": true,
+      "weights_loaded": false,
+      "fallback_active": true,
+      "execution_device": "cpu",
+      "precision": "fp32",
+      "memory_footprint_mb": 10.0,
+      "version": "trocr-v1.0-offline-fallback"
+    },
+    "ppocr": {
+      "model": "ppocr",
+      "backend": "rapidocr-onnx",
+      "is_neural": true,
+      "weights_loaded": true,
+      "fallback_active": false,
+      "execution_device": "cpu",
+      "execution_provider": "CPUExecutionProvider",
+      "precision": "fp32",
+      "memory_footprint_mb": 140.0,
+      "version": "ppocr-v4-onnx"
+    },
+    "paddleocr": {
+      "model": "paddleocr",
+      "backend": "rapidocr-onnx",
+      "is_neural": true,
+      "weights_loaded": false,
+      "fallback_active": false,
+      "execution_device": "cpu",
+      "execution_provider": "unloaded",
+      "precision": "fp32",
+      "memory_footprint_mb": 0.0,
+      "version": "unloaded"
+    },
+    "rtdetr": {
+      "model": "rtdetr",
+      "backend": "morphological-layout-heuristic",
+      "is_neural": false,
+      "weights_loaded": false,
+      "fallback_active": true,
+      "execution_device": "cpu",
+      "precision": "fp32",
+      "memory_footprint_mb": 0.0,
+      "version": "unloaded"
+    }
+  },
   "counts": {
-    "facts": 12,
-    "unmatched_lines": 12,
+    "facts": 11,
+    "unmatched_lines": 13,
     "ambiguous_lines": 0,
     "low_confidence_lines": 0
   },
   "facts": [
     {
-      "fact_id": "58aedacc13ab2442",
-      "patient_id": "01607992-4fd3-45d8-8fbe-04c961dd73ac",
+      "fact_id": "678525fd2dc70acd",
+      "patient_id": "test-pat-123",
       "category": "CONDITION",
       "safety_class": "CLINICAL",
-      "text": "Condition: Essential hypertension (disorder) (scanned, OCR 90%)",
+      "text": "Condition: Essential hypertension (disorder) (scanned, OCR 88%)",
       "code_system": "http://snomed.info/sct",
       "code": "59621000",
       "display": "Essential hypertension (disorder)",
       "value": null,
       "unit": null,
-      "date": "2026-03-09T00:00:00+05:30",
+      "date": "2026-09-19T12:30:13.564603+00:00",
       "status": "active",
       "source_resource_type": "ScannedDocument",
       "source_resource_id": "discharge_summary.png#p1L12",
       "encounter_id": null,
       "also_in": [],
-      "_ocr": {
-        "confidence": 0.898,
+      "_provenance": {
+        "document_id": "discharge_summary.png",
         "page": 1,
-        "line_no": 12,
-        "line_text": "Essential.hypertension"
-      }
+        "region_id": "p1_r1",
+        "bbox": [
+          89.0,
+          581.0,
+          401.0,
+          608.0
+        ],
+        "source_model": "trocr",
+        "model_version": "trocr-v1.0-offline-fallback",
+        "pipeline_version": "2.0.0"
+      },
+      "_calibrated_confidence": 0.714
     },
     {
-      "fact_id": "6baed024f7d43395",
-      "patient_id": "01607992-4fd3-45d8-8fbe-04c961dd73ac",
+      "fact_id": "1d91d2801354d32e",
+      "patient_id": "test-pat-123",
       "category": "CONDITION",
       "safety_class": "CLINICAL",
-      "text": "Condition: End-stage renal disease (disorder) (scanned, OCR 85%)",
+      "text": "Condition: End-stage renal disease (disorder) (scanned, OCR 88%)",
       "code_system": "http://snomed.info/sct",
       "code": "46177005",
       "display": "End-stage renal disease (disorder)",
       "value": null,
       "unit": null,
-      "date": "2026-03-09T00:00:00+05:30",
+      "date": "2026-09-19T12:30:13.564603+00:00",
       "status": "active",
       "source_resource_type": "ScannedDocument",
       "source_resource_id": "discharge_summary.png#p1L13",
@@ -61,88 +206,91 @@
         "433144002",
         "431857002"
       ],
-      "_ocr": {
-        "confidence": 0.852,
+      "_provenance": {
+        "document_id": "discharge_summary.png",
         "page": 1,
-        "line_no": 13,
-        "line_text": "Chronic kidney' disease"
-      }
+        "region_id": "p1_r1",
+        "bbox": [
+          88.0,
+          617.0,
+          404.0,
+          647.0
+        ],
+        "source_model": "trocr",
+        "model_version": "trocr-v1.0-offline-fallback",
+        "pipeline_version": "2.0.0"
+      },
+      "_calibrated_confidence": 0.714
     },
     {
-      "fact_id": "eb0cda6ba85e07d7",
-      "patient_id": "01607992-4fd3-45d8-8fbe-04c961dd73ac",
+      "fact_id": "cbc5dd3ab0686aa9",
+      "patient_id": "test-pat-123",
       "category": "ALLERGY",
       "safety_class": "SAFETY",
-      "text": "Allergy: Penicillin V (scanned, OCR 82%)",
+      "text": "Allergy: Penicillin V (scanned, OCR 88%)",
       "code_system": "http://www.nlm.nih.gov/research/umls/rxnorm",
       "code": "7984",
       "display": "Penicillin V",
       "value": null,
       "unit": null,
-      "date": "2026-03-09T00:00:00+05:30",
+      "date": "2026-09-19T12:30:13.564603+00:00",
       "status": "active",
       "source_resource_type": "ScannedDocument",
       "source_resource_id": "discharge_summary.png#p1L15",
       "encounter_id": null,
       "also_in": [],
-      "_ocr": {
-        "confidence": 0.825,
+      "_provenance": {
+        "document_id": "discharge_summary.png",
         "page": 1,
-        "line_no": 15,
-        "line_text": "Penicillin"
-      }
+        "region_id": "p1_r1",
+        "bbox": [
+          87.0,
+          730.0,
+          241.0,
+          760.0
+        ],
+        "source_model": "trocr",
+        "model_version": "trocr-v1.0-offline-fallback",
+        "pipeline_version": "2.0.0"
+      },
+      "_calibrated_confidence": 0.714
     },
     {
-      "fact_id": "77e4fc31b7a0a366",
-      "patient_id": "01607992-4fd3-45d8-8fbe-04c961dd73ac",
+      "fact_id": "8f6a11884f091d3f",
+      "patient_id": "test-pat-123",
       "category": "ALLERGY",
       "safety_class": "SAFETY",
-      "text": "Allergy: Aspirin (scanned, OCR 87%)",
+      "text": "Allergy: Aspirin (scanned, OCR 89%)",
       "code_system": "http://www.nlm.nih.gov/research/umls/rxnorm",
       "code": "1191",
       "display": "Aspirin",
       "value": null,
       "unit": null,
-      "date": "2026-03-09T00:00:00+05:30",
+      "date": "2026-09-19T12:30:13.564603+00:00",
       "status": "active",
       "source_resource_type": "ScannedDocument",
       "source_resource_id": "discharge_summary.png#p1L16",
       "encounter_id": null,
       "also_in": [],
-      "_ocr": {
-        "confidence": 0.874,
+      "_provenance": {
+        "document_id": "discharge_summary.png",
         "page": 1,
-        "line_no": 16,
-        "line_text": "Aspirin"
-      }
+        "region_id": "p1_r1",
+        "bbox": [
+          87.0,
+          768.0,
+          195.0,
+          799.0
+        ],
+        "source_model": "trocr",
+        "model_version": "trocr-v1.0-offline-fallback",
+        "pipeline_version": "2.0.0"
+      },
+      "_calibrated_confidence": 0.714
     },
     {
-      "fact_id": "1eb997dd945faaa2",
-      "patient_id": "01607992-4fd3-45d8-8fbe-04c961dd73ac",
-      "category": "MEDICATION",
-      "safety_class": "CLINICAL",
-      "text": "Medication: 24 HR Metformin hydrochloride 500 MG Extended Release Oral Tablet (scanned, OCR 83%)",
-      "code_system": "http://www.nlm.nih.gov/research/umls/rxnorm",
-      "code": "860975",
-      "display": "24 HR Metformin hydrochloride 500 MG Extended Release Oral Tablet",
-      "value": "500",
-      "unit": "mg",
-      "date": "2026-03-09T00:00:00+05:30",
-      "status": "active",
-      "source_resource_type": "ScannedDocument",
-      "source_resource_id": "discharge_summary.png#p1L18",
-      "encounter_id": null,
-      "also_in": [],
-      "_ocr": {
-        "confidence": 0.833,
-        "page": 1,
-        "line_no": 18,
-        "line_text": "Metformin' 500'mg"
-      }
-    },
-    {
-      "fact_id": "44d2c5ce72affbe2",
-      "patient_id": "01607992-4fd3-45d8-8fbe-04c961dd73ac",
+      "fact_id": "df372eecac80905a",
+      "patient_id": "test-pat-123",
       "category": "MEDICATION",
       "safety_class": "CLINICAL",
       "text": "Medication: amLODIPine 2.5 MG Oral Tablet (scanned, OCR 88%)",
@@ -151,22 +299,31 @@
       "display": "amLODIPine 2.5 MG Oral Tablet",
       "value": "5",
       "unit": "mg",
-      "date": "2026-03-09T00:00:00+05:30",
+      "date": "2026-09-19T12:30:13.564603+00:00",
       "status": "active",
       "source_resource_type": "ScannedDocument",
       "source_resource_id": "discharge_summary.png#p1L19",
       "encounter_id": null,
       "also_in": [],
-      "_ocr": {
-        "confidence": 0.878,
+      "_provenance": {
+        "document_id": "discharge_summary.png",
         "page": 1,
-        "line_no": 19,
-        "line_text": "Amlodipine 5 mg"
-      }
+        "region_id": "p1_r1",
+        "bbox": [
+          83.0,
+          916.0,
+          306.0,
+          956.0
+        ],
+        "source_model": "trocr",
+        "model_version": "trocr-v1.0-offline-fallback",
+        "pipeline_version": "2.0.0"
+      },
+      "_calibrated_confidence": 0.714
     },
     {
-      "fact_id": "24ba1caa1021ce97",
-      "patient_id": "01607992-4fd3-45d8-8fbe-04c961dd73ac",
+      "fact_id": "21a5c28a96b9213e",
+      "patient_id": "test-pat-123",
       "category": "MEDICATION",
       "safety_class": "CLINICAL",
       "text": "Medication: atorvastatin 10 MG Oral Tablet (scanned, OCR 89%)",
@@ -175,7 +332,7 @@
       "display": "atorvastatin 10 MG Oral Tablet",
       "value": "20",
       "unit": "mg",
-      "date": "2026-03-09T00:00:00+05:30",
+      "date": "2026-09-19T12:30:13.564603+00:00",
       "status": "active",
       "source_resource_type": "ScannedDocument",
       "source_resource_id": "discharge_summary.png#p1L20",
@@ -186,25 +343,34 @@
         "259255",
         "617320"
       ],
-      "_ocr": {
-        "confidence": 0.892,
+      "_provenance": {
+        "document_id": "discharge_summary.png",
         "page": 1,
-        "line_no": 20,
-        "line_text": "Atorvastatin20mg"
-      }
+        "region_id": "p1_r1",
+        "bbox": [
+          83.0,
+          952.0,
+          348.0,
+          994.0
+        ],
+        "source_model": "trocr",
+        "model_version": "trocr-v1.0-offline-fallback",
+        "pipeline_version": "2.0.0"
+      },
+      "_calibrated_confidence": 0.714
     },
     {
-      "fact_id": "85dee2e08c302615",
-      "patient_id": "01607992-4fd3-45d8-8fbe-04c961dd73ac",
+      "fact_id": "5b6e901a856a3b97",
+      "patient_id": "test-pat-123",
       "category": "MEDICATION",
       "safety_class": "CLINICAL",
-      "text": "Medication: Furosemide 40 MG Oral Tablet (scanned, OCR 85%)",
+      "text": "Medication: Furosemide 40 MG Oral Tablet (scanned, OCR 86%)",
       "code_system": "http://www.nlm.nih.gov/research/umls/rxnorm",
       "code": "313988",
       "display": "Furosemide 40 MG Oral Tablet",
       "value": "40",
       "unit": "mg",
-      "date": "2026-03-09T00:00:00+05:30",
+      "date": "2026-09-19T12:30:13.564603+00:00",
       "status": "active",
       "source_resource_type": "ScannedDocument",
       "source_resource_id": "discharge_summary.png#p1L21",
@@ -212,25 +378,34 @@
       "also_in": [
         "1719286"
       ],
-      "_ocr": {
-        "confidence": 0.851,
+      "_provenance": {
+        "document_id": "discharge_summary.png",
         "page": 1,
-        "line_no": 21,
-        "line_text": "Furosemide :40 :mg"
-      }
+        "region_id": "p1_r1",
+        "bbox": [
+          84.0,
+          993.0,
+          320.0,
+          1031.0
+        ],
+        "source_model": "trocr",
+        "model_version": "trocr-v1.0-offline-fallback",
+        "pipeline_version": "2.0.0"
+      },
+      "_calibrated_confidence": 0.714
     },
     {
-      "fact_id": "1aa2e5df4f283aec",
-      "patient_id": "01607992-4fd3-45d8-8fbe-04c961dd73ac",
+      "fact_id": "b6503dc3f28003c6",
+      "patient_id": "test-pat-123",
       "category": "LAB",
       "safety_class": "CLINICAL",
-      "text": "Lab: Hemoglobin [Mass/volume] in Blood (scanned, OCR 88%)",
+      "text": "Lab: Hemoglobin [Mass/volume] in Blood (scanned, OCR 90%)",
       "code_system": "http://loinc.org",
       "code": "718-7",
       "display": "Hemoglobin [Mass/volume] in Blood",
       "value": null,
       "unit": null,
-      "date": "2026-03-09T00:00:00+05:30",
+      "date": "2026-09-19T12:30:13.564603+00:00",
       "status": "active",
       "source_resource_type": "ScannedDocument",
       "source_resource_id": "discharge_summary.png#p1L23",
@@ -238,25 +413,34 @@
       "also_in": [
         "5794-3"
       ],
-      "_ocr": {
-        "confidence": 0.877,
+      "_provenance": {
+        "document_id": "discharge_summary.png",
         "page": 1,
-        "line_no": 23,
-        "line_text": "Hemoglobin"
-      }
+        "region_id": "p1_r1",
+        "bbox": [
+          83.0,
+          1107.0,
+          236.0,
+          1142.0
+        ],
+        "source_model": "trocr",
+        "model_version": "trocr-v1.0-offline-fallback",
+        "pipeline_version": "2.0.0"
+      },
+      "_calibrated_confidence": 0.714
     },
     {
-      "fact_id": "f86386cf80e5ed26",
-      "patient_id": "01607992-4fd3-45d8-8fbe-04c961dd73ac",
+      "fact_id": "bd4174f6c6ccd614",
+      "patient_id": "test-pat-123",
       "category": "LAB",
       "safety_class": "CLINICAL",
-      "text": "Lab: Creatinine [Mass/volume] in Blood (scanned, OCR 87%)",
+      "text": "Lab: Creatinine [Mass/volume] in Blood (scanned, OCR 89%)",
       "code_system": "http://loinc.org",
       "code": "38483-4",
       "display": "Creatinine [Mass/volume] in Blood",
       "value": null,
       "unit": null,
-      "date": "2026-03-09T00:00:00+05:30",
+      "date": "2026-09-19T12:30:13.564603+00:00",
       "status": "active",
       "source_resource_type": "ScannedDocument",
       "source_resource_id": "discharge_summary.png#p1L24",
@@ -264,25 +448,34 @@
       "also_in": [
         "2160-0"
       ],
-      "_ocr": {
-        "confidence": 0.87,
+      "_provenance": {
+        "document_id": "discharge_summary.png",
         "page": 1,
-        "line_no": 24,
-        "line_text": "Creatinine"
-      }
+        "region_id": "p1_r1",
+        "bbox": [
+          83.0,
+          1147.0,
+          235.0,
+          1177.0
+        ],
+        "source_model": "trocr",
+        "model_version": "trocr-v1.0-offline-fallback",
+        "pipeline_version": "2.0.0"
+      },
+      "_calibrated_confidence": 0.714
     },
     {
-      "fact_id": "00771e134a676fbf",
-      "patient_id": "01607992-4fd3-45d8-8fbe-04c961dd73ac",
+      "fact_id": "7901f5be283614a2",
+      "patient_id": "test-pat-123",
       "category": "LAB",
       "safety_class": "CLINICAL",
-      "text": "Lab: Potassium [Moles/volume] in Blood (scanned, OCR 90%)",
+      "text": "Lab: Potassium [Moles/volume] in Blood (scanned, OCR 89%)",
       "code_system": "http://loinc.org",
       "code": "6298-4",
       "display": "Potassium [Moles/volume] in Blood",
       "value": null,
       "unit": null,
-      "date": "2026-03-09T00:00:00+05:30",
+      "date": "2026-09-19T12:30:13.564603+00:00",
       "status": "active",
       "source_resource_type": "ScannedDocument",
       "source_resource_id": "discharge_summary.png#p1L25",
@@ -290,52 +483,71 @@
       "also_in": [
         "2823-3"
       ],
-      "_ocr": {
-        "confidence": 0.897,
+      "_provenance": {
+        "document_id": "discharge_summary.png",
         "page": 1,
-        "line_no": 25,
-        "line_text": "Potassium"
-      }
+        "region_id": "p1_r1",
+        "bbox": [
+          81.0,
+          1187.0,
+          220.0,
+          1216.0
+        ],
+        "source_model": "trocr",
+        "model_version": "trocr-v1.0-offline-fallback",
+        "pipeline_version": "2.0.0"
+      },
+      "_calibrated_confidence": 0.714
     },
     {
-      "fact_id": "62a85c740a7ae717",
-      "patient_id": "01607992-4fd3-45d8-8fbe-04c961dd73ac",
+      "fact_id": "560cb6e9a5de1200",
+      "patient_id": "test-pat-123",
       "category": "PROCEDURE",
       "safety_class": "CLINICAL",
-      "text": "Procedure: Renal dialysis (procedure) (scanned, OCR 79%)",
+      "text": "Procedure: Renal dialysis (procedure) (scanned, OCR 89%)",
       "code_system": "http://snomed.info/sct",
       "code": "265764009",
       "display": "Renal dialysis (procedure)",
       "value": null,
       "unit": null,
-      "date": "2026-03-09T00:00:00+05:30",
+      "date": "2026-09-19T12:30:13.564603+00:00",
       "status": "active",
       "source_resource_type": "ScannedDocument",
       "source_resource_id": "discharge_summary.png#p1L27",
       "encounter_id": null,
       "also_in": [],
-      "_ocr": {
-        "confidence": 0.789,
+      "_provenance": {
+        "document_id": "discharge_summary.png",
         "page": 1,
-        "line_no": 27,
-        "line_text": "Renal. :dialysis"
-      }
+        "region_id": "p1_r1",
+        "bbox": [
+          83.0,
+          1297.0,
+          290.0,
+          1333.0
+        ],
+        "source_model": "trocr",
+        "model_version": "trocr-v1.0-offline-fallback",
+        "pipeline_version": "2.0.0"
+      },
+      "_calibrated_confidence": 0.714
     }
   ],
   "not_extracted": {
     "unmatched": [
-      "SUNRISE:MULTISPECIALITY'HOSPITAL",
-      "Bengaluru,: Karnataka",
-      "DISCHARGE'SUMMARY",
-      "PatientName..Ramesh .Kumar",
-      "IP.Number ::: : IP-2026-04417",
-      "Admitted:",
-      ":: 02-03-2026",
-      "Discharged.",
-      "::09-03-2026",
-      "Type .2: diabetes. mellitus",
-      "Advised.review after:two:weeks.",
-      "Dr.. S.. Iyer', MD"
+      "SUNRISE:MULTISPECIALITY HOSPITAL",
+      "Bengaluru, Karnataka",
+      "DISCHARGE SUMMARY",
+      "Patient Name. : Ramesh Kumar",
+      "Age / Sex::58/M",
+      "IP Number: IP-2026-04417",
+      "Admitted.",
+      ":02-03-2026",
+      "Discharged 09-03-2026",
+      "Type 2 diabetes mellitus",
+      "Metformin 5o0 mg",
+      "Advised review after two weeks.",
+      "Dr..S. Iyer, MD."
     ],
     "ambiguous": [],
     "low_confidence": []

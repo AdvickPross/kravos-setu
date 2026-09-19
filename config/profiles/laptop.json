@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "profile_name": "laptop",
+  "hardware": {
+    "device": "auto",
+    "fallback_to_cpu": true
+  },
+  "memory": {
+    "max_resident_models": 5,
+    "enable_eviction": false,
+    "idle_timeout_seconds": 1800
+  },
+  "inference": {
+    "precision": "auto",
+    "cpu_threads": "auto"
+  },
+  "pdf": {
+    "dpi": 250
+  }
+}
