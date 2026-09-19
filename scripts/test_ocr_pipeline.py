@@ -42,38 +42,72 @@ def _truncate(text: str, maxlen: int = 80) -> str:
 
 
 def _format_pipeline_report(result, verbose: bool = False) -> None:
-    """Print a formatted diagnostic report from a PipelineResult."""
-    print(_rule("="))
-    print("  KRAVOS SETU — OCR PIPELINE DIAGNOSTIC REPORT")
-    print(_rule("="))
+    """Print a formatted diagnostic report conforming to Section 24 specification."""
+    print("Kravos Setu OCR Diagnostic")
+    print("==========================")
+    print(f"Input: {result.source_file}")
+    num_pages = len(result.quality_reports) if result.quality_reports else 1
+    print(f"Pages: {num_pages}")
+    print("\nMODEL STATUS")
+    print("------------")
 
-    print(f"\n[DOCUMENT]")
-    print(f"  File:             {result.source_file}")
-    print(f"  Document Type:    {getattr(result, 'document_type', 'unknown')}")
-    print(f"  Pipeline Version: {result.pipeline_version}")
-    print(f"  Total OCR Lines:  {len(result.ocr_results)}")
-    print(f"  Mean Confidence:  {result.mean_confidence:.3f}")
-    print(f"  Entities Found:   {len(result.entities)}")
+    models_meta = getattr(result, "model_metadata", {})
+    for model_name in ["ppocr", "trocr", "rt-detr", "restormer", "layoutlmv3"]:
+        meta = models_meta.get(model_name, {})
+        display = {
+            "ppocr": "PP-OCR",
+            "trocr": "TrOCR",
+            "rt-detr": "RT-DETR",
+            "restormer": "Restormer",
+            "layoutlmv3": "LayoutLMv3",
+        }.get(model_name, model_name)
+        status = meta.get("status", "FALLBACK" if meta.get("fallback") else "ACTIVE_NEURAL_MODEL")
+        print(f"\n{display}:")
+        print(f"  status:     {status}")
+        print(f"  checkpoint: {meta.get('checkpoint') or 'none'}")
+        print(f"  backend:    {meta.get('backend', 'unknown')}")
+        print(f"  device:     {meta.get('execution_device', meta.get('device', 'cpu'))}")
 
-    print(f"\n[STAGE TIMINGS]")
-    for key, val in result.stage_timings.items():
-        print(f"  {key:<32} {val:>8.1f} ms")
-
-    print(f"\n[MODEL VERSIONS]")
-    for key, val in result.stage_versions.items():
-        print(f"  {key:<26} {val}")
-
-    print(f"\n[QUALITY REPORTS]")
+    # Per-page breakdown
     for qr in result.quality_reports:
-        passed_checks = [k for k, v in qr.checks.items() if v.passed]
-        failed_checks = [k for k, v in qr.checks.items() if not v.passed]
-        print(f"  Page {qr.page}:")
-        print(f"    Overall Score:       {qr.overall_score:.3f}")
-        print(f"    Enhancement Needed:  {qr.enhancement_required}")
-        print(f"    Action Plan:         {', '.join(qr.action_plan) or 'none'}")
-        print(f"    Checks Passed:       {', '.join(passed_checks) or 'none'}")
-        print(f"    Checks Failed:       {', '.join(failed_checks) or 'none'}")
-        print(f"    Latency:             {qr.latency_ms:.1f} ms")
+        page_no = qr.page
+        print(f"\nPAGE {page_no}")
+        print("------")
+        metrics = getattr(qr, "metrics", {})
+        print("Quality:")
+        print(f"  blur:     {metrics.get('blur', 'N/A')}")
+        print(f"  noise:    {metrics.get('noise', 'N/A')}")
+        print(f"  rotation: {metrics.get('rotation', 0)}")
+        print(f"  skew:     {metrics.get('skew_angle', 'N/A')}")
+
+        restoration_used = qr.enhancement_required or "restormer_deblur" in qr.action_plan
+        print("\nRestoration:")
+        print(f"  used: {restoration_used}")
+
+        page_regions = [r for r in result.regions if r.page == page_no]
+        print("\nDetection:")
+        print(f"  regions: {len(page_regions)}")
+
+        printed_count = sum(1 for r in page_regions if r.class_name in ("paragraph", "header", "footer"))
+        hw_count = sum(1 for r in result.ocr_results if r.page == page_no and r.is_handwritten)
+        table_count = sum(1 for r in page_regions if r.class_name == "table")
+
+        print("\nRouting:")
+        print(f"  printed:     {printed_count}")
+        print(f"  handwritten: {hw_count}")
+        print(f"  tables:      {table_count}")
+
+        ppocr_lines = sum(1 for r in result.ocr_results if r.page == page_no and r.model == "ppocr")
+        trocr_lines = sum(1 for r in result.ocr_results if r.page == page_no and r.model == "trocr")
+        low_conf = sum(1 for r in result.ocr_results if r.page == page_no and r.confidence < 0.70)
+        second_pass = sum(1 for r in result.ocr_results if r.page == page_no and "+fused" in r.model_version)
+
+        print("\nOCR:")
+        print(f"  PP-OCR regions: {ppocr_lines}")
+        print(f"  TrOCR regions:  {trocr_lines}")
+        print(f"\nLow confidence: {low_conf}")
+        print(f"Second pass:    {second_pass}")
+        print(f"\nFinal confidence: {result.mean_confidence:.3f}")
 
     print(f"\n[DETECTED REGIONS ({len(result.regions)})]")
     for i, region in enumerate(result.regions[:20]):  # Limit to 20

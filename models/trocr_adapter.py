@@ -38,19 +38,21 @@ class TrOCRAdapter(BaseModelAdapter):
             return f"{self._version}-hf-{self.checkpoint}"
         return f"{self._version}-offline-fallback"
 
-    def get_metadata(self) -> dict[str, Any]:
-        """Return truthful runtime metadata describing active execution backend and model state."""
-        return {
-            "model": self.model_name,
-            "backend": "transformers-trocr" if self._has_hf_model else "rapidocr-handwritten-heuristic",
-            "is_neural": True,
-            "weights_loaded": self._is_loaded and self._has_hf_model,
-            "fallback_active": not self._has_hf_model,
-            "execution_device": self.device if self._has_hf_model else "cpu",
-            "precision": self.resolved_precision,
-            "memory_footprint_mb": self.memory_footprint_mb,
-            "version": self.get_model_version() if self.is_loaded else "unloaded",
-        }
+    @property
+    def is_fallback(self) -> bool:
+        return not self._has_hf_model
+
+    @property
+    def fallback_type(self) -> str | None:
+        return "rapidocr_handwritten_heuristic" if not self._has_hf_model else None
+
+    @property
+    def checkpoint_path(self) -> str | None:
+        return self.checkpoint
+
+    @property
+    def backend_name(self) -> str:
+        return "transformers-trocr" if self._has_hf_model else "rapidocr-handwritten-heuristic"
 
     def load(self) -> None:
         if self._is_loaded:

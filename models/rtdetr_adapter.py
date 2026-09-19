@@ -58,19 +58,21 @@ class RTDetrAdapter(BaseModelAdapter):
             return f"{self._version}-custom-checkpoint"
         return f"{self._version}-base-layout-heuristic"
 
-    def get_metadata(self) -> dict[str, Any]:
-        """Return truthful runtime metadata describing active execution backend and model state."""
-        return {
-            "model": self.model_name,
-            "backend": "ultralytics-rtdetr" if self._has_custom_weights else "morphological-layout-heuristic",
-            "is_neural": self._has_custom_weights,
-            "weights_loaded": self._is_loaded and self._has_custom_weights,
-            "fallback_active": not self._has_custom_weights,
-            "execution_device": self.device if self._has_custom_weights else "cpu",
-            "precision": self.resolved_precision,
-            "memory_footprint_mb": self.memory_footprint_mb,
-            "version": self.get_model_version() if self.is_loaded else "unloaded",
-        }
+    @property
+    def is_fallback(self) -> bool:
+        return not self._has_custom_weights
+
+    @property
+    def fallback_type(self) -> str | None:
+        return "morphological_layout_segmentation" if not self._has_custom_weights else None
+
+    @property
+    def checkpoint_path(self) -> str | None:
+        return str(self.weights_path) if self.weights_path else None
+
+    @property
+    def backend_name(self) -> str:
+        return "ultralytics-rtdetr" if self._has_custom_weights else "morphological-layout-heuristic"
 
     def load(self) -> None:
         """Instantiate RT-DETR model weights or layout segmentation."""
@@ -229,11 +231,11 @@ class RTDetrAdapter(BaseModelAdapter):
                     page=page,
                     bbox=BoundingBox(x0=float(x0), y0=float(y0), x1=float(x1), y1=float(y1)),
                     class_name=cls_name,
-                    confidence=0.92,
+                    confidence=0.60,  # Honest heuristic score for classical layout segmentation
                     source_model=self.model_name,
                     model_version=self.get_model_version(),
                     reading_order=idx,
-                    metadata={"heuristic": True},
+                    metadata={"heuristic": True, "fallback_type": "morphological_layout_segmentation"},
                 )
             )
 

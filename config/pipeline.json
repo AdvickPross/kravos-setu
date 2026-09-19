@@ -19,6 +19,14 @@
     "printed_ocr": "ppocr",
     "handwritten_ocr": "trocr"
   },
+  "model_execution": {
+    "strict": false
+  },
+  "second_pass": {
+    "enabled": true,
+    "confidence_threshold": 0.70,
+    "fusion_threshold": 0.35
+  },
   "document_types": {
     "discharge_summary": {
       "mandatory_sections": ["DIAGNOSIS", "MEDICATION"],

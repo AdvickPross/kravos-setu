@@ -158,3 +158,25 @@ def test_precision_auto_resolution():
     policy_fp16 = MemoryPolicy(device_preference="cpu", precision="fp16")
     mgr_fp16 = ModelManager(policy=policy_fp16, device="cpu", precision="fp16")
     assert mgr_fp16.precision == "fp32"
+
+
+def test_strict_mode_blocks_fallback_adapter():
+    """Verify that strict_mode=True raises RuntimeError when a fallback adapter is requested."""
+    from models.registry import default_registry
+
+    mgr = ModelManager(registry=default_registry, strict_mode=True)
+    with pytest.raises(RuntimeError, match="strict mode"):
+        mgr.get_model("rt-detr")
+
+
+def test_non_strict_mode_allows_fallback_adapter():
+    """Verify that strict_mode=False allows fallback adapter with truthful metadata."""
+    from models.base import ModelStatus
+    from models.registry import default_registry
+
+    mgr = ModelManager(registry=default_registry, strict_mode=False)
+    m = mgr.get_model("rt-detr")
+    assert m.is_fallback is True
+    assert m.status == ModelStatus.FALLBACK
+    assert m.fallback_type == "morphological_layout_segmentation"
+

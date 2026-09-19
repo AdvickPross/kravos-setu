@@ -27,9 +27,26 @@ class PPOCRAdapter(BaseModelAdapter):
         super().__init__(model_name=model_name, device=device, precision=precision, config=config)
         self._reader = None
         self._version = "ppocr-v4-onnx"
+        self._checkpoint_path = self.config.get("checkpoint_path", "rapidocr-v4-builtin")
 
     def get_model_version(self) -> str:
         return self._version
+
+    @property
+    def is_fallback(self) -> bool:
+        return False
+
+    @property
+    def fallback_type(self) -> str | None:
+        return None
+
+    @property
+    def checkpoint_path(self) -> str | None:
+        return self._checkpoint_path
+
+    @property
+    def backend_name(self) -> str:
+        return "rapidocr-onnx"
 
     def _get_active_provider(self) -> str:
         if self._reader is not None:
@@ -47,19 +64,10 @@ class PPOCRAdapter(BaseModelAdapter):
 
     def get_metadata(self) -> dict[str, Any]:
         """Return truthful runtime metadata describing active execution backend and model state."""
+        meta = super().get_metadata()
         active_ep = self._get_active_provider() if self._is_loaded else "unloaded"
-        return {
-            "model": self.model_name,
-            "backend": "rapidocr-onnx",
-            "is_neural": True,
-            "weights_loaded": self._is_loaded and (self._reader is not None),
-            "fallback_active": False,
-            "execution_device": self.device,
-            "execution_provider": active_ep,
-            "precision": self.resolved_precision,
-            "memory_footprint_mb": self.memory_footprint_mb,
-            "version": self.get_model_version() if self.is_loaded else "unloaded",
-        }
+        meta["execution_provider"] = active_ep
+        return meta
 
     def load(self) -> None:
         if self._is_loaded:

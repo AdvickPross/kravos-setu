@@ -146,6 +146,26 @@ class QualityReport:
     enhancement_required: bool
     action_plan: list[str]
     latency_ms: float = 0.0
+    metrics: dict[str, Any] = field(default_factory=dict)
+    issues: list[str] = field(default_factory=list)
+
+    def to_metrics_dict(self) -> dict[str, Any]:
+        """Return standardized flat metrics dictionary conforming to target architecture."""
+        return {
+            "blur": self.metrics.get("blur", 0.0),
+            "contrast": self.metrics.get("contrast", 0.0),
+            "brightness": self.metrics.get("brightness", 0.0),
+            "noise": self.metrics.get("noise", 0.0),
+            "entropy": self.metrics.get("entropy", 0.0),
+            "dpi": self.metrics.get("dpi", 250),
+            "skew_angle": self.metrics.get("skew_angle", 0.0),
+            "rotation": self.metrics.get("rotation", 0),
+            "shadow_score": self.metrics.get("shadow_score", 0.0),
+            "perspective_score": self.metrics.get("perspective_score", 0.0),
+            "blank_page": self.metrics.get("blank_page", False),
+            "overall_quality": round(self.overall_score, 3),
+            "issues": self.issues,
+        }
 
 
 @dataclass(frozen=True)

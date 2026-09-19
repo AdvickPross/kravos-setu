@@ -120,3 +120,17 @@ class TestNumericValidation:
                 assert r.raw_value
                 assert isinstance(r.validation, str)
                 assert r.validation in ("valid", "suspicious", "unrecognized", "no_number")
+
+    def test_detect_suspicious_numeric_mutation(self):
+        warnings = MedicalOCRCorrector.detect_suspicious_numeric_mutation(
+            "Hemoglobin 13.2 g/dL", "Hemoglobin 132 g/dL"
+        )
+        assert len(warnings) == 1
+        assert "decimal point dropped" in warnings[0]
+
+        # No mutation on identical text
+        clean = MedicalOCRCorrector.detect_suspicious_numeric_mutation(
+            "Hemoglobin 13.2 g/dL", "Hemoglobin 13.2 g/dL"
+        )
+        assert len(clean) == 0
+

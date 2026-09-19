@@ -391,6 +391,18 @@ class MedicalOCRCorrector:
             ))
         return results
 
+    @staticmethod
+    def detect_suspicious_numeric_mutation(raw_text: str, candidate_text: str) -> list[str]:
+        """Detect dropped decimal points or numeric corruptions between raw OCR and candidate."""
+        warnings: list[str] = []
+        raw_decimals = set(re.findall(r"\b\d+\.\d+\b", raw_text))
+        cand_ints = set(re.findall(r"\b\d+\b", candidate_text))
+        for r_num in raw_decimals:
+            int_equiv = r_num.replace(".", "")
+            if int_equiv in cand_ints and r_num not in candidate_text:
+                warnings.append(f"Suspicious numeric transformation: decimal point dropped in '{r_num}' -> '{int_equiv}'")
+        return warnings
+
     def correct_batch(
         self, texts: list[str]
     ) -> list[MedicalCorrectionResult]:

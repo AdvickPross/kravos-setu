@@ -115,25 +115,93 @@ class QualityAssessmentEngine:
             details={"threshold": self.policy.noise_speckle_density_threshold},
         )
 
+        # 8. Shannon Entropy Check
+        entropy_val = self._calculate_entropy(gray)
+        entropy_passed = entropy_val >= 3.0  # Document images with text typically have entropy > 3.5
+        checks["entropy"] = QualityCheckResult(
+            name="entropy",
+            score=round(entropy_val, 2),
+            passed=entropy_passed,
+            details={"threshold": 3.0},
+        )
+
+        # 9. Perspective & Shadow Checks
+        perspective_score = self._estimate_perspective_distortion(gray)
+        perspective_passed = perspective_score >= 0.80
+        checks["perspective"] = QualityCheckResult(
+            name="perspective",
+            score=round(perspective_score, 2),
+            passed=perspective_passed,
+            details={"threshold": 0.80},
+        )
+
+        # 10. Rotation & Estimated DPI
+        rotation_deg = self._detect_orientation_rotation(gray)
+        estimated_dpi = self._estimate_dpi(gray)
+
+        # 11. Blank Page Detection
+        is_blank = self._check_blank_page(gray)
+
+        # Collect issues list
+        issues: list[str] = []
+        if not blur_passed:
+            issues.append(f"Blur detected (score={lap_var:.1f} < {self.policy.blur_threshold})")
+        if not skew_passed:
+            issues.append(f"Skew detected ({skew_angle:.1f}° > {self.policy.skew_threshold_degrees}°)")
+        if not contrast_passed:
+            issues.append(f"Low contrast (score={contrast_score:.2f} < {self.policy.contrast_threshold})")
+        if not brightness_passed:
+            issues.append(f"Suboptimal brightness (mean={mean_brightness:.1f})")
+        if not illum_passed:
+            issues.append(f"Uneven illumination / shadows (uniformity={illum_score:.2f})")
+        if not speckle_passed:
+            issues.append(f"High sensor speckle noise (density={speckle_density:.4f})")
+        if not perspective_passed:
+            issues.append(f"Perspective distortion detected (score={perspective_score:.2f})")
+        if is_blank:
+            issues.append("Page appears blank or empty")
+
         # Build Action Plan and Decision
         action_plan: list[str] = []
         if not skew_passed:
             action_plan.append("deskew")
+        if rotation_deg != 0:
+            action_plan.append(f"rotate_{rotation_deg}")
+        if not perspective_passed:
+            action_plan.append("perspective_correction")
         if not blur_passed:
             action_plan.append("restormer_deblur")
         if not contrast_passed or not brightness_passed:
             action_plan.append("contrast_normalization")
+        if not illum_passed:
+            action_plan.append("shadow_removal")
         if not speckle_passed:
             action_plan.append("restormer_denoise")
 
         # Enhancement required if any non-geometry content check failed (excluding paper tint/color_cast)
         enhancement_required = any(
-            not c.passed for name, c in checks.items() if name not in ("skew", "color_cast")
-        )
+            not c.passed for name, c in checks.items() if name not in ("skew", "color_cast", "perspective", "entropy")
+        ) or not perspective_passed
 
         # Overall composite score (0.0 to 1.0)
         pass_ratio = sum(1 for c in checks.values() if c.passed) / len(checks)
         latency_ms = (time.perf_counter() - start_t) * 1000
+
+        metrics_dict = {
+            "blur": round(lap_var, 2),
+            "contrast": round(contrast_score, 3),
+            "brightness": round(mean_brightness, 2),
+            "noise": round(speckle_density, 4),
+            "entropy": round(entropy_val, 2),
+            "dpi": estimated_dpi,
+            "skew_angle": round(skew_angle, 2),
+            "rotation": rotation_deg,
+            "shadow_score": round(illum_score, 3),
+            "perspective_score": round(perspective_score, 3),
+            "blank_page": is_blank,
+            "overall_quality": round(pass_ratio, 3),
+            "issues": issues,
+        }
 
         report = QualityReport(
             page=page,
@@ -142,6 +210,8 @@ class QualityAssessmentEngine:
             enhancement_required=enhancement_required,
             action_plan=action_plan,
             latency_ms=round(latency_ms, 2),
+            metrics=metrics_dict,
+            issues=issues,
         )
 
         log.info(
@@ -226,3 +296,52 @@ class QualityAssessmentEngine:
         speckle_count = sum(1 for i in range(1, num_labels) if stats[i, cv2.CC_STAT_AREA] <= 4)
         total_pixels = gray.shape[0] * gray.shape[1]
         return float(speckle_count * 4 / total_pixels)
+
+    def _calculate_entropy(self, gray: np.ndarray) -> float:
+        """Compute Shannon entropy of grayscale image histogram."""
+        import cv2
+        hist = cv2.calcHist([gray], [0], None, [256], [0, 256]).ravel()
+        hist = hist / (hist.sum() + 1e-7)
+        non_zeros = hist[hist > 0]
+        return float(-np.sum(non_zeros * np.log2(non_zeros)))
+
+    def _estimate_dpi(self, gray: np.ndarray) -> int:
+        """Estimate scanning DPI based on standard page dimensions."""
+        h, w = gray.shape[:2]
+        # Standard A4 is ~8.27 x 11.69 inches
+        estimated = int(round(h / 11.69))
+        return max(72, min(600, estimated if estimated >= 100 else 250))
+
+    def _detect_orientation_rotation(self, gray: np.ndarray) -> int:
+        """Estimate 0, 90, 180, or 270 degree rotation."""
+        h, w = gray.shape[:2]
+        if w > h * 1.3:
+            # Landscape scan of portrait document -> likely 90 or 270 deg
+            return 90
+        return 0
+
+    def _estimate_perspective_distortion(self, gray: np.ndarray) -> float:
+        """Estimate perspective distortion based on contour bounding trapezoids."""
+        import cv2
+        h, w = gray.shape[:2]
+        small = cv2.resize(gray, (min(w, 400), min(h, 400)))
+        _, thresh = cv2.threshold(small, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+        contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        if not contours:
+            return 1.0
+        c = max(contours, key=cv2.contourArea)
+        area = cv2.contourArea(c)
+        if area < (small.shape[0] * small.shape[1] * 0.1):
+            return 1.0
+        hull = cv2.convexHull(c)
+        hull_area = cv2.contourArea(hull)
+        if hull_area == 0:
+            return 1.0
+        # Ratio of contour to convex hull
+        return float(min(1.0, area / hull_area))
+
+    def _check_blank_page(self, gray: np.ndarray) -> bool:
+        """Return True if the page appears empty or uniform background."""
+        std = float(np.std(gray))
+        mean = float(np.mean(gray))
+        return std < 6.0 or (mean > 250 and std < 12.0)

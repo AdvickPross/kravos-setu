@@ -10,6 +10,8 @@ import numpy as np
 from PIL import Image
 
 from models.manager import ModelManager
+from pipeline.adaptive_preprocessing import AdaptivePreprocessor, PreprocessingProfile
+from pipeline.fusion import OCRCandidate, OCRFusionEngine
 from pipeline.router import ROIRouter, RoutingDecision
 from pipeline.schemas.canonical import BoundingBox, DocumentRegion, OCRResult, RegionClass
 
@@ -19,9 +21,21 @@ log = logging.getLogger(__name__)
 class ExtractionStage:
     """Extracts text across all detected document regions using the ROI router."""
 
-    def __init__(self, model_manager: ModelManager, router: ROIRouter | None = None) -> None:
+    def __init__(
+        self,
+        model_manager: ModelManager,
+        router: ROIRouter | None = None,
+        enable_second_pass: bool = True,
+        low_confidence_threshold: float = 0.70,
+        high_confidence_threshold: float = 0.90,
+    ) -> None:
         self.model_manager = model_manager
         self.router = router or ROIRouter()
+        self.enable_second_pass = enable_second_pass
+        self.low_confidence_threshold = low_confidence_threshold
+        self.high_confidence_threshold = high_confidence_threshold
+        self.preprocessor = AdaptivePreprocessor()
+        self.fusion_engine = OCRFusionEngine()
         self._table_extractor: Any = None  # lazy-init
 
     def process(
@@ -46,6 +60,15 @@ class ExtractionStage:
             crop = region.bbox.crop_from(arr)
 
             results = self._extract_for_decision(decision, crop, region, page)
+
+            # Confidence-driven Second Pass
+            if self.enable_second_pass and results:
+                mean_conf = sum(r.confidence for r in results) / len(results)
+                if mean_conf < self.low_confidence_threshold:
+                    results = self._second_pass_reprocess(
+                        results, crop, decision, region, page
+                    )
+
             all_results.extend(results)
 
         log.info(
@@ -55,6 +78,83 @@ class ExtractionStage:
             page,
         )
         return all_results
+
+    def _second_pass_reprocess(
+        self,
+        pass1_results: list[OCRResult],
+        crop: np.ndarray,
+        decision: RoutingDecision,
+        region: DocumentRegion,
+        page: int,
+    ) -> list[OCRResult]:
+        """Execute alternative preprocessing profile and fuse candidates with first pass."""
+        log.info(
+            "Second pass triggered for region %s (mean_conf=%.2f < threshold=%.2f)",
+            region.region_id,
+            sum(r.confidence for r in pass1_results) / len(pass1_results),
+            self.low_confidence_threshold,
+        )
+        # Select alternative preprocessing profile based on engine
+        alt_profile = (
+            PreprocessingProfile.HANDWRITING
+            if decision.target_engine == "trocr"
+            else PreprocessingProfile.LOW_QUALITY
+        )
+        reproc_crop, _ = self.preprocessor.process(crop, alt_profile)
+
+        # Run extraction again on reprocessed crop
+        pass2_results = self._extract_for_decision(decision, reproc_crop, region, page)
+        if not pass2_results:
+            return pass1_results
+
+        # Candidate fusion
+        fused_results: list[OCRResult] = []
+        max_len = max(len(pass1_results), len(pass2_results))
+
+        for idx in range(max_len):
+            c1 = pass1_results[idx] if idx < len(pass1_results) else None
+            c2 = pass2_results[idx] if idx < len(pass2_results) else None
+
+            cand_list: list[OCRCandidate] = []
+            if c1:
+                cand_list.append(OCRCandidate(
+                    text=c1.text,
+                    confidence=c1.confidence,
+                    model=c1.model,
+                    preprocessing="original",
+                    is_handwritten=c1.is_handwritten,
+                    bbox=c1.bbox,
+                    line_no=c1.line_no,
+                ))
+            if c2:
+                cand_list.append(OCRCandidate(
+                    text=c2.text,
+                    confidence=c2.confidence,
+                    model=c2.model,
+                    preprocessing="adaptive_reprocess",
+                    is_handwritten=c2.is_handwritten,
+                    bbox=c2.bbox,
+                    line_no=c2.line_no,
+                ))
+
+            fused = self.fusion_engine.fuse_candidates(cand_list)
+            ref_item = c1 or c2
+            fused_results.append(
+                OCRResult(
+                    text=fused.best_text,
+                    confidence=fused.confidence,
+                    bbox=ref_item.bbox,
+                    page=page,
+                    line_no=ref_item.line_no,
+                    region_id=region.region_id,
+                    model=fused.winning_model,
+                    model_version=f"{ref_item.model_version}+fused",
+                    is_handwritten=ref_item.is_handwritten,
+                    is_reliable=(fused.confidence >= 0.50),
+                )
+            )
+
+        return fused_results
 
     def _extract_for_decision(
         self,

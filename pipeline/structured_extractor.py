@@ -201,13 +201,14 @@ _FREQ_NOTE_KEYWORDS = [
 ]
 _DOCTOR_PREFIX = re.compile(r"\bDr[\.:\s]+([A-Za-z][A-Za-z\s\.:]{2,40})", re.IGNORECASE)
 _PATIENT_NAME_PAT = re.compile(
-    r"(?:Mr\.?|Mrs\.?|Ms\.?|Miss|Master|Shri\.?|Smt\.?|Baby\.?|M/s\.?)\s*([A-Za-z][A-Za-z\s\.]{2,40})",
+    r"(?:Mr\.?|Mrs\.?|Ms\.?|Miss|Master|Shri\.?|Smt\.?|Baby\.?|M/s\.?|M\.)\s*([A-Za-z][A-Za-z\s\.]{2,40})",
     re.IGNORECASE
 )
 _PATIENT_LABEL_PAT = re.compile(
-    r"(?:Patient\s*Name|Patient|Pt\.?\s*Name)[\s\.:\-]+([A-Za-z][A-Za-z\s\.]{2,40})",
+    r"(?:Patient\s*Name|Patient|Pt\.?\s*Name|\bName\b)[\s\.:\-]+([A-Za-z][A-Za-z\s\.]{2,40})",
     re.IGNORECASE,
 )
+
 
 
 
@@ -388,7 +389,7 @@ class StructuredExtractor:
         # Look for medication lines: lines starting with common drug prefixes
         # or having dosage patterns
         med_prefix_pat = re.compile(
-            r"^(?:T\.|C\.|Cap\.|Tab\.|Inj\.|Syp\.|Syr\.|Oint\.|Gel\.|Eye\.|Ear\.|C\-|T\-)\s*([A-Za-z0-9\s\-\.]+)",
+            r"^(?:[\-\*\•\d\.\)]\s*)*(?:T\.|C\.|Cap\.|Tab\.|Inj\.|Syp\.|Syr\.|Oint\.|Gel\.|Eye\.|Ear\.|C\-|T\-|M\s+)\s*([A-Za-z0-9\s\-\.]+)",
             re.IGNORECASE
         )
         duration_found: str | None = None
@@ -398,8 +399,10 @@ class StructuredExtractor:
         known_drugs = [
             "amox", "zerodol", "pan", "pantop", "microdox", "lacne", "perobar",
             "paracetamol", "ibuprofen", "metformin", "atorvastatin", "omeprazole",
-            "pantoprazole", "ciprofloxacin", "azithromycin", "cetirizine"
+            "pantoprazole", "ciprofloxacin", "azithromycin", "cetirizine",
+            "breezy", "opox", "allihose", "aldigesic", "shipen",
         ]
+
 
         for i, r in enumerate(ocr_results):
             text = r.text.strip()

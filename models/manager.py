@@ -78,16 +78,31 @@ class ModelManager:
         enable_eviction: bool | None = None,
         precision: str | None = None,
         cpu_threads: str | int | None = None,
+        strict_mode: bool | None = None,
     ) -> None:
         self.registry = registry or default_registry
+        strict_from_policy = False
         if policy is not None:
             self.policy = policy
+            strict_from_policy = getattr(policy, "strict_mode", getattr(policy, "strict", False))
         else:
             try:
-                self.policy = PolicyConfig.load().memory
+                full_policy = PolicyConfig.load()
+                self.policy = full_policy.memory
+                strict_from_policy = (
+                    getattr(full_policy.model_execution, "strict", False)
+                    or getattr(full_policy.validation, "strict_mode", False)
+                )
             except Exception:
                 self.policy = MemoryPolicy()
+                strict_from_policy = False
 
+        if strict_mode is not None:
+            self.strict_mode = strict_mode
+        elif os.environ.get("KRAVOS_STRICT_MODE", "").strip().lower() in ("1", "true", "yes"):
+            self.strict_mode = True
+        else:
+            self.strict_mode = strict_from_policy
         self.max_resident_models = (
             max_resident_models if max_resident_models is not None else self.policy.max_resident_models
         )
@@ -240,8 +255,20 @@ class ModelManager:
                     adapter.load()
                 else:
                     raise
+
+        if self.strict_mode and adapter.is_fallback:
+            raise RuntimeError(
+                f"Required model checkpoint unavailable in strict mode: '{key}' "
+                f"(checkpoint={adapter.checkpoint_path or 'none'}, fallback={adapter.fallback_type}). "
+                f"To run without strict enforcement, set 'model_execution.strict: false' or 'strict_mode=False'."
+            )
+
         adapter.touch()
         return adapter
+
+    def get_loaded_models(self) -> list[str]:
+        """Return names of all currently loaded models."""
+        return [k for k, v in self._instances.items() if v.is_loaded]
 
     def unload(self, name: str) -> bool:
         """Explicitly unload a model by name."""

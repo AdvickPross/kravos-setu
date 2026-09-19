@@ -40,6 +40,15 @@
     "cpu_threads": "auto",
     "pdf_dpi": 250
   },
+  "model_execution": {
+    "strict": false
+  },
+  "extraction": {
+    "enable_second_pass": true,
+    "low_confidence_threshold": 0.70,
+    "high_confidence_threshold": 0.90,
+    "fusion_threshold": 0.35
+  },
   "validation": {
     "confidence_floor": 0.40,
     "strict_mode": false,
