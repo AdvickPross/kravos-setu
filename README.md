@@ -465,9 +465,15 @@ python scripts/ocr_system_info.py
 python scripts/ocr_system_info.py --json
 ```
 
-### Document Ingestion CLI
+### Document Ingestion & Diagnostic CLI
 
 ```pwsh
+# Run full end-to-end diagnostic and inspection report on any medical document
+python -m scripts.test_ocr_pipeline demo/scans/discharge_summary.png
+
+# Diagnose uploaded prescription image with verbose OCR line printing and save JSON artifact
+python -m scripts.test_ocr_pipeline <path_to_image> --verbose --save
+
 # Process a document with 5-model pipeline (laptop profile)
 python scripts/ocr_ingest.py demo/scans/discharge_summary.png --patient <patient_id>
 
@@ -489,6 +495,9 @@ python scripts/ocr_ingest.py document.pdf --patient <patient_id> --text-layer
 Benchmark **Legacy RapidOCR** vs the **5-Model Document Intelligence Pipeline**, measuring cold-start latency, warm latency (P50, P95), Character Error Rate (CER), Word Error Rate (WER), and process RSS / CUDA VRAM:
 
 ```pwsh
+# Run OCR benchmark test suite
+python -m pytest tests/test_ocr_benchmark.py -v
+
 # Run full comparative benchmark (outputs eval/pipeline_benchmark.json)
 python eval/ocr_eval.py --runs 3 --device auto --profile laptop
 
@@ -498,8 +507,13 @@ python eval/ocr_eval.py --runs 3 --pipeline-only
 
 ### HTTP Endpoints
 
-- `POST /api/ocr/extract`: Multipart upload (`file`, required `patientId`, optional `documentDate`). Runs the 5-model pipeline with resident models and returns extracted clinical facts, quality assessment report, document regions, and execution latency.
-- `POST /api/ocr/commit`: Accepts user-reviewed/edited clinical facts and atomically commits them into Postgres with full provenance tracing.
+- `POST /api/ocr/extract`: Multipart upload (`file`, required `patientId`, optional `documentDate`). Proposes lexicon-coded facts (dry run).
+- `POST /api/ocr/commit`: Accepts approved clinical facts and atomically commits them into Postgres with full provenance tracing.
+- `POST /api/ocr/analyze`: Full structured document extraction returning patient demographics, provider info, prescription line-items with dosages/schedules, lab test tables, and OCR lines.
+- `POST /api/ocr/quality`: Pre-screening endpoint returning page-level blur, skew, brightness, and contrast metrics without OCR overhead.
+- `GET /api/ocr/models`: Returns runtime status, device, precision, and version for all registered model adapters.
+- `GET /api/ocr/health`: Health status and model readiness.
+
 
 ## Optional features (all off by default, all degrade safely)
 

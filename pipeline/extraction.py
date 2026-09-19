@@ -22,6 +22,7 @@ class ExtractionStage:
     def __init__(self, model_manager: ModelManager, router: ROIRouter | None = None) -> None:
         self.model_manager = model_manager
         self.router = router or ROIRouter()
+        self._table_extractor: Any = None  # lazy-init
 
     def process(
         self, image: np.ndarray | Image.Image, regions: list[DocumentRegion], page: int = 1
@@ -88,10 +89,38 @@ class ExtractionStage:
             log.debug("Region %s handled as %s metadata", region.region_id, region.class_name)
             return []
 
+        elif decision.target_engine == "table":
+            extractor = self._get_table_extractor()
+            table_result = extractor.extract(
+                crop, page=page, region_id=region.region_id,
+                offset_x=x0, offset_y=y0
+            )
+            log.info(
+                "Table extracted: %d rows x %d cols, confidence=%.2f (region %s)",
+                table_result.row_count, table_result.col_count,
+                table_result.confidence, region.region_id
+            )
+            return table_result.to_ocr_results(
+                page=page, region_id=region.region_id,
+                offset_x=x0, offset_y=y0
+            )
+
         else:
             # Default to PP-OCR
             ppocr = self.model_manager.get_model("ppocr")
             return ppocr.predict(crop, page=page, region_id=region.region_id, offset_x=x0, offset_y=y0)
+
+    def _get_table_extractor(self):
+        """Lazily create and return the table extractor."""
+        if self._table_extractor is None:
+            from pipeline.table_extractor import TableExtractor
+            ppocr = self.model_manager.get_model("ppocr")
+            # Pass ppocr.predict as the OCR function for cells
+            def _ocr_fn(crop):
+                return ppocr.predict(crop, page=1)
+            self._table_extractor = TableExtractor(ocr_fn=_ocr_fn)
+        return self._table_extractor
+
 
     def _decode_barcode(self, crop: np.ndarray, region: DocumentRegion, page: int) -> list[OCRResult]:
         """Decode 1D/2D barcodes from the region crop."""

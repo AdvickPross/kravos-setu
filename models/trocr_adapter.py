@@ -31,6 +31,7 @@ class TrOCRAdapter(BaseModelAdapter):
         self._model = None
         self._version = "trocr-v1.0"
         self._has_hf_model = False
+        self._fallback_reader = None
 
     def get_model_version(self) -> str:
         if self._has_hf_model:
@@ -99,6 +100,7 @@ class TrOCRAdapter(BaseModelAdapter):
     def unload(self) -> None:
         self._processor = None
         self._model = None
+        self._fallback_reader = None
         self._is_loaded = False
         self._memory_footprint_mb = 0.0
 
@@ -193,11 +195,12 @@ class TrOCRAdapter(BaseModelAdapter):
         offset_y: float,
     ) -> list[OCRResult]:
         """Offline fallback using RapidOCR with handwritten confidence calibration."""
-        from rapidocr_onnxruntime import RapidOCR
+        if self._fallback_reader is None:
+            from rapidocr_onnxruntime import RapidOCR
+            self._fallback_reader = RapidOCR()
 
         arr = np.array(pil_img)
-        reader = RapidOCR()
-        results, _ = reader(arr)
+        results, _ = self._fallback_reader(arr)
         if not results:
             return []
 

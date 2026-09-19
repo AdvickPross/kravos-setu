@@ -21,6 +21,7 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .mypy_cache/
+models/cache/
 
 # Node / Next.js
 frontend/node_modules/

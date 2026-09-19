@@ -126,9 +126,9 @@ class QualityAssessmentEngine:
         if not speckle_passed:
             action_plan.append("restormer_denoise")
 
-        # Enhancement required if any non-geometry content check failed
+        # Enhancement required if any non-geometry content check failed (excluding paper tint/color_cast)
         enhancement_required = any(
-            not c.passed for name, c in checks.items() if name != "skew"
+            not c.passed for name, c in checks.items() if name not in ("skew", "color_cast")
         )
 
         # Overall composite score (0.0 to 1.0)

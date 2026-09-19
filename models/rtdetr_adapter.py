@@ -180,17 +180,27 @@ class RTDetrAdapter(BaseModelAdapter):
         # Binarize with Otsu
         _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
 
-        # Morphological dilation to group connected text lines into paragraph and header blocks
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (25, 9))
-        dilated = cv2.dilate(binary, kernel, iterations=2)
+        # Suppress long vertical ruling lines (tables/borders) to prevent merging separate columns
+        v_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 30))
+        v_lines = cv2.morphologyEx(binary, cv2.MORPH_OPEN, v_kernel)
+        text_only = cv2.subtract(binary, v_lines)
+
+        # Dilation with wide horizontal kernel to group lines into semantic document bands
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (int(width * 0.35), 8))
+        dilated = cv2.dilate(text_only, kernel, iterations=1)
 
         contours, _ = cv2.findContours(dilated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         raw_boxes = []
         for c in contours:
             x, y, w, h = cv2.boundingRect(c)
-            # Filter noise contours smaller than 20x10
-            if w > 25 and h > 12 and (w * h) > 300:
-                raw_boxes.append((x, y, x + w, y + h))
+            # Filter noise contours smaller than 15px height
+            if h > 15 and (w * h) > 300:
+                # Keep full horizontal width of content band
+                bx0 = 0.0 if w > (width * 0.4) else max(0.0, float(x - 5))
+                by0 = max(0.0, float(y - 5))
+                bx1 = float(width) if w > (width * 0.4) else min(float(width), float(x + w + 5))
+                by1 = min(float(height), float(y + h + 5))
+                raw_boxes.append((bx0, by0, bx1, by1))
 
         # Sort top-to-bottom
         raw_boxes.sort(key=lambda b: (b[1], b[0]))

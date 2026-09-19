@@ -1,0 +1,504 @@
+{
+  "source_file": "lab_report.png",
+  "pipeline_version": "2.0.0",
+  "document_type": "lab_report",
+  "structured_data": {
+    "document_type": "lab_report",
+    "classification_confidence": 0.788,
+    "overall_confidence": 0.849,
+    "patient": {
+      "name": {
+        "value": "Sunita Sharma",
+        "confidence": 0.889,
+        "presence": "PRESENT",
+        "raw_ocr_text": "Patient Name : Sunita Sharma"
+      },
+      "age": {
+        "value": "42",
+        "confidence": 0.697,
+        "presence": "PRESENT",
+        "raw_ocr_text": ": 42 / F"
+      },
+      "sex": {
+        "value": "F",
+        "confidence": 0.697,
+        "presence": "PRESENT",
+        "raw_ocr_text": ": 42 / F"
+      },
+      "hospital_number": {
+        "value": null,
+        "confidence": 0.0,
+        "presence": "NOT_FOUND",
+        "raw_ocr_text": null
+      }
+    },
+    "doctor": {
+      "value": "DR.LAL PATHLABS CLINICAL LABORATORY",
+      "confidence": 0.86,
+      "presence": "PRESENT",
+      "raw_ocr_text": "DR.LAL PATHLABS CLINICAL LABORATORY"
+    },
+    "date": {
+      "value": "14-04-2026",
+      "confidence": 0.851,
+      "presence": "PRESENT",
+      "raw_ocr_text": "Date / Time : 14-04-2026 09:30 AM"
+    },
+    "department": {
+      "value": null,
+      "confidence": 0.0,
+      "presence": "NOT_FOUND",
+      "raw_ocr_text": null
+    },
+    "institution": {
+      "value": null,
+      "confidence": 0.0,
+      "presence": "NOT_FOUND",
+      "raw_ocr_text": null
+    },
+    "medications": [],
+    "lab_tests": [],
+    "instructions": [],
+    "diagnosis": {
+      "value": null,
+      "confidence": 0.0,
+      "presence": "NOT_APPLICABLE",
+      "raw_ocr_text": null
+    },
+    "follow_up": {
+      "value": null,
+      "confidence": 0.0,
+      "presence": "NOT_APPLICABLE",
+      "raw_ocr_text": null
+    },
+    "extraction_warnings": []
+  },
+  "mean_confidence": 0.831,
+  "ocr_results": [
+    {
+      "text": "DR.LAL PATHLABS CLINICAL LABORATORY",
+      "confidence": 0.86,
+      "page": 1,
+      "line_no": 1,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "Indiranagar,  Bengaluru - 560038.",
+      "confidence": 0.862,
+      "page": 1,
+      "line_no": 2,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "NABH&NABLACCREDITEDLABORATORY",
+      "confidence": 0.883,
+      "page": 1,
+      "line_no": 3,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "LABORATORY INVESTIGATION REPORT",
+      "confidence": 0.865,
+      "page": 1,
+      "line_no": 4,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "Patient Name : Sunita Sharma",
+      "confidence": 0.889,
+      "page": 1,
+      "line_no": 5,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "Age / Sex",
+      "confidence": 0.834,
+      "page": 1,
+      "line_no": 6,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": ": 42 / F",
+      "confidence": 0.697,
+      "page": 1,
+      "line_no": 7,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "Ref By Doctor: Dr. Rajiv Mehta, MD",
+      "confidence": 0.866,
+      "page": 1,
+      "line_no": 8,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "Specimen.",
+      "confidence": 0.859,
+      "page": 1,
+      "line_no": 9,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": ": : Whole Blood EDTA / Serum",
+      "confidence": 0.858,
+      "page": 1,
+      "line_no": 10,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "Date / Time : 14-04-2026 09:30 AM",
+      "confidence": 0.851,
+      "page": 1,
+      "line_no": 11,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "Lab Ref No .:: LAB-2026-88901",
+      "confidence": 0.862,
+      "page": 1,
+      "line_no": 12,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "COMPLETE BLOOD COUNT (CBC) & BIOCHEMISTRY:",
+      "confidence": 0.861,
+      "page": 1,
+      "line_no": 13,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "TestName",
+      "confidence": 0.895,
+      "page": 1,
+      "line_no": 14,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "Result:Units.",
+      "confidence": 0.847,
+      "page": 1,
+      "line_no": 15,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "Reference Range",
+      "confidence": 0.892,
+      "page": 1,
+      "line_no": 16,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "Hemoglobin",
+      "confidence": 0.898,
+      "page": 1,
+      "line_no": 17,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "13.2",
+      "confidence": 0.8,
+      "page": 1,
+      "line_no": 18,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": ": 7p/3.",
+      "confidence": 0.764,
+      "page": 1,
+      "line_no": 19,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "12.0 - 15.5.",
+      "confidence": 0.796,
+      "page": 1,
+      "line_no": 20,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "Fast Blood Glucose:",
+      "confidence": 0.866,
+      "page": 1,
+      "line_no": 21,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "112",
+      "confidence": 0.899,
+      "page": 1,
+      "line_no": 22,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "mg/dL...",
+      "confidence": 0.667,
+      "page": 1,
+      "line_no": 23,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "70 - 100",
+      "confidence": 0.811,
+      "page": 1,
+      "line_no": 24,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "HbA1c.. .",
+      "confidence": 0.762,
+      "page": 1,
+      "line_no": 25,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "6.4",
+      "confidence": 0.829,
+      "page": 1,
+      "line_no": 26,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "%",
+      "confidence": 0.774,
+      "page": 1,
+      "line_no": 27,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "4.0 - 5.6",
+      "confidence": 0.792,
+      "page": 1,
+      "line_no": 28,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "Serum.Creatinine",
+      "confidence": 0.867,
+      "page": 1,
+      "line_no": 29,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "6.0.",
+      "confidence": 0.811,
+      "page": 1,
+      "line_no": 30,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "mg/dL0.6-1.2",
+      "confidence": 0.854,
+      "page": 1,
+      "line_no": 31,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "Serum Urea.",
+      "confidence": 0.88,
+      "page": 1,
+      "line_no": 32,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "24.",
+      "confidence": 0.7,
+      "page": 1,
+      "line_no": 33,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "mg/ dL....",
+      "confidence": 0.736,
+      "page": 1,
+      "line_no": 34,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "15.+45",
+      "confidence": 0.735,
+      "page": 1,
+      "line_no": 35,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "Total Cholesterol",
+      "confidence": 0.885,
+      "page": 1,
+      "line_no": 36,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "210",
+      "confidence": 0.899,
+      "page": 1,
+      "line_no": 37,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "7p/Bu",
+      "confidence": 0.716,
+      "page": 1,
+      "line_no": 38,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "125. - 200",
+      "confidence": 0.843,
+      "page": 1,
+      "line_no": 39,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "Serum. Potassium",
+      "confidence": 0.876,
+      "page": 1,
+      "line_no": 40,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "4.2",
+      "confidence": 0.898,
+      "page": 1,
+      "line_no": 41,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "mEq/ L..",
+      "confidence": 0.729,
+      "page": 1,
+      "line_no": 42,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "3.5. - 5.1",
+      "confidence": 0.78,
+      "page": 1,
+      "line_no": 43,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "Serum Sodium",
+      "confidence": 0.884,
+      "page": 1,
+      "line_no": 44,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "138",
+      "confidence": 0.899,
+      "page": 1,
+      "line_no": 45,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "mEq/ L- :.",
+      "confidence": 0.703,
+      "page": 1,
+      "line_no": 46,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "135-- 145",
+      "confidence": 0.775,
+      "page": 1,
+      "line_no": 47,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "INTERPRETATION:",
+      "confidence": 0.892,
+      "page": 1,
+      "line_no": 48,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "Mildly elevated fasting blood glucose and HbAic suggestive of pre-diabetes.",
+      "confidence": 0.867,
+      "page": 1,
+      "line_no": 49,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "Advised lifestyle modification and medical. review..",
+      "confidence": 0.87,
+      "page": 1,
+      "line_no": 50,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "Verified By..",
+      "confidence": 0.845,
+      "page": 1,
+      "line_no": 51,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "Dr. Ananya Roy, MD (Pathology)",
+      "confidence": 0.874,
+      "page": 1,
+      "line_no": 52,
+      "is_handwritten": true,
+      "model": "trocr"
+    },
+    {
+      "text": "Consultant Pathologist",
+      "confidence": 0.891,
+      "page": 1,
+      "line_no": 53,
+      "is_handwritten": true,
+      "model": "trocr"
+    }
+  ],
+  "entities": []
+}

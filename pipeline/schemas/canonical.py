@@ -264,6 +264,8 @@ class PipelineResult:
     mean_confidence: float = 0.0
     model_metadata: dict[str, Any] = field(default_factory=dict)
     memory_status: dict[str, Any] = field(default_factory=dict)
+    document_type: str = "unknown"
+    structured_data: dict[str, Any] = field(default_factory=dict)
 
     @property
     def total_lines(self) -> int:

@@ -305,3 +305,259 @@ def _insert(rows: list[dict[str, Any]]) -> int:
             f"`docker compose up -d postgres`",
         ) from exc
     return inserted
+
+
+# ---------------------------------------------------------------------------
+# New endpoints: /analyze, /quality, /models, /health
+# ---------------------------------------------------------------------------
+
+
+
+class AnalyzeResponse(BaseModel):
+    """Full structured analysis response including document type and structured data."""
+    source_file: str
+    document_type: str
+    classification_confidence: float
+    pipeline_version: str
+    mean_confidence: float
+    structured_data: dict[str, Any]
+    sections_seen: list[str]
+    lines: list[OcrLineOut]
+    facts: list[OcrFactOut]
+    unmatched: list[str]
+    ambiguous: list[str]
+    low_confidence: list[str]
+    stage_timings: dict[str, float]
+    model_versions: dict[str, str]
+
+
+class QualityCheckOut(BaseModel):
+    name: str
+    score: float
+    passed: bool
+    details: dict[str, Any] = Field(default_factory=dict)
+
+
+class QualityReportOut(BaseModel):
+    page: int
+    overall_score: float
+    enhancement_required: bool
+    action_plan: list[str]
+    checks: dict[str, QualityCheckOut]
+    latency_ms: float
+
+
+class QualityResponse(BaseModel):
+    source_file: str
+    pages: list[QualityReportOut]
+
+
+class ModelInfo(BaseModel):
+    name: str
+    loaded: bool
+    backend: str
+    device: str
+    precision: str
+    version: str
+
+
+class ModelsResponse(BaseModel):
+    models: list[ModelInfo]
+    memory_status: dict[str, Any]
+
+
+class HealthResponse(BaseModel):
+    status: str
+    pipeline_version: str
+    models_ready: bool
+    details: dict[str, Any]
+
+
+@router.post("/analyze")
+async def api_analyze(
+    file: Annotated[UploadFile, File()],
+    patient_id: Annotated[str, Form(alias="patientId")],
+    document_date: Annotated[str | None, Form(alias="documentDate")] = None,
+    document_type: Annotated[str | None, Form(alias="documentType")] = None,
+) -> AnalyzeResponse:
+    """Run the full pipeline and return structured document analysis.
+
+    Unlike /extract (which focuses on coded clinical facts), /analyze returns
+    the complete structured extraction: medications, lab tests, patient fields,
+    document type classification, and full OCR results.
+
+    Writes nothing to the database.
+    """
+    _require_patient(patient_id)
+    when = _document_date(document_date)
+    doc_type = document_type or "auto"
+
+    with ExitStack() as stack:
+        temp = await _to_temp_file(file, stack)
+        orchestrator = _get_orchestrator()
+        try:
+            result = orchestrator.process_document(
+                temp,
+                patient_id=patient_id,
+                document_date=when,
+                document_type=doc_type,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=415, detail=str(exc)) from exc
+        except Exception as exc:
+            log.exception("Pipeline analysis failure on %s", file.filename)
+            raise HTTPException(
+                status_code=503,
+                detail=f"Document intelligence pipeline failed: {exc}",
+            ) from exc
+
+    structured_data = getattr(result, "structured_data", {})
+    effective_doc_type = getattr(result, "document_type", "unknown")
+    class_conf = structured_data.get("classification_confidence", 0.0)
+
+    return AnalyzeResponse(
+        source_file=temp.name,
+        document_type=effective_doc_type,
+        classification_confidence=round(class_conf, 3),
+        pipeline_version=result.pipeline_version,
+        mean_confidence=round(result.mean_confidence, 3),
+        structured_data=structured_data,
+        sections_seen=result.sections_seen,
+        lines=[
+            OcrLineOut(
+                text=line.text,
+                confidence=round(line.confidence, 3),
+                page=line.page,
+                line_no=line.line_no,
+                reliable=line.is_reliable,
+            )
+            for line in result.ocr_results
+        ],
+        facts=[
+            OcrFactOut(
+                fact_id=entity.fact_id,
+                category=entity.category,
+                display=entity.display,
+                code=entity.code,
+                code_system=entity.code_system,
+                value=entity.value,
+                unit=entity.unit,
+                confidence=round(entity.confidence, 3),
+                page=entity.provenance.page,
+                line_no=entity.line_no,
+                line_text=entity.line_text,
+                also_in=list(entity.also_in),
+            )
+            for entity in result.entities
+        ],
+        unmatched=result.unmatched,
+        ambiguous=result.ambiguous,
+        low_confidence=result.low_confidence,
+        stage_timings=result.stage_timings,
+        model_versions=result.stage_versions,
+    )
+
+
+@router.post("/quality")
+async def api_quality(
+    file: Annotated[UploadFile, File()],
+) -> QualityResponse:
+    """Assess image quality for all pages without running OCR.
+
+    Returns per-page quality reports: blur score, skew angle, brightness,
+    contrast, speckle density, and the enhancement action plan.
+
+    Useful for pre-screening document quality before uploading for extraction.
+    """
+    with ExitStack() as stack:
+        temp = await _to_temp_file(file, stack)
+        orchestrator = _get_orchestrator()
+        try:
+            pages = orchestrator.load_pages(temp)
+            reports = []
+            for page_idx, page_arr in enumerate(pages, start=1):
+                q_report = orchestrator.quality_stage.assess_page(page_arr, page=page_idx)
+                reports.append(QualityReportOut(
+                    page=q_report.page,
+                    overall_score=round(q_report.overall_score, 3),
+                    enhancement_required=q_report.enhancement_required,
+                    action_plan=q_report.action_plan,
+                    checks={
+                        k: QualityCheckOut(
+                            name=v.name,
+                            score=round(v.score, 3),
+                            passed=v.passed,
+                            details=v.details,
+                        )
+                        for k, v in q_report.checks.items()
+                    },
+                    latency_ms=round(q_report.latency_ms, 2),
+                ))
+        except Exception as exc:
+            log.exception("Quality assessment failure on %s", file.filename)
+            raise HTTPException(
+                status_code=503,
+                detail=f"Quality assessment failed: {exc}",
+            ) from exc
+
+    return QualityResponse(source_file=temp.name, pages=reports)
+
+
+@router.get("/models")
+async def api_models() -> ModelsResponse:
+    """Return metadata for all registered model adapters.
+
+    Includes load status, backend (neural vs. classical fallback), device,
+    precision, and model version. Useful for diagnostics and monitoring.
+    """
+    orchestrator = _get_orchestrator()
+    metadata = orchestrator.model_manager.get_all_metadata()
+    memory = orchestrator.model_manager.get_memory_status()
+
+    models = []
+    for name, meta in metadata.items():
+        models.append(ModelInfo(
+            name=name,
+            loaded=meta.get("weights_loaded", False),
+            backend=meta.get("backend", "unknown"),
+            device=meta.get("execution_device", "cpu"),
+            precision=meta.get("precision", "fp32"),
+            version=meta.get("model_version", "unknown"),
+        ))
+
+    return ModelsResponse(models=models, memory_status=memory)
+
+
+@router.get("/health")
+async def api_health() -> HealthResponse:
+    """Health check for the OCR pipeline.
+
+    Returns pipeline version, model readiness, and basic diagnostics.
+    Does not run inference.
+    """
+    try:
+        orchestrator = _get_orchestrator()
+        metadata = orchestrator.model_manager.get_all_metadata()
+        pipeline_version = orchestrator.pipeline_config.pipeline_version
+        # A pipeline is "ready" if PP-OCR (the core required model) is registered
+        models_ready = "ppocr" in metadata or "paddleocr" in metadata
+        status = "ok" if models_ready else "degraded"
+        details: dict[str, Any] = {
+            "registered_models": list(metadata.keys()),
+            "loaded_models": [k for k, v in metadata.items() if v.get("weights_loaded")],
+        }
+    except Exception as exc:
+        return HealthResponse(
+            status="error",
+            pipeline_version="unknown",
+            models_ready=False,
+            details={"error": str(exc)},
+        )
+
+    return HealthResponse(
+        status=status,
+        pipeline_version=pipeline_version,
+        models_ready=models_ready,
+        details=details,
+    )
+
