@@ -39,19 +39,21 @@ class RestormerAdapter(BaseModelAdapter):
     def get_model_version(self) -> str:
         return f"{self._version}-neural" if self._is_neural else f"{self._version}-cv-fallback"
 
-    def get_metadata(self) -> dict[str, Any]:
-        """Return truthful runtime metadata describing active execution backend and model state."""
-        return {
-            "model": self.model_name,
-            "backend": "torch-neural" if self._is_neural else "classical-cv-photographic",
-            "is_neural": self._is_neural,
-            "weights_loaded": self._is_loaded and self._is_neural,
-            "fallback_active": not self._is_neural,
-            "execution_device": self.device if self._is_neural else "cpu",
-            "precision": self.resolved_precision,
-            "memory_footprint_mb": self.memory_footprint_mb,
-            "version": self.get_model_version() if self.is_loaded else "unloaded",
-        }
+    @property
+    def is_fallback(self) -> bool:
+        return not self._is_neural
+
+    @property
+    def fallback_type(self) -> str | None:
+        return "classical_cv_photographic" if not self._is_neural else None
+
+    @property
+    def checkpoint_path(self) -> str | None:
+        return str(self.weights_path) if self.weights_path else None
+
+    @property
+    def backend_name(self) -> str:
+        return "torch-neural" if self._is_neural else "classical-cv-photographic"
 
     def load(self) -> None:
         """Instantiate Restormer model weights or initialize enhancement pipeline."""

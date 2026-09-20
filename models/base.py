@@ -3,9 +3,19 @@
 from __future__ import annotations
 
 import abc
+from enum import Enum
 from pathlib import Path
 import time
 from typing import Any
+
+
+class ModelStatus(str, Enum):
+    """Truthful lifecycle and inference status of a model adapter."""
+
+    ACTIVE_NEURAL_MODEL = "ACTIVE_NEURAL_MODEL"
+    FALLBACK = "FALLBACK"
+    UNAVAILABLE = "UNAVAILABLE"
+    FAILED = "FAILED"
 
 
 def has_local_hf_checkpoint(repo_or_path: str) -> bool:
@@ -59,6 +69,35 @@ class BaseModelAdapter(abc.ABC):
     def last_used(self) -> float:
         return self._last_used
 
+    @property
+    def status(self) -> ModelStatus:
+        """Truthful operational status of this adapter."""
+        if not self._is_loaded:
+            return ModelStatus.UNAVAILABLE
+        if self.is_fallback:
+            return ModelStatus.FALLBACK
+        return ModelStatus.ACTIVE_NEURAL_MODEL
+
+    @property
+    def is_fallback(self) -> bool:
+        """True if the adapter is using classical CV or spatial heuristics instead of neural model."""
+        return False
+
+    @property
+    def fallback_type(self) -> str | None:
+        """Name of the classical heuristic algorithm used when in fallback mode."""
+        return None
+
+    @property
+    def checkpoint_path(self) -> str | None:
+        """Local file path or HuggingFace identifier for the checkpoint if applicable."""
+        return None
+
+    @property
+    def backend_name(self) -> str:
+        """Human-readable backend engine description."""
+        return "base"
+
     def touch(self) -> None:
         self._last_used = time.time()
 
@@ -85,13 +124,20 @@ class BaseModelAdapter(abc.ABC):
     def get_metadata(self) -> dict[str, Any]:
         """Return truthful runtime metadata describing active execution backend and model state."""
         return {
+            "name": self.model_name,
             "model": self.model_name,
-            "backend": "base",
-            "weights_loaded": self.is_loaded,
+            "status": self.status.value,
+            "checkpoint": self.checkpoint_path,
+            "backend": self.backend_name,
+            "device": self.device,
+            "version": self.get_model_version() if self.is_loaded else "unloaded",
+            "fallback": self.is_fallback,
+            "fallback_type": self.fallback_type,
+            "is_neural": not self.is_fallback and self.is_loaded,
+            "weights_loaded": self.is_loaded and not self.is_fallback,
             "execution_device": self.device,
             "precision": self.resolved_precision,
             "memory_footprint_mb": self.memory_footprint_mb,
-            "version": self.get_model_version() if self.is_loaded else "unloaded",
         }
 
     def ensure_loaded(self) -> None:

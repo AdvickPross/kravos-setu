@@ -1,130 +1,121 @@
-# Kravos Setu — Current Document & OCR Architecture
+# Kravos Setu — Medical Document OCR & Intelligence Pipeline Architecture
 
-## 1. Overview & Current Document Processing Flow
+## 1. Executive Summary & Flow
 
-The repository currently provides an OCR-based scanned document ingestion flow designed for clinical documents (such as discharge summaries and OPD slips) to extract coded clinical facts.
+Kravos Setu provides a 5-model, 11-stage document intelligence pipeline designed for medical records (prescriptions, lab reports, discharge summaries, insurance forms, bills). It extracts both coded clinical entities (mapped to RxNorm, SNOMED CT, LOINC, ICD-10) and structured document fields (patient demographics, provider info, prescription line-items with schedules).
 
-```
-+-----------------------------------------------------------------------------+
-|                               Input Document                                |
-|           (PDF or Image: .png, .jpg, .jpeg, .tif, .tiff, .bmp, .webp)        |
-+-----------------------------------------------------------------------------+
-                                       |
-                                       v
-+-----------------------------------------------------------------------------+
-|                                Preprocessing                                |
-|  - PDF: Rasterized via PyMuPDF (fitz) at 200 DPI into 3-channel RGB numpy   |
-|  - Image: Loaded via PIL, converted to RGB numpy array                      |
-+-----------------------------------------------------------------------------+
-                                       |
-                                       v
-+-----------------------------------------------------------------------------+
-|                         OCR Engine (RapidOCR ONNX)                          |
-|  - Single singleton instance loaded via @lru_cache(maxsize=1) _reader()     |
-|  - 3 ONNX models: DBNet (detection), angle classifier, SVTR/CRNN (recog)   |
-|  - Yields: raw polygons [[x,y],...], text strings, and confidence scores    |
-+-----------------------------------------------------------------------------+
-                                       |
-                                       v
-+-----------------------------------------------------------------------------+
-|                          OcrDocument & OcrLine                              |
-|  - Boxes flattened to (x0, y0, x1, y1) in original page pixel coordinates   |
-|  - Lines tagged with page index (1-indexed), line_no, and confidence float  |
-|  - is_reliable flag: confidence >= MIN_LINE_CONFIDENCE (0.50)               |
-+-----------------------------------------------------------------------------+
-                                       |
-                                       v
-+-----------------------------------------------------------------------------+
-|                        Clinical Fact Extraction                             |
-|  - Regex cleans OCR punctuation artifacts (clean_ocr_text)                  |
-|  - Matches Section Headings: ALLERGY, MEDICATION, CONDITION, LAB, etc.      |
-|  - Extracts dosages via regex: (\d+(\.\d+)?)\s*(mg|mcg|g|ml|units?|iu)      |
-|  - Resolves phrases against retrieval.lexicon.Lexicon (synonyms/RxNorm/etc) |
-|  - Generates deterministic fact_id: sha1(patient_id|source|page|line|code)  |
-|  - Collects unmatched, ambiguous (outside known section), low_confidence    |
-+-----------------------------------------------------------------------------+
-                                       |
-                                       v
-+-----------------------------------------------------------------------------+
-|                    FastAPI Endpoints (Two-Stage Review)                     |
-|  - POST /api/ocr/extract: Upload -> temp dir -> OCR -> facts (writes 0)     |
-|  - POST /api/ocr/commit: Re-reads upload -> inserts approved fact IDs into  |
-|    Postgres 'facts' table (ON CONFLICT DO NOTHING)                          |
-|  - Next.js UI interacts via frontend/src/lib/ocr.ts                         |
-+-----------------------------------------------------------------------------+
+The system runs on local hardware (standard CPU laptop first) without external cloud OCR or LLM dependencies.
+
+```text
++-----------------------------------------------------------------------------------------+
+|                                    Input Document                                       |
+|                    (PDF or Image: .png, .jpg, .jpeg, .tif, .tiff, .bmp, .webp)          |
++-----------------------------------------------------------------------------------------+
+                                             |
+                                             v
++-----------------------------------------------------------------------------------------+
+| 1. Acquisition: PyMuPDF rasterization (configurable DPI, e.g. 250) or PIL image load    |
++-----------------------------------------------------------------------------------------+
+                                             |
+                                             v
++-----------------------------------------------------------------------------------------+
+| 2. Quality Assessment: Laplacian blur, Hough skew, brightness, contrast, speckle density|
++-----------------------------------------------------------------------------------------+
+                                             |
+                                             v
++-----------------------------------------------------------------------------------------+
+| 3. Enhancement: Conditional Deskew + Restormer (or classical OpenCV restoration)        |
++-----------------------------------------------------------------------------------------+
+                                             |
+                                             v
++-----------------------------------------------------------------------------------------+
+| 4. Region Detection: RT-DETR (or morphological layout heuristic segmentation)           |
++-----------------------------------------------------------------------------------------+
+                                             |
+                                             v
++-----------------------------------------------------------------------------------------+
+| 5. Layout Understanding: LayoutLMv3 (or topological 2D spatial sort + hierarchy linking)|
++-----------------------------------------------------------------------------------------+
+                                             |
+                                             v
++-----------------------------------------------------------------------------------------+
+| 6. Region-Adaptive Extraction:                                                          |
+|    - Printed Paragraphs/Headers -> PP-OCR (RapidOCR ONNX)                               |
+|    - Handwritten Text/ROI -> TrOCR (HuggingFace transformer or RapidOCR fallback)       |
+|    - Tables -> TableExtractor (OpenCV morphological grid segmentation -> Cell OCR)     |
+|    - Ambiguous Typography -> Fusion (Confidence + Alphanumeric scoring)                 |
++-----------------------------------------------------------------------------------------+
+                                             |
+                                             v
++-----------------------------------------------------------------------------------------+
+| 7. Document Classification: Heuristic keyword signals -> prescription/lab/discharge/etc.|
++-----------------------------------------------------------------------------------------+
+                                             |
+                                             v
++-----------------------------------------------------------------------------------------+
+| 8. Structured Extraction: MedicalOCRCorrector -> Fields (Patient, Meds, Labs, Schedule) |
++-----------------------------------------------------------------------------------------+
+                                             |
+                                             v
++-----------------------------------------------------------------------------------------+
+| 9. Clinical Normalization: Lexicon mapping -> RxNorm, SNOMED, LOINC, ICD-10             |
++-----------------------------------------------------------------------------------------+
+                                             |
+                                             v
++-----------------------------------------------------------------------------------------+
+| 10. Structuring: Min-Across-Stages Confidence Propagation & Provenance Assembly         |
++-----------------------------------------------------------------------------------------+
+                                             |
+                                             v
++-----------------------------------------------------------------------------------------+
+| 11. Validation: Policy rules (confidence floor, empty scan check, mandatory sections)   |
++-----------------------------------------------------------------------------------------+
 ```
 
 ---
 
-## 2. The Current OCR Contract
+## 2. The 5 Core Models & Adapters
 
-### 2.1 Inputs
-- **File formats**: PDF (`.pdf`) or images (`.png`, `.jpg`, `.jpeg`, `.tif`, `.tiff`, `.bmp`, `.webp`).
-- **File constraints**: Maximum upload size `25 MB` (`MAX_UPLOAD_BYTES`), non-empty payloads.
-- **Entry points**:
-  - `ocr.engine.read_document(path: str | Path) -> OcrDocument`
-  - `ocr.engine.read_pdf_text_layer(path: str | Path) -> OcrDocument` (for born-digital PDFs)
+All models are managed by `models.manager.ModelManager` with LRU eviction and automatic CUDA-to-CPU fallback:
 
-### 2.2 Outputs & Data Representations
-- **`OcrLine`** (`ocr/engine.py`):
-  ```python
-  @dataclass(frozen=True)
-  class OcrLine:
-      text: str
-      confidence: float                       # Scalar 0.0 - 1.0 from RapidOCR
-      page: int                               # 1-indexed page number
-      line_no: int                            # 1-indexed line number on the page
-      box: tuple[float, float, float, float]  # (x0, y0, x1, y1) in original page pixel coordinates
-  ```
-  - Reliability property: `is_reliable = confidence >= 0.50`.
-- **`OcrDocument`** (`ocr/engine.py`):
-  ```python
-  @dataclass(frozen=True)
-  class OcrDocument:
-      source: Path
-      lines: list[OcrLine]
-      engine: str                             # "rapidocr-onnxruntime" or "pdf-text-layer"
-  ```
-- **`OcrFact`** (`ocr/extract.py`):
-  ```python
-  @dataclass(frozen=True)
-  class OcrFact:
-      fact_id: str                            # 16-char sha1 hash
-      patient_id: str
-      category: str                           # "ALLERGY", "MEDICATION", "CONDITION", etc.
-      safety_class: str                       # "SAFETY" for ALLERGY, "CLINICAL" otherwise
-      text: str
-      code_system: str | None
-      code: str | None
-      display: str | None
-      value: str | None
-      unit: str | None
-      date: datetime | None
-      status: str                             # "active"
-      source_resource_id: str                 # "{file}#p{page}L{line_no}"
-      confidence: float                       # Carried from OcrLine.confidence
-      page: int
-      line_no: int
-      line_text: str
-      also_in: list[str]                      # Alternate code mappings
-  ```
-
-### 2.3 Error Behavior
-- `OcrUnavailable`: Raised if `rapidocr_onnxruntime` is missing. Surfaced as HTTP 503 at the API.
-- `ValueError`: Raised on unsupported file extensions. Surfaced as HTTP 415.
-- `FileNotFoundError`: Raised if the target path does not exist on disk.
-- Empty images / pages with no text: RapidOCR returns `None` or `[]`; `OcrDocument` produces `lines = []` and `mean_confidence = 0.0`.
+1. **Restormer (`RestormerAdapter`)**: Neural photographic restoration. Falls back to OpenCV bilateral filter + PIL contrast/sharpness when neural weights are unprovided.
+2. **RT-DETR (`RTDetrAdapter`)**: Document layout object detection. Segments headers, tables, paragraphs, signatures, ROIs. Falls back to morphological contour segmentation.
+3. **LayoutLMv3 (`LayoutLMv3Adapter`)**: Reading order sequencing and heading-to-child hierarchy linking. Falls back to 2D topological spatial sorting.
+4. **PP-OCR (`PPOCRAdapter`)**: High-accuracy printed text OCR using lightweight RapidOCR ONNX models (DBNet + SVTR/CRNN).
+5. **TrOCR (`TrOCRAdapter`)**: Transformer handwriting recognition. Loads `microsoft/trocr-small-handwritten` from local cache, or gracefully uses RapidOCR fallback with confidence penalties.
 
 ---
 
-## 3. Downstream Consumers
+## 3. Data Contracts & Canonical Schemas
 
-1. **Frontend Review Client** (`frontend/src/lib/ocr.ts`):
-   - Calls `POST /api/ocr/extract` to get lines, proposed facts, and unextracted lines.
-   - Shows reviewed checkboxes for clinicians to approve facts.
-   - Calls `POST /api/ocr/commit` with approved `factIds`.
-2. **Postgres Storage & Retrieval** (`retrieval/db.py`, `backend/data_layer.py`):
-   - Approved facts are committed to the `facts` table with `source_resource_type = "ScannedDocument"`.
-   - Coded queries via `/api/query` and conversational RAG via `/api/chat` retrieve these facts identically to FHIR-derived facts.
-3. **CLI Ingestion Script** (`scripts/ocr_ingest.py`):
-   - Executes `read_document` and `extract_facts`, producing human-reviewable `.facts.json` artifacts in `demo/scans/`.
+- **`BoundingBox`**: Coordinates `(x0, y0, x1, y1)` in original image pixel space with IoU and normalized coordinate support.
+- **`DocumentRegion`**: Segments with `region_id`, `class_name`, `confidence`, `reading_order`, `parent_id`.
+- **`OCRResult`**: Text line with `confidence`, `bbox`, `model`, `is_handwritten`, `is_reliable` (confidence >= 0.50).
+- **`ClinicalEntity`**: Standardized medical fact with `fact_id`, `category`, `code`, `display`, `value`, `unit`, `provenance`.
+- **`StructuredDocument`**: Structured extraction payload holding typed `ExtractedField` items, `MedicationEntry` (with morning/noon/night schedule), and `LabTestEntry`.
+- **`PipelineResult`**: Complete output encapsulating quality reports, regions, lines, facts, structured data, stage timings, and metadata.
+
+---
+
+## 4. API Endpoints (`backend/ocr_routes.py`)
+
+- `POST /api/ocr/extract`: Extracts OCR lines and proposes lexicon-coded facts (dry run).
+- `POST /api/ocr/commit`: Re-reads and writes approved `factIds` to Postgres `facts` table.
+- `POST /api/ocr/analyze`: Full structured JSON extraction (patient, doctor, medications with schedules, lab tests, quality).
+- `POST /api/ocr/quality`: Fast pre-screening assessing image blur, skew, brightness, and contrast without running OCR.
+- `GET /api/ocr/models`: Status, execution device, precision, and version of all model adapters.
+- `GET /api/ocr/health`: Health status and model readiness.
+
+---
+
+## 5. Diagnostic & Benchmarking Tools
+
+- **Diagnostic CLI**:
+  ```bash
+  py -3 -m scripts.test_ocr_pipeline <path_to_image_or_pdf> [--verbose] [--json] [--save]
+  ```
+- **Benchmark Evaluator**: `tests/ocr_benchmark/evaluator.py` provides CER, WER, and field accuracy metrics.
+- **Unit & Regression Suite**:
+  ```bash
+  py -3 -m pytest tests/test_pipeline_models.py tests/test_medical_corrector.py tests/test_table_extractor.py tests/test_ocr_benchmark.py -v
+  ```

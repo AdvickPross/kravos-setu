@@ -29,6 +29,8 @@ from pipeline.schemas.canonical import (
 from pipeline.structuring import StructuringStage
 from pipeline.understanding import LayoutUnderstandingStage
 from pipeline.validation import ValidationStage
+from pipeline.document_classifier import DocumentClassifier, DocumentTypeResult
+from pipeline.structured_extractor import StructuredExtractor, StructuredDocument
 
 log = logging.getLogger(__name__)
 
@@ -84,6 +86,8 @@ class PipelineOrchestrator:
         self.normalization_stage = NormalizationStage()
         self.structuring_stage = StructuringStage()
         self.validation_stage = ValidationStage(policy=self.policy_config.validation)
+        self.document_classifier = DocumentClassifier()
+        self.structured_extractor = StructuredExtractor()
 
     def load_pages(self, path: Path | str, dpi: int | None = None) -> list[np.ndarray]:
         """Rasterize PDF pages or load image into list of 3-channel RGB numpy arrays."""
@@ -126,7 +130,7 @@ class PipelineOrchestrator:
         file_path: Path | str,
         patient_id: str = "patient-unknown",
         document_date: datetime | None = None,
-        document_type: str = "discharge_summary",
+        document_type: str = "auto",
         dpi: int | None = None,
     ) -> PipelineResult:
         """Run complete document intelligence pipeline over all pages of the document."""
@@ -214,7 +218,7 @@ class PipelineOrchestrator:
             )
             all_regions.extend(ordered_regions)
 
-            # 6. Extraction (PP-OCR, TrOCR, Fusion)
+            # 6. Extraction (PP-OCR, TrOCR, Table, Fusion)
             ext_start = time.perf_counter()
             ocr_results = self.extraction_stage.process(
                 processed_image, ordered_regions, page=page_idx
@@ -240,7 +244,51 @@ class PipelineOrchestrator:
             )
             all_ocr_results.extend(ocr_results)
 
-        # 7. Normalization
+        # 7. Document Type Classification (auto-detect if not explicitly specified)
+        cls_start = time.perf_counter()
+        classification_result: DocumentTypeResult | None = None
+        effective_document_type = document_type
+
+        if document_type in ("auto", "discharge_summary"):  # 'discharge_summary' is old default
+            try:
+                classification_result = self.document_classifier.classify(all_ocr_results)
+                if classification_result.document_type != "unknown":
+                    effective_document_type = classification_result.document_type
+                    log.info(
+                        "Document auto-classified as '%s' (confidence=%.2f, signals=%s)",
+                        effective_document_type,
+                        classification_result.confidence,
+                        classification_result.signals,
+                    )
+                else:
+                    effective_document_type = "discharge_summary"  # safe fallback for validation
+                    log.info(
+                        "Document type could not be determined (confidence=%.2f). Using '%s' as fallback.",
+                        classification_result.confidence,
+                        effective_document_type,
+                    )
+            except Exception as exc:
+                log.warning("Document classification failed: %s. Using default.", exc)
+                effective_document_type = "discharge_summary"
+
+        cls_ms = (time.perf_counter() - cls_start) * 1000
+        stage_timings["classification_ms"] = cls_ms
+
+        # 8. Structured Extraction (medications, lab values, patient info)
+        struct_ext_start = time.perf_counter()
+        structured_data: dict[str, Any] = {}
+        try:
+            struct_doc = self.structured_extractor.extract(
+                ocr_results=all_ocr_results,
+                document_type=effective_document_type,
+                classification_confidence=classification_result.confidence if classification_result else 0.0,
+            )
+            structured_data = struct_doc.to_dict()
+        except Exception as exc:
+            log.warning("Structured extraction failed: %s", exc)
+        stage_timings["structured_extraction_ms"] = (time.perf_counter() - struct_ext_start) * 1000
+
+        # 9. Normalization (lexicon-based coded fact extraction)
         norm_start = time.perf_counter()
         norm_res = self.normalization_stage.process(
             ocr_results=all_ocr_results,
@@ -258,7 +306,7 @@ class PipelineOrchestrator:
             extra={"entities_found": len(norm_res.entities)},
         )
 
-        # 8. Structuring (Confidence Propagation & Provenance)
+        # 10. Structuring (Confidence Propagation & Provenance)
         struct_start = time.perf_counter()
         stage_timings["total_ms"] = (time.perf_counter() - t0) * 1000
         result = self.structuring_stage.process(
@@ -278,6 +326,9 @@ class PipelineOrchestrator:
             model_metadata=self.model_manager.get_all_metadata(),
             memory_status=self.model_manager.get_memory_status(),
         )
+        # Attach structured extraction data and document type to result
+        result.document_type = effective_document_type
+        result.structured_data = structured_data
         stage_timings["structuring_ms"] = (time.perf_counter() - struct_start) * 1000
         structured_log(
             "structuring",
@@ -286,9 +337,9 @@ class PipelineOrchestrator:
             confidence=result.mean_confidence,
         )
 
-        # 9. Validation
+        # 11. Validation
         val_start = time.perf_counter()
-        val_report = self.validation_stage.process(result, document_type=document_type)
+        val_report = self.validation_stage.process(result, document_type=effective_document_type)
         val_ms = (time.perf_counter() - val_start) * 1000
         stage_timings["validation_ms"] = val_ms
         structured_log(
@@ -299,10 +350,11 @@ class PipelineOrchestrator:
         )
 
         log.info(
-            "Completed document processing for %s in %.1fms (%d lines, %d facts)",
+            "Completed document processing for %s in %.1fms (%d lines, %d facts, type=%s)",
             doc_id,
             stage_timings["total_ms"],
             len(all_ocr_results),
             len(result.entities),
+            effective_document_type,
         )
         return result

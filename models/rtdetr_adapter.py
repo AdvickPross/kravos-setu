@@ -58,19 +58,21 @@ class RTDetrAdapter(BaseModelAdapter):
             return f"{self._version}-custom-checkpoint"
         return f"{self._version}-base-layout-heuristic"
 
-    def get_metadata(self) -> dict[str, Any]:
-        """Return truthful runtime metadata describing active execution backend and model state."""
-        return {
-            "model": self.model_name,
-            "backend": "ultralytics-rtdetr" if self._has_custom_weights else "morphological-layout-heuristic",
-            "is_neural": self._has_custom_weights,
-            "weights_loaded": self._is_loaded and self._has_custom_weights,
-            "fallback_active": not self._has_custom_weights,
-            "execution_device": self.device if self._has_custom_weights else "cpu",
-            "precision": self.resolved_precision,
-            "memory_footprint_mb": self.memory_footprint_mb,
-            "version": self.get_model_version() if self.is_loaded else "unloaded",
-        }
+    @property
+    def is_fallback(self) -> bool:
+        return not self._has_custom_weights
+
+    @property
+    def fallback_type(self) -> str | None:
+        return "morphological_layout_segmentation" if not self._has_custom_weights else None
+
+    @property
+    def checkpoint_path(self) -> str | None:
+        return str(self.weights_path) if self.weights_path else None
+
+    @property
+    def backend_name(self) -> str:
+        return "ultralytics-rtdetr" if self._has_custom_weights else "morphological-layout-heuristic"
 
     def load(self) -> None:
         """Instantiate RT-DETR model weights or layout segmentation."""
@@ -180,17 +182,27 @@ class RTDetrAdapter(BaseModelAdapter):
         # Binarize with Otsu
         _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
 
-        # Morphological dilation to group connected text lines into paragraph and header blocks
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (25, 9))
-        dilated = cv2.dilate(binary, kernel, iterations=2)
+        # Suppress long vertical ruling lines (tables/borders) to prevent merging separate columns
+        v_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 30))
+        v_lines = cv2.morphologyEx(binary, cv2.MORPH_OPEN, v_kernel)
+        text_only = cv2.subtract(binary, v_lines)
+
+        # Dilation with wide horizontal kernel to group lines into semantic document bands
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (int(width * 0.35), 8))
+        dilated = cv2.dilate(text_only, kernel, iterations=1)
 
         contours, _ = cv2.findContours(dilated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         raw_boxes = []
         for c in contours:
             x, y, w, h = cv2.boundingRect(c)
-            # Filter noise contours smaller than 20x10
-            if w > 25 and h > 12 and (w * h) > 300:
-                raw_boxes.append((x, y, x + w, y + h))
+            # Filter noise contours smaller than 15px height
+            if h > 15 and (w * h) > 300:
+                # Keep full horizontal width of content band
+                bx0 = 0.0 if w > (width * 0.4) else max(0.0, float(x - 5))
+                by0 = max(0.0, float(y - 5))
+                bx1 = float(width) if w > (width * 0.4) else min(float(width), float(x + w + 5))
+                by1 = min(float(height), float(y + h + 5))
+                raw_boxes.append((bx0, by0, bx1, by1))
 
         # Sort top-to-bottom
         raw_boxes.sort(key=lambda b: (b[1], b[0]))
@@ -219,11 +231,11 @@ class RTDetrAdapter(BaseModelAdapter):
                     page=page,
                     bbox=BoundingBox(x0=float(x0), y0=float(y0), x1=float(x1), y1=float(y1)),
                     class_name=cls_name,
-                    confidence=0.92,
+                    confidence=0.60,  # Honest heuristic score for classical layout segmentation
                     source_model=self.model_name,
                     model_version=self.get_model_version(),
                     reading_order=idx,
-                    metadata={"heuristic": True},
+                    metadata={"heuristic": True, "fallback_type": "morphological_layout_segmentation"},
                 )
             )
 

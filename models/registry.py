@@ -48,6 +48,7 @@ class ModelRegistry:
 
 # Global default registry
 registry = ModelRegistry()
+default_registry = registry
 
 
 def _get_restormer():

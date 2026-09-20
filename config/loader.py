@@ -151,6 +151,19 @@ class ValidationPolicy:
 
 
 @dataclass(frozen=True)
+class ModelExecutionPolicy:
+    strict: bool = False
+
+
+@dataclass(frozen=True)
+class ExtractionPolicy:
+    enable_second_pass: bool = True
+    low_confidence_threshold: float = 0.70
+    high_confidence_threshold: float = 0.90
+    fusion_threshold: float = 0.35
+
+
+@dataclass(frozen=True)
 class PolicyConfig:
     policy_version: str
     quality: QualityPolicy
@@ -158,6 +171,8 @@ class PolicyConfig:
     routing: RoutingPolicy
     memory: MemoryPolicy
     validation: ValidationPolicy
+    model_execution: ModelExecutionPolicy = field(default_factory=ModelExecutionPolicy)
+    extraction: ExtractionPolicy = field(default_factory=ExtractionPolicy)
     default_profile: str = "laptop"
     pdf_dpi: int = 250
 
@@ -198,6 +213,8 @@ class PolicyConfig:
                 mem_kwargs[k] = raw_mem[k]
 
         memory_policy = MemoryPolicy(**mem_kwargs)
+        raw_exec = raw.get("model_execution", {})
+        raw_ext = raw.get("extraction", {})
 
         return cls(
             policy_version=raw.get("policy_version", "2.0.0"),
@@ -206,6 +223,8 @@ class PolicyConfig:
             routing=RoutingPolicy(**raw.get("routing", {})),
             memory=memory_policy,
             validation=ValidationPolicy(**raw.get("validation", {})),
+            model_execution=ModelExecutionPolicy(**raw_exec) if isinstance(raw_exec, dict) else ModelExecutionPolicy(),
+            extraction=ExtractionPolicy(**raw_ext) if isinstance(raw_ext, dict) else ExtractionPolicy(),
             default_profile=hw_profile.profile_name,
             pdf_dpi=hw_profile.pdf_dpi,
         )
@@ -217,6 +236,8 @@ class PipelineConfig:
     stages: list[str]
     models: dict[str, str]
     document_types: dict[str, dict[str, Any]]
+    model_execution: dict[str, Any] = field(default_factory=dict)
+    second_pass: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
     def load(cls, path: Path | str = DEFAULT_PIPELINE_CONFIG) -> PipelineConfig:
@@ -226,4 +247,6 @@ class PipelineConfig:
             stages=raw.get("stages", []),
             models=raw.get("models", {}),
             document_types=raw.get("document_types", {}),
+            model_execution=raw.get("model_execution", {}),
+            second_pass=raw.get("second_pass", {}),
         )
