@@ -87,7 +87,17 @@ def use_test_db(monkeypatch):
     conn.autocommit = True
     try:
         with conn.cursor() as cur:
-            cur.execute("TRUNCATE TABLE conversation_turns, conversations, facts, patients")
+            cur.execute(
+    """
+    TRUNCATE TABLE
+        abdm_care_contexts,
+        abdm_transactions,
+        conversation_turns,
+        conversations,
+        facts,
+        patients
+    """
+)
     finally:
         conn.close()
 

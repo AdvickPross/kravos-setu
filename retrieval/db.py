@@ -93,6 +93,52 @@ CREATE TABLE IF NOT EXISTS conversation_turns (
 
 CREATE INDEX IF NOT EXISTS conversation_turns_conv_idx
     ON conversation_turns (conversation_id, turn_index);
+
+-- ABDM M2 transaction tracking.
+CREATE TABLE IF NOT EXISTS abdm_transactions (
+    id              BIGSERIAL PRIMARY KEY,
+    patient_id      TEXT,
+    transaction_id  TEXT,
+    request_id      TEXT NOT NULL,
+    operation       TEXT NOT NULL,
+    status          TEXT NOT NULL,
+    error_code      TEXT,
+    error_message   TEXT,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS abdm_transactions_patient_idx
+    ON abdm_transactions (patient_id);
+
+CREATE INDEX IF NOT EXISTS abdm_transactions_transaction_idx
+    ON abdm_transactions (transaction_id);
+
+CREATE INDEX IF NOT EXISTS abdm_transactions_request_idx
+    ON abdm_transactions (request_id);
+
+-- ABDM M2 care-context records.
+CREATE TABLE IF NOT EXISTS abdm_care_contexts (
+    id                BIGSERIAL PRIMARY KEY,
+    patient_id        TEXT,
+    transaction_id    TEXT,
+    reference_number  TEXT NOT NULL,
+    display           TEXT,
+    hi_type           TEXT,
+    hip_id            TEXT,
+    status            TEXT NOT NULL DEFAULT 'DISCOVERED',
+    discovered_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+    linked_at         TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS abdm_care_contexts_patient_idx
+    ON abdm_care_contexts (patient_id);
+
+CREATE INDEX IF NOT EXISTS abdm_care_contexts_transaction_idx
+    ON abdm_care_contexts (transaction_id);
+
+CREATE INDEX IF NOT EXISTS abdm_care_contexts_reference_idx
+    ON abdm_care_contexts (reference_number);
 """
 
 COLUMNS = (
