@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from backend.abdm_store import create_transaction
 
 
@@ -10,11 +11,11 @@ def start_m2_transaction(
     operation: str,
 ) -> int:
     """
-    Create a local record for an ABDM M2 operation.
+    Create an internal transaction record for an M2 operation.
 
-    The transaction must be stored before the corresponding
-    ABDM callback is expected.
+    The transaction is initially marked as INITIATED.
     """
+
     return create_transaction(
         patient_id=patient_id,
         transaction_id=transaction_id,

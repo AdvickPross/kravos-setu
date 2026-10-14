@@ -1,7 +1,6 @@
 from __future__ import annotations
 from typing import Any
-from retrieval.db import connection
-
+from backend.data_layer import connection
 
 def create_transaction(
     *,

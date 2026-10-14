@@ -41,6 +41,7 @@ from backend.models import (
 )
 from backend.retrieve import retrieve
 from retrieval.ner import parse_query
+from backend.m2_routes import m2_router
 
 app = FastAPI(title="Kravos Setu API")
 
@@ -59,6 +60,8 @@ app.add_middleware(
 # the frontend than a 404 that reads as "this feature does not exist".
 app.include_router(abha_router)
 
+app.include_router(m2_router)
+
 # Scanned-record ingestion. /extract proposes, /commit writes -- nothing
 # reaches the corpus without a second explicit call. See backend/ocr_routes.py.
 app.include_router(ocr_router)
@@ -66,6 +69,7 @@ app.include_router(ocr_router)
 # Creating a patient by hand -- the demo path, and a walk-in whose history
 # is a paper folder. See backend/patient_routes.py.
 app.include_router(patient_router)
+
 
 
 @app.get("/api/patients")

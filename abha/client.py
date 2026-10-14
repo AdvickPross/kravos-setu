@@ -117,6 +117,7 @@ class AbhaClient:
         benefit_name: str | None = None,
         transaction_id: str | None = None,
         encrypted: bool = False,
+        extra_headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         return self._request(
             "POST",
@@ -128,6 +129,7 @@ class AbhaClient:
             benefit_name=benefit_name,
             transaction_id=transaction_id,
             encrypted=encrypted,
+            extra_headers=extra_headers,
         )
 
     def get(
@@ -185,20 +187,24 @@ class AbhaClient:
         t_token: str | None = None,
         benefit_name: str | None = None,
         transaction_id: str | None = None,
+        extra_headers: dict[str, str] | None = None,
     ) -> dict[str, str]:
-        return base_headers(
+        headers = base_headers(
             extra={
                 "Authorization": self.session.authorization(),
                 # ABDM writes this one without the Bearer prefix in some
-                # examples and with it in others. The prefix is what the
-                # sandbox accepts; normalising here means no call site has to
-                # remember, and an already-prefixed value is not doubled.
+                # examples and with it in others.
                 "X-token": _bearer(x_token),
                 "T-token": _bearer(t_token),
                 "BENEFIT-NAME": benefit_name,
                 "Transaction_Id": transaction_id,
             }
         )
+
+        if extra_headers:
+            headers.update(extra_headers)
+
+        return headers
 
     def _request(
         self,
@@ -212,6 +218,7 @@ class AbhaClient:
         benefit_name: str | None,
         transaction_id: str | None,
         encrypted: bool = False,
+        extra_headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         url = self._url(path, host)
 
@@ -221,6 +228,7 @@ class AbhaClient:
                 t_token=t_token,
                 benefit_name=benefit_name,
                 transaction_id=transaction_id,
+                extra_headers=extra_headers,
             )
             return self.transport.send_json(
                 method, url, headers=headers, json_body=body
