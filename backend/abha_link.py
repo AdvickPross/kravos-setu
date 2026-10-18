@@ -119,6 +119,17 @@ class AbhaLinkStore:
         record = self._load().get(normalize_abha_number(abha_number))
         return record.get("patient_id") if record else None
 
+    def patient_for_address(self, abha_address: str) -> str | None:
+        """M2 discovery: the gateway identifies a patient by ABHA address.
+        Addresses are case-insensitive (``Jane@sbx`` is ``jane@sbx``)."""
+        wanted = (abha_address or "").strip().lower()
+        if not wanted:
+            return None
+        for record in self._load().values():
+            if (record.get("abha_address") or "").strip().lower() == wanted:
+                return record.get("patient_id")
+        return None
+
     def abha_for(self, patient_id: str) -> AbhaLink | None:
         for number, record in self._load().items():
             if record.get("patient_id") == patient_id:

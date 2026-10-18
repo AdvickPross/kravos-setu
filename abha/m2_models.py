@@ -212,12 +212,12 @@ class HipDiscoveryPatient(BaseModel):
     )
 
     verified_identifiers: list[VerifiedIdentifier] = Field(
-        ...,
+        default_factory=list,
         alias="verifiedIdentifiers",
     )
 
     unverified_identifiers: list[DiscoveryIdentifier] = Field(
-        ...,
+        default_factory=list,
         alias="unverifiedIdentifiers",
     )
 
@@ -253,6 +253,18 @@ class HipDiscoveryCallbackRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
 
+class LinkInitPatient(BaseModel):
+    """One hiType group in a link/init request. The gateway echoes back what
+    we offered in on-discover; display, hiType and count are not relied on."""
+
+    reference_number: str = Field(..., alias="referenceNumber", min_length=1)
+    care_contexts: list[CareContext] = Field(..., alias="careContexts", min_length=1)
+    hi_type: str | None = Field(default=None, alias="hiType")
+    count: int | None = None
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
 class LinkInitRequest(BaseModel):
     transaction_id: str = Field(
         ...,
@@ -265,7 +277,7 @@ class LinkInitRequest(BaseModel):
         alias="abhaAddress",
     )
 
-    patient: list[DiscoveredPatient] = Field(
+    patient: list[LinkInitPatient] = Field(
         ...,
         min_length=1,
     )
@@ -273,3 +285,19 @@ class LinkInitRequest(BaseModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
+
+
+class LinkConfirmation(BaseModel):
+    link_ref_number: str = Field(..., alias="linkRefNumber", min_length=1)
+    token: str = Field(..., min_length=1)
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class LinkConfirmRequest(BaseModel):
+    """Body of the gateway's /hip/link/care-context/confirm: the OTP the
+    patient typed into their PHR app, against our link reference."""
+
+    confirmation: LinkConfirmation
+
+    model_config = ConfigDict(populate_by_name=True)

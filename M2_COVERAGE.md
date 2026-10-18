@@ -17,8 +17,13 @@ Status values:
 | **not built** | no implementation |
 | **n/a** | does not apply, or happens entirely on the ABDM / PHR-app side |
 
-**Summary: no mandatory test case is met yet.** Of the 12 mandatory rows, 5 are
-partial and 7 are not built. The code from `task/M2_v1` is a skeleton:
+**Status after stage 2 (branch `m2/hip-fixes`):** user-initiated linking
+(603–605) is built and tested against a fake gateway. OTP delivery is still
+log-only, and nothing has run against the real sandbox yet. See the
+section 6 table.
+
+**Original summary (at merge): no mandatory test case was met.** Of the 12
+mandatory rows, 5 were partial and 7 were not built. The code from `task/M2_v1` is a skeleton:
 request models, a transaction log and pass-through proxies. The HIP-side
 logic (patient matching, OTP, consent storage, FHIR, encryption and data
 push) has not been built.
@@ -124,9 +129,16 @@ The gateway calls the HIP; the HIP replies. V3 replies: `on-discover`,
 |---|---|---|---|---|
 | USER_INIT_LINK_601 | — | Log into PHR app | n/a | PHR side. |
 | USER_INIT_LINK_602 | Mandatory | Facility searchable in PHR | n/a in code | Needs the HIP registered in HFR with a public bridge URL. Config, not code. |
-| USER_INIT_LINK_603 | Mandatory | HIP matches patient: ABHA address first, then mobile + fuzzy demographic match | **partial** | `/api/v3/hip/patient/care-context/discover` exists but returns `SUCCESS` without searching patients and without calling `on-discover`. |
-| USER_INIT_LINK_604 | Mandatory | Matched care contexts returned to PHR | **partial** | Outbound `on-discover` proxy exists (wrong host). Not wired to 603. |
-| USER_INIT_LINK_605 | Mandatory | OTP to patient's mobile, then link | **not built** | `/api/v3/hip/link/care-context/init` only logs. No OTP generation or `on-init`. No `/hip/link/care-context/confirm` route, no OTP check, no `on-confirm`. |
+| USER_INIT_LINK_603 | Mandatory | HIP matches patient: ABHA address first, then mobile + fuzzy demographic match | **done (mock)** | `m2_service.match_patient`: ABHA address, then ABHA number (M1 link store), then verified mobile (`patient_mobiles`, set via `PUT /api/m2/patients/{id}/mobile`) plus exact gender and year of birth and name similarity ≥ 0.8. Exactly one patient must match. |
+| USER_INIT_LINK_604 | Mandatory | Matched care contexts returned to PHR | **done (mock)** | One care context per encounter, newest first, already-linked ones excluded, all `OPConsultation`. `on-discover` is sent as a background task. The largest corpus patient has 394 care contexts in one reply, which may need capping if the PHR app struggles. |
+| USER_INIT_LINK_605 | Mandatory | OTP to patient's mobile, then link | **partial** | init checks the care contexts were offered, issues a 6-digit OTP (hashed, 10 min, 3 attempts, single use) and replies with `on-init`. confirm verifies the OTP, records `LINKED` and replies with `on-confirm`. **The OTP is written to the server log** (`ABDM_OTP_DELIVERY=log`). A real SMS provider is needed before certification. |
+
+Stage 2 is tested end to end against `kravos_test` with a fake gateway
+(`tests/test_m2_user_linking.py`). It hasn't run against the real sandbox,
+which needs a registered HIP and a bridge URL pointing at this server. Error
+codes sent to the gateway are descriptive strings (`PATIENT_NOT_FOUND`,
+`OTP_INVALID`, …) because ABDM's v3 code catalogue isn't published. They are
+all defined in one place in `m2_service.py`.
 | USER_INIT_LINK_606 | Mandatory | CM validates request | n/a | Gateway side. |
 | USER_INIT_LINK_607 | Mandatory | Records pullable in PHR app | **not built** | Depends on section 8. |
 

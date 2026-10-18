@@ -1,5 +1,9 @@
 from __future__ import annotations
+
 from typing import Any
+
+from psycopg.types.json import Jsonb
+
 from backend.data_layer import connection
 
 def create_transaction(
@@ -116,7 +120,7 @@ def save_care_context(
                     transaction_id = %s
                     OR (
                         transaction_id IS NULL
-                        AND %s IS NULL
+                        AND %s::text IS NULL
                     )
                   )
             ORDER BY id
@@ -192,7 +196,7 @@ def mark_care_context_linked(
                     transaction_id = %s
                     OR (
                         transaction_id IS NULL
-                        AND %s IS NULL
+                        AND %s::text IS NULL
                     )
                   )
             """,
@@ -276,8 +280,8 @@ def list_care_contexts(
             discovered_at,
             linked_at
         FROM abdm_care_contexts
-        WHERE (%s IS NULL OR patient_id = %s)
-          AND (%s IS NULL OR transaction_id = %s)
+        WHERE (%s::text IS NULL OR patient_id = %s)
+          AND (%s::text IS NULL OR transaction_id = %s)
         ORDER BY discovered_at DESC
     """
 
@@ -296,3 +300,228 @@ def list_care_contexts(
         columns = [description.name for description in cur.description]
 
     return [dict(zip(columns, row)) for row in rows]
+
+
+# -- user-initiated linking ------------------------------------------------------
+
+
+def save_discovery(
+    *,
+    transaction_id: str,
+    patient_id: str,
+    abha_address: str | None,
+    mobile: str | None,
+    offered: list[str],
+) -> None:
+    """Record which patient a discovery matched and which care contexts
+    (encounter ids) were offered."""
+    conn = connection()
+
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO abdm_discoveries
+                (transaction_id, patient_id, abha_address, mobile, offered)
+            VALUES (%s, %s, %s, %s, %s)
+            ON CONFLICT (transaction_id) DO UPDATE SET
+                patient_id = EXCLUDED.patient_id,
+                abha_address = EXCLUDED.abha_address,
+                mobile = EXCLUDED.mobile,
+                offered = EXCLUDED.offered
+            """,
+            (transaction_id, patient_id, abha_address, mobile, Jsonb(offered)),
+        )
+
+
+def get_discovery(transaction_id: str) -> dict[str, Any] | None:
+    conn = connection()
+
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT transaction_id, patient_id, abha_address, mobile, offered
+            FROM abdm_discoveries
+            WHERE transaction_id = %s
+            """,
+            (transaction_id,),
+        )
+        row = cur.fetchone()
+        if row is None:
+            return None
+        columns = [d.name for d in cur.description]
+
+    return dict(zip(columns, row))
+
+
+def create_link_request(
+    *,
+    link_ref_number: str,
+    transaction_id: str,
+    patient_id: str,
+    abha_address: str | None,
+    care_contexts: list[dict[str, Any]],
+    otp_hash: str,
+    ttl_seconds: int,
+) -> None:
+    conn = connection()
+
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO abdm_link_requests (
+                link_ref_number, transaction_id, patient_id, abha_address,
+                care_contexts, otp_hash, expires_at
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, now() + make_interval(secs => %s))
+            """,
+            (
+                link_ref_number,
+                transaction_id,
+                patient_id,
+                abha_address,
+                Jsonb(care_contexts),
+                otp_hash,
+                ttl_seconds,
+            ),
+        )
+
+
+def claim_link_attempt(link_ref_number: str, *, max_attempts: int) -> dict[str, Any] | None:
+    """Count one OTP attempt and return the request, atomically.
+
+    Returns None for an unknown reference. The returned ``attempts`` already
+    includes this one, and ``expired`` is computed by the database clock, so
+    two concurrent confirms can't both get the last attempt.
+    """
+    conn = connection()
+
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            UPDATE abdm_link_requests
+            SET attempts = attempts + 1
+            WHERE link_ref_number = %s
+              AND status = 'PENDING'
+              AND attempts < %s
+            RETURNING link_ref_number, transaction_id, patient_id, abha_address,
+                      care_contexts, otp_hash, attempts,
+                      expires_at <= now() AS expired
+            """,
+            (link_ref_number, max_attempts),
+        )
+        row = cur.fetchone()
+        if row is not None:
+            columns = [d.name for d in cur.description]
+            return dict(zip(columns, row))
+
+        cur.execute(
+            "SELECT status, attempts FROM abdm_link_requests WHERE link_ref_number = %s",
+            (link_ref_number,),
+        )
+        existing = cur.fetchone()
+
+    if existing is None:
+        return None
+    # Known, but already confirmed or out of attempts.
+    return {"link_ref_number": link_ref_number, "status": existing[0], "exhausted": True}
+
+
+def set_link_request_status(link_ref_number: str, status: str) -> None:
+    conn = connection()
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE abdm_link_requests SET status = %s WHERE link_ref_number = %s",
+            (status, link_ref_number),
+        )
+
+
+def save_linked_care_context(
+    *,
+    patient_id: str,
+    hip_id: str,
+    transaction_id: str,
+    reference_number: str,
+    display: str | None,
+    hi_type: str | None,
+) -> None:
+    """Record a care context the patient linked to their ABHA."""
+    conn = connection()
+
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO abdm_care_contexts (
+                patient_id, transaction_id, reference_number, display,
+                hi_type, hip_id, status, linked_at
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, 'LINKED', now())
+            """,
+            (patient_id, transaction_id, reference_number, display, hi_type, hip_id),
+        )
+
+
+def linked_care_context_refs(*, patient_id: str, hip_id: str) -> set[str]:
+    """Care contexts already linked, so discovery does not offer them again."""
+    conn = connection()
+
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT reference_number
+            FROM abdm_care_contexts
+            WHERE patient_id = %s AND hip_id = %s AND status = 'LINKED'
+            """,
+            (patient_id, hip_id),
+        )
+        return {row[0] for row in cur.fetchall()}
+
+
+# -- patient mobiles -------------------------------------------------------------
+
+
+def set_patient_mobile(*, patient_id: str, mobile: str) -> None:
+    conn = connection()
+
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO patient_mobiles (patient_id, mobile)
+            VALUES (%s, %s)
+            ON CONFLICT (patient_id) DO UPDATE SET
+                mobile = EXCLUDED.mobile,
+                updated_at = now()
+            """,
+            (patient_id, mobile),
+        )
+
+
+def get_patient_mobile(patient_id: str) -> str | None:
+    conn = connection()
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT mobile FROM patient_mobiles WHERE patient_id = %s",
+            (patient_id,),
+        )
+        row = cur.fetchone()
+
+    return row[0] if row else None
+
+
+def patients_with_mobile(mobile: str) -> list[dict[str, Any]]:
+    """Demographics of every patient registered with this mobile number."""
+    conn = connection()
+
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT p.patient_id, p.name, p.gender, p.birth_date
+            FROM patient_mobiles m
+            JOIN patients p ON p.patient_id = m.patient_id
+            WHERE m.mobile = %s
+            """,
+            (mobile,),
+        )
+        columns = [d.name for d in cur.description]
+        return [dict(zip(columns, row)) for row in cur.fetchall()]

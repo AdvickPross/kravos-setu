@@ -24,7 +24,8 @@ import logging
 import threading
 from typing import Any
 
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException
+from pydantic import BaseModel, Field
 
 from abha.config import AbhaConfig, AbhaConfigError
 from abha.errors import AbhaApiError, AbhaTransportError
@@ -33,6 +34,7 @@ from abha.m2_client import AbdmM2Client
 from abha.m2_models import (
     HipDiscoveryCallbackRequest,
     LinkCareContextRequest,
+    LinkConfirmRequest,
     LinkInitRequest,
     TokenRequest,
     TokenResponse,
@@ -41,9 +43,17 @@ from abha.transport import new_request_id
 from backend.abdm_store import (
     get_link_token,
     save_link_token,
+    set_patient_mobile,
     update_transaction,
 )
-from backend.m2_service import start_m2_transaction
+from backend.data_layer import get_patient
+from backend.m2_service import (
+    handle_discovery,
+    handle_link_confirm,
+    handle_link_init,
+    normalize_mobile,
+    start_m2_transaction,
+)
 
 log = logging.getLogger(__name__)
 
@@ -215,6 +225,28 @@ def link_care_contexts(payload: LinkCareContextRequest) -> dict[str, str]:
     return {"status": "PENDING", "requestId": request_id}
 
 
+class PatientMobile(BaseModel):
+    mobile: str = Field(..., min_length=10)
+
+
+@m2_router.put("/patients/{patient_id}/mobile")
+def put_patient_mobile(patient_id: str, payload: PatientMobile) -> dict[str, str]:
+    """Record the mobile captured at registration.
+
+    User-initiated discovery falls back to it when the ABHA address isn't
+    linked here (USER_INIT_LINK_603), and the linking OTP is sent to it.
+    """
+    mobile = normalize_mobile(payload.mobile)
+    if mobile is None:
+        raise HTTPException(status_code=422, detail="mobile must have at least 10 digits")
+    try:
+        get_patient(patient_id)
+    except KeyError:
+        raise HTTPException(status_code=404, detail=f"unknown patient_id: {patient_id}") from None
+    set_patient_mobile(patient_id=patient_id, mobile=mobile)
+    return {"patientId": patient_id, "mobile": f"******{mobile[-4:]}"}
+
+
 # -- gateway callbacks ---------------------------------------------------------
 
 
@@ -277,15 +309,12 @@ def handle_link_token_callback(
 @gateway_router.post("/hip/patient/care-context/discover", status_code=202)
 def handle_hip_care_context_discovery(
     payload: HipDiscoveryCallbackRequest,
+    background: BackgroundTasks,
     x_hip_id: str | None = Header(default=None, alias="X-HIP-ID"),
     request_id: str | None = Header(default=None, alias="REQUEST-ID"),
     timestamp: str | None = Header(default=None, alias="TIMESTAMP"),
 ) -> dict[str, str]:
-    """User-initiated discovery request from the gateway.
-
-    Recorded only. Patient matching and the on-discover reply are stage 2
-    (USER_INIT_LINK_603/604).
-    """
+    """USER_INIT_LINK_603/604: find the patient, answer on-discover."""
     validated_request_id = _require_header(request_id, "REQUEST-ID")
     _require_header(timestamp, "TIMESTAMP")
     _require_own_hip_id(x_hip_id)
@@ -296,21 +325,21 @@ def handle_hip_care_context_discovery(
         request_id=validated_request_id,
         operation="DISCOVERY_REQUEST",
     )
-    return {"status": "RECEIVED", "transactionId": payload.transaction_id}
+    background.add_task(
+        handle_discovery, _client(), payload, gateway_request_id=validated_request_id
+    )
+    return {"status": "ACCEPTED", "transactionId": payload.transaction_id}
 
 
 @gateway_router.post("/hip/link/care-context/init", status_code=202)
 def handle_link_care_context_init(
     payload: LinkInitRequest,
+    background: BackgroundTasks,
     x_hip_id: str | None = Header(default=None, alias="X-HIP-ID"),
     request_id: str | None = Header(default=None, alias="REQUEST-ID"),
     timestamp: str | None = Header(default=None, alias="TIMESTAMP"),
 ) -> dict[str, str]:
-    """User-initiated link init from the gateway.
-
-    Recorded only. OTP generation and the on-init reply are stage 2
-    (USER_INIT_LINK_605).
-    """
+    """USER_INIT_LINK_605, step 1: send the patient an OTP, answer on-init."""
     validated_request_id = _require_header(request_id, "REQUEST-ID")
     _require_header(timestamp, "TIMESTAMP")
     _require_own_hip_id(x_hip_id)
@@ -321,4 +350,32 @@ def handle_link_care_context_init(
         request_id=validated_request_id,
         operation="LINK_INIT_REQUEST",
     )
-    return {"status": "RECEIVED", "transactionId": payload.transaction_id}
+    background.add_task(
+        handle_link_init, _client(), payload, gateway_request_id=validated_request_id
+    )
+    return {"status": "ACCEPTED", "transactionId": payload.transaction_id}
+
+
+@gateway_router.post("/hip/link/care-context/confirm", status_code=202)
+def handle_link_care_context_confirm(
+    payload: LinkConfirmRequest,
+    background: BackgroundTasks,
+    x_hip_id: str | None = Header(default=None, alias="X-HIP-ID"),
+    request_id: str | None = Header(default=None, alias="REQUEST-ID"),
+    timestamp: str | None = Header(default=None, alias="TIMESTAMP"),
+) -> dict[str, str]:
+    """USER_INIT_LINK_605, step 2: check the OTP, link, answer on-confirm."""
+    validated_request_id = _require_header(request_id, "REQUEST-ID")
+    _require_header(timestamp, "TIMESTAMP")
+    _require_own_hip_id(x_hip_id)
+
+    start_m2_transaction(
+        patient_id=None,
+        transaction_id=None,
+        request_id=validated_request_id,
+        operation="LINK_CONFIRM_REQUEST",
+    )
+    background.add_task(
+        handle_link_confirm, _client(), payload, gateway_request_id=validated_request_id
+    )
+    return {"status": "ACCEPTED"}

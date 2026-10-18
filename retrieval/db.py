@@ -150,6 +150,43 @@ CREATE TABLE IF NOT EXISTS abdm_link_tokens (
     expires_at    TIMESTAMPTZ NOT NULL,
     PRIMARY KEY (abha_address, hip_id)
 );
+
+-- User-initiated linking. A discovery we answered: which patient the
+-- gateway's transaction resolved to and which care contexts we offered, so
+-- link/init can refuse anything we did not offer.
+CREATE TABLE IF NOT EXISTS abdm_discoveries (
+    transaction_id  TEXT PRIMARY KEY,
+    patient_id      TEXT NOT NULL,
+    abha_address    TEXT,
+    mobile          TEXT,
+    offered         JSONB NOT NULL,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- One OTP challenge per link/init. Only a hash of the OTP is kept.
+CREATE TABLE IF NOT EXISTS abdm_link_requests (
+    link_ref_number TEXT PRIMARY KEY,
+    transaction_id  TEXT NOT NULL,
+    patient_id      TEXT NOT NULL,
+    abha_address    TEXT,
+    care_contexts   JSONB NOT NULL,
+    otp_hash        TEXT NOT NULL,
+    expires_at      TIMESTAMPTZ NOT NULL,
+    attempts        INTEGER NOT NULL DEFAULT 0,
+    status          TEXT NOT NULL DEFAULT 'PENDING',
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Mobile numbers captured at registration. Synthea has none; this is what
+-- USER_INIT_LINK_603's mobile fallback match searches.
+CREATE TABLE IF NOT EXISTS patient_mobiles (
+    patient_id  TEXT PRIMARY KEY,
+    mobile      TEXT NOT NULL,
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS patient_mobiles_mobile_idx
+    ON patient_mobiles (mobile);
 """
 
 COLUMNS = (

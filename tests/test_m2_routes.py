@@ -44,6 +44,8 @@ def m2(monkeypatch):
     monkeypatch.setattr(m2_routes, "update_transaction", Mock(return_value=1))
     monkeypatch.setattr(m2_routes, "save_link_token", Mock())
     monkeypatch.setattr(m2_routes, "get_link_token", Mock(return_value="link-tok"))
+    for handler in ("handle_discovery", "handle_link_init", "handle_link_confirm"):
+        monkeypatch.setattr(m2_routes, handler, Mock())
     verifier = Mock()
     verifier.verify.return_value = {"iss": "gateway"}
     monkeypatch.setattr(m2_routes, "_gateway_verifier", lambda: verifier)
@@ -272,6 +274,10 @@ def test_token_callback_error_marks_transaction_failed(api, m2):
             },
         ),
         ("/api/v3/hip/link/care-context/init", {"transactionId": "t-1", **_link_request()}),
+        (
+            "/api/v3/hip/link/care-context/confirm",
+            {"confirmation": {"linkRefNumber": "ref-1", "token": "123456"}},
+        ),
     ],
 )
 def test_callbacks_reject_tokens_the_gateway_did_not_sign(api, m2, path, body):
@@ -283,6 +289,9 @@ def test_callbacks_reject_tokens_the_gateway_did_not_sign(api, m2, path, body):
     m2_routes.start_m2_transaction.assert_not_called()
     m2_routes.update_transaction.assert_not_called()
     m2_routes.save_link_token.assert_not_called()
+    m2_routes.handle_discovery.assert_not_called()
+    m2_routes.handle_link_init.assert_not_called()
+    m2_routes.handle_link_confirm.assert_not_called()
 
 
 def test_callbacks_addressed_to_another_hip_are_refused(api, m2):
@@ -309,6 +318,55 @@ def test_removed_relay_routes_are_gone(api):
         "/api/v3/hiu/patient/care-context/on-init",
     ):
         assert api.post(path, json={}).status_code in (404, 405), path
+
+
+@pytest.mark.parametrize(
+    "path, body, handler",
+    [
+        (
+            "/api/v3/hip/patient/care-context/discover",
+            {"transactionId": "t-1", "patient": {"id": "jane@sbx", "name": "Jane", "gender": "F", "yearOfBirth": 1990}},
+            "handle_discovery",
+        ),
+        ("/api/v3/hip/link/care-context/init", {"transactionId": "t-1", **_link_request()}, "handle_link_init"),
+        (
+            "/api/v3/hip/link/care-context/confirm",
+            {"confirmation": {"linkRefNumber": "ref-1", "token": "123456"}},
+            "handle_link_confirm",
+        ),
+    ],
+)
+def test_callbacks_answer_202_and_hand_off_with_the_gateway_request_id(api, m2, path, body, handler):
+    response = api.post(path, json=body, headers=_callback_headers())
+
+    assert response.status_code == 202
+    mock = getattr(m2_routes, handler)
+    mock.assert_called_once()
+    assert mock.call_args.args[0] is m2
+    # The reply must carry the gateway's REQUEST-ID as response.requestId.
+    assert mock.call_args.kwargs == {"gateway_request_id": GATEWAY_REQUEST_ID}
+
+
+def test_patient_mobile_is_normalised_and_masked(api, monkeypatch):
+    saved = Mock()
+    monkeypatch.setattr(m2_routes, "set_patient_mobile", saved)
+    monkeypatch.setattr(m2_routes, "get_patient", Mock())
+
+    response = api.put("/api/m2/patients/p-1/mobile", json={"mobile": "+91 98765-43210"})
+
+    assert response.status_code == 200
+    assert response.json() == {"patientId": "p-1", "mobile": "******3210"}
+    saved.assert_called_once_with(patient_id="p-1", mobile="9876543210")
+
+
+def test_patient_mobile_for_unknown_patient_is_404(api, monkeypatch):
+    monkeypatch.setattr(m2_routes, "get_patient", Mock(side_effect=KeyError("p-x")))
+    monkeypatch.setattr(m2_routes, "set_patient_mobile", Mock())
+
+    response = api.put("/api/m2/patients/p-x/mobile", json={"mobile": "9876543210"})
+
+    assert response.status_code == 404
+    m2_routes.set_patient_mobile.assert_not_called()
 
 
 # -- link token store ----------------------------------------------------------

@@ -91,8 +91,11 @@ def use_test_db(monkeypatch):
     """
     TRUNCATE TABLE
         abdm_care_contexts,
+        abdm_discoveries,
+        abdm_link_requests,
         abdm_link_tokens,
         abdm_transactions,
+        patient_mobiles,
         conversation_turns,
         conversations,
         facts,
