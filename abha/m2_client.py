@@ -1,109 +1,87 @@
-﻿from __future__ import annotations
+﻿"""HIP-side calls to the ABDM HIE-CM (gateway host).
+
+Every call here is HIP -> gateway. Headers come from this server's own
+config and session and never from an inbound request. Forwarding a caller's
+``Authorization`` or ``X-HIP-ID`` would let anyone who can reach this server
+act as the HIP.
+
+The caller passes ``request_id``, because ABDM echoes it back as
+``response.requestId`` in the async callback. The transaction log is keyed on
+it, so the caller has to know it before the request leaves.
+"""
+
+from __future__ import annotations
 
 from typing import Any
 
 from abha.client import AbhaClient
+from abha.config import AbhaConfigError
+
+TOKEN_GENERATE = "/api/hiecm/v3/token/generate-token"
+LINK_CARE_CONTEXT = "/api/hiecm/hip/v3/link/carecontext"
+UIL_ON_DISCOVER = "/api/hiecm/user-initiated-linking/v3/patient/care-context/on-discover"
+UIL_ON_INIT = "/api/hiecm/user-initiated-linking/v3/link/care-context/on-init"
+UIL_ON_CONFIRM = "/api/hiecm/user-initiated-linking/v3/link/care-context/on-confirm"
 
 
 class AbdmM2Client:
-    """
-    Client for ABDM M2 APIs.
-
-    This class is intentionally kept separate from AbhaClient so that
-    M1 ABHA functionality remains unchanged while M2-specific API
-    operations are added incrementally.
-    """
-
     def __init__(self, client: AbhaClient):
         self.client = client
 
-    def discover_care_contexts(
+    @property
+    def hip_id(self) -> str:
+        hip_id = self.client.config.hip_id
+        if not hip_id:
+            raise AbhaConfigError(
+                "ABDM_HIP_ID must be set for M2 -- the facility id this "
+                "bridge is registered under on the ABDM sandbox."
+            )
+        return hip_id
+
+    def _post(
         self,
-        *,
+        path: str,
         body: dict[str, Any],
-        extra_headers: dict[str, str] | None = None,
-    ) -> Any:
+        *,
+        request_id: str,
+        with_hip_id: bool,
+        extra: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        headers = {
+            "REQUEST-ID": request_id,
+            "X-CM-ID": self.client.config.cm_id,
+        }
+        if with_hip_id:
+            headers["X-HIP-ID"] = self.hip_id
+        headers.update(extra or {})
         return self.client.post(
-            "/api/hiecm/user-initiated-linking/v3/patient/care-context/discover",
-            body=body,
-            host="abha",
-            extra_headers=extra_headers,
+            path, body=body, host="gateway", extra_headers=headers
         )
 
-    def respond_to_care_context_discovery(
-        self,
-        *,
-        body: dict[str, Any],
-        extra_headers: dict[str, str] | None = None,
-    ) -> Any:
-        return self.client.post(
-            "/api/hiecm/user-initiated-linking/v3/patient/care-context/on-discover",
-            body=body,
-            host="abha",
-            extra_headers=extra_headers,
-        )
+    # -- HIP-initiated linking ----------------------------------------------
 
-    def generate_link_token(
-        self,
-        *,
-        body: dict[str, Any],
-        extra_headers: dict[str, str] | None = None,
-    ) -> Any:
-        return self.client.post(
-            "/api/hiecm/v3/token/generate-token",
-            body=body,
-            host="abha",
-            extra_headers=extra_headers,
-        )
+    def generate_link_token(self, body: dict[str, Any], *, request_id: str) -> dict[str, Any]:
+        return self._post(TOKEN_GENERATE, body, request_id=request_id, with_hip_id=True)
 
     def link_care_context(
-        self,
-        *,
-        body: dict[str, Any],
-        extra_headers: dict[str, str] | None = None,
-    ) -> Any:
-        return self.client.post(
-            "/api/hiecm/hip/v3/link/carecontext",
-            body=body,
-            host="abha",
-            extra_headers=extra_headers,
+        self, body: dict[str, Any], *, link_token: str, request_id: str
+    ) -> dict[str, Any]:
+        # In v3 the link token travels as a header, not in the body.
+        return self._post(
+            LINK_CARE_CONTEXT,
+            body,
+            request_id=request_id,
+            with_hip_id=True,
+            extra={"X-LINK-TOKEN": link_token},
         )
 
-    def initialize_care_context_link(
-        self,
-        *,
-        body: dict[str, Any],
-        extra_headers: dict[str, str] | None = None,
-    ) -> Any:
-        return self.client.post(
-            "/api/hiecm/user-initiated-linking/v3/link/care-context/init",
-            body=body,
-            host="abha",
-            extra_headers=extra_headers,
-        )
+    # -- user-initiated linking: the HIP's replies ---------------------------
 
-    def respond_to_care_context_link_init(
-        self,
-        *,
-        body: dict[str, Any],
-        extra_headers: dict[str, str] | None = None,
-    ) -> Any:
-        return self.client.post(
-            "/api/hiecm/user-initiated-linking/v3/link/care-context/on-init",
-            body=body,
-            host="abha",
-            extra_headers=extra_headers,
-        )
+    def on_discover(self, body: dict[str, Any], *, request_id: str) -> dict[str, Any]:
+        return self._post(UIL_ON_DISCOVER, body, request_id=request_id, with_hip_id=False)
 
-    def confirm_care_context_link(
-        self,
-        *,
-        body: dict[str, Any],
-        extra_headers: dict[str, str] | None = None,
-    ) -> Any:
-        return self.client.post(
-            "/api/hiecm/user-initiated-linking/v3/link/care-context/confirm",
-            body=body,
-            host="abha",
-            extra_headers=extra_headers,
-        )
+    def on_init(self, body: dict[str, Any], *, request_id: str) -> dict[str, Any]:
+        return self._post(UIL_ON_INIT, body, request_id=request_id, with_hip_id=False)
+
+    def on_confirm(self, body: dict[str, Any], *, request_id: str) -> dict[str, Any]:
+        return self._post(UIL_ON_CONFIRM, body, request_id=request_id, with_hip_id=False)

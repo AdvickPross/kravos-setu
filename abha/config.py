@@ -85,6 +85,13 @@ class AbhaConfig:
     # constants buried in the face-auth module.
     face_auth_poll_seconds: float = 5.0
     face_auth_timeout_seconds: float = 600.0
+    # M2: the facility id registered in HFR/the bridge. Sent as X-HIP-ID on
+    # HIP-originated calls. Optional so M1 keeps working without it; the M2
+    # client refuses to send without one.
+    hip_id: str = ""
+    # M2: verify the gateway JWT on inbound /api/v3/hip/* callbacks. Only
+    # ever switched off for local curl testing.
+    verify_gateway_tokens: bool = True
 
     @property
     def _hosts(self) -> _Hosts:
@@ -103,6 +110,21 @@ class AbhaConfig:
 
     def phr_url(self, path: str) -> str:
         return f"{self._hosts.phr}/{path.lstrip('/')}"
+
+    def gateway_url(self, path: str) -> str:
+        """HIE-CM (M2/M3) APIs: linking, consent, data flow."""
+        return f"{self._hosts.gateway}/{path.lstrip('/')}"
+
+    @property
+    def gateway_jwks_url(self) -> str:
+        # The v3 certs endpoint answers 401 even with a session token; the
+        # v0.5 one is public and serves the same central-registry keys that
+        # sign both our session token and the gateway's callback tokens.
+        return f"{self._hosts.gateway}/gateway/v0.5/certs"
+
+    @property
+    def gateway_issuer(self) -> str:
+        return f"{self._hosts.gateway}/auth/realms/central-registry"
 
     def face_auth_landing_url(self, txn_id: str) -> str:
         """The URL encoded into the QR the patient scans with the ABHA app.
@@ -135,6 +157,10 @@ class AbhaConfig:
             client_secret=client_secret,
             environment=environment,
             timeout_seconds=float(os.getenv("ABDM_TIMEOUT_SECONDS", "30")),
+            hip_id=os.getenv("ABDM_HIP_ID", "").strip(),
+            verify_gateway_tokens=os.getenv(
+                "ABDM_VERIFY_GATEWAY_TOKENS", "true"
+            ).strip().lower() not in ("0", "false", "no"),
         )
 
     @classmethod

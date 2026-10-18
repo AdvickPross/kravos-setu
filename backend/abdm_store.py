@@ -206,6 +206,53 @@ def mark_care_context_linked(
         return cur.rowcount
 
 
+def save_link_token(
+    *,
+    abha_address: str,
+    hip_id: str,
+    link_token: str,
+) -> None:
+    """Store (or replace) the link token for an ABHA address at this HIP."""
+    conn = connection()
+
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO abdm_link_tokens (abha_address, hip_id, link_token, expires_at)
+            VALUES (%s, %s, %s, now() + interval '6 months')
+            ON CONFLICT (abha_address, hip_id) DO UPDATE SET
+                link_token = EXCLUDED.link_token,
+                created_at = now(),
+                expires_at = EXCLUDED.expires_at
+            """,
+            (abha_address, hip_id, link_token),
+        )
+
+
+def get_link_token(
+    *,
+    abha_address: str,
+    hip_id: str,
+) -> str | None:
+    """The unexpired link token for an ABHA address, or None."""
+    conn = connection()
+
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT link_token
+            FROM abdm_link_tokens
+            WHERE abha_address = %s
+              AND hip_id = %s
+              AND expires_at > now()
+            """,
+            (abha_address, hip_id),
+        )
+        row = cur.fetchone()
+
+    return row[0] if row else None
+
+
 def list_care_contexts(
     *,
     patient_id: str | None = None,

@@ -27,8 +27,17 @@ push) has not been built.
 
 ## Blocking defects in the existing M2 code
 
-These have to be fixed before any row below can pass in the sandbox,
-whatever else is built.
+**All five fixed on branch `m2/hip-fixes` (stage 1).** What changed:
+
+| # | Fix |
+|---|---|
+| 1 | `AbhaClient` gained a `gateway` host (`config.gateway_url`). Every M2 call now goes to `https://dev.abdm.gov.in/api/hiecm/...`. |
+| 2 | Relay routes removed. The app now calls `POST /api/m2/link-token` and `POST /api/m2/link-care-contexts`, which take only the body. Session token, `X-HIP-ID` (`ABDM_HIP_ID`), `X-CM-ID` and `REQUEST-ID` all come from the server. |
+| 3 | The PHR/HIU-side routes, their client methods and their models are removed. The client now has the HIP's replies: `on_discover`, `on_init` and `on_confirm`. |
+| 4 | `on-generate-token` correlates on `response.requestId` (the id we sent), not the gateway's own `REQUEST-ID` header. It stores the token in `abdm_link_tokens`, which expires after 6 months. A token for a request we never made is refused. `link-care-contexts` sends it as `X-LINK-TOKEN`. |
+| 5 | Every `/api/v3/hip/*` route requires an RS256 JWT verified against the gateway JWKS (`/gateway/v0.5/certs`) with issuer `central-registry`, plus the `gateway` realm role, and `X-HIP-ID` must be ours. Verified live: a real sandbox integrator token passes the signature check but is refused for lacking the role. **The role name has not yet been confirmed on a real gateway callback**; a refusal logs the token's roles. |
+
+The original findings, for the record:
 
 1. **Wrong host for every outbound call.** `abha/m2_client.py` posts every
    HIE-CM call with `host="abha"`, which resolves to
@@ -99,11 +108,11 @@ V3 APIs: `token/generate-token`, `hip/v3/link/carecontext`,
 
 | Test case | M/O | Requirement | Status | Notes |
 |---|---|---|---|---|
-| HIP_INTI_LINK_501 | Mandatory | Provision to link records to ABHA address | **partial** | Proxy route exists; blocking defects 1, 2 and 4 apply. |
-| HIP_INTI_LINK_502 | Mandatory | HIP holds name, DOB, gender, mobile | **partial** | `patients` table has demographics. Nothing assembles them into a `generate-token` request from a patient ID. |
-| HIP_INTI_LINK_503 | Mandatory | Gateway validates demographics, issues link token | **partial** | Callback route exists, but the token is not stored (defect 4). |
+| HIP_INTI_LINK_501 | Mandatory | Provision to link records to ABHA address | **partial** | `POST /api/m2/link-token` → gateway; not yet run against the sandbox (needs `ABDM_HIP_ID` + bridge URL). |
+| HIP_INTI_LINK_502 | Mandatory | HIP holds name, DOB, gender, mobile | **partial** | `patients` table has demographics. Nothing assembles them into a `generate-token` request from a patient ID; the caller supplies them. |
+| HIP_INTI_LINK_503 | Mandatory | Gateway validates demographics, issues link token | **partial** | Callback correlates, stores the token and records failures. Mock-tested only. |
 | HIP_INTI_LINK_504 | Mandatory | New linking token created | **partial** | As 503. |
-| HIP_INTI_LINK_505 | Mandatory | Link care contexts with token; **pushed from backend as a batch process** | **partial** | Proxy exists. No care contexts are derived from patient records, no batch job, and no `on-carecontext` callback handler. |
+| HIP_INTI_LINK_505 | Mandatory | Link care contexts with token; **pushed from backend as a batch process** | **partial** | `POST /api/m2/link-care-contexts` sends the stored token. No care contexts are derived from patient records, no batch job, and no `on-carecontext` callback handler. |
 | HIP_INTI_LINK_506 | Mandatory | Records pullable in PHR app | **not built** | Depends on section 8 (data transfer). `link/context/notify` is not built. |
 
 ## 6 · User-initiated linking

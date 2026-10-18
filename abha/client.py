@@ -178,7 +178,9 @@ class AbhaClient:
             return self.config.abha_url(path)
         if host == "phr":
             return self.config.phr_url(path)
-        raise AbhaFlowError(f"unknown host {host!r}; expected abha or phr")
+        if host == "gateway":
+            return self.config.gateway_url(path)
+        raise AbhaFlowError(f"unknown host {host!r}; expected abha, phr or gateway")
 
     def _headers(
         self,

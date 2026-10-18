@@ -41,7 +41,7 @@ from backend.models import (
 )
 from backend.retrieve import retrieve
 from retrieval.ner import parse_query
-from backend.m2_routes import m2_router
+from backend.m2_routes import gateway_router as m2_gateway_router, m2_router
 
 app = FastAPI(title="Kravos Setu API")
 
@@ -61,6 +61,7 @@ app.add_middleware(
 app.include_router(abha_router)
 
 app.include_router(m2_router)
+app.include_router(m2_gateway_router)
 
 # Scanned-record ingestion. /extract proposes, /commit writes -- nothing
 # reaches the corpus without a second explicit call. See backend/ocr_routes.py.

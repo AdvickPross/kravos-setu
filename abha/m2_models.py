@@ -51,39 +51,6 @@ class DiscoveredPatient(BaseModel):
         return self
 
 
-class OnDiscoverRequest(BaseModel):
-    transaction_id: str = Field(
-        ...,
-        alias="transactionId",
-        min_length=1,
-    )
-    patient: dict[str, Any] | None = None
-    reference_number: str | None = Field(
-        default=None,
-        alias="referenceNumber",
-    )
-    care_contexts: list[CareContext] = Field(
-        default_factory=list,
-        alias="careContexts",
-    )
-    hi_type: str | None = Field(
-        default=None,
-        alias="hiType",
-    )
-
-    model_config = ConfigDict(populate_by_name=True)
-
-
-class PatientReference(BaseModel):
-    reference_number: str = Field(
-        ...,
-        alias="referenceNumber",
-        min_length=1,
-    )
-    display: str | None = None
-
-    model_config = ConfigDict(populate_by_name=True)
-
 class DiscoveryError(BaseModel):
     code: str = Field(..., min_length=1)
     message: str = Field(..., min_length=1)
@@ -146,6 +113,13 @@ class TokenRequest(BaseModel):
         le=2200,
     )
 
+    # Ours, not ABDM's: ties the transaction to a patient. Never sent.
+    patient_id: str | None = Field(
+        default=None,
+        alias="patientId",
+        exclude=True,
+    )
+
     model_config = ConfigDict(populate_by_name=True)
 
     @model_validator(mode="after")
@@ -165,10 +139,9 @@ class LinkCareContextRequest(BaseModel):
         min_length=1,
     )
 
-    link_token: str = Field(
-        ...,
-        alias="linkToken",
-        min_length=1,
+    abha_number: str | None = Field(
+        default=None,
+        alias="abhaNumber",
     )
 
     patient: list[DiscoveredPatient] = Field(
@@ -176,32 +149,13 @@ class LinkCareContextRequest(BaseModel):
         min_length=1,
     )
 
-    model_config = ConfigDict(populate_by_name=True)
-
-
-class LinkResponse(BaseModel):
-    abha_address: str | None = Field(
+    # Ours, not ABDM's. The link token is looked up server-side from what
+    # on-generate-token stored and is sent as X-LINK-TOKEN.
+    patient_id: str | None = Field(
         default=None,
-        alias="abhaAddress",
+        alias="patientId",
+        exclude=True,
     )
-
-    transaction_id: str | None = Field(
-        default=None,
-        alias="transactionId",
-    )
-
-    link: dict[str, Any] | None = None
-
-    error: dict[str, Any] | None = None
-
-    response: dict[str, Any] | None = None
-
-    request_id: str | None = Field(
-        default=None,
-        alias="requestId",
-    )
-
-    meta: dict[str, Any] | None = None
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -298,21 +252,6 @@ class HipDiscoveryCallbackRequest(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
-class DiscoveryRequest(BaseModel):
-    hip_id: str = Field(
-        ...,
-        alias="hipId",
-        min_length=1,
-    )
-
-    unverified_identifiers: list[DiscoveryIdentifier] = Field(
-        ...,
-        alias="unverifiedIdentifiers",
-        min_length=1,
-    )
-
-    model_config = ConfigDict(populate_by_name=True)
-
 
 class LinkInitRequest(BaseModel):
     transaction_id: str = Field(
@@ -330,31 +269,6 @@ class LinkInitRequest(BaseModel):
         ...,
         min_length=1,
     )
-
-    model_config = ConfigDict(
-        populate_by_name=True,
-    )
-
-
-class ConfirmationDetails(BaseModel):
-    token: str = Field(
-        ...,
-        min_length=1,
-    )
-
-    link_ref_number: str = Field(
-        ...,
-        alias="linkRefNumber",
-        min_length=1,
-    )
-
-    model_config = ConfigDict(
-        populate_by_name=True,
-    )
-
-
-class ConfirmationRequest(BaseModel):
-    confirmation: ConfirmationDetails
 
     model_config = ConfigDict(
         populate_by_name=True,

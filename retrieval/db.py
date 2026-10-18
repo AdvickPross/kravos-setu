@@ -139,6 +139,17 @@ CREATE INDEX IF NOT EXISTS abdm_care_contexts_transaction_idx
 
 CREATE INDEX IF NOT EXISTS abdm_care_contexts_reference_idx
     ON abdm_care_contexts (reference_number);
+
+-- ABDM M2 link tokens, from /hip/token/on-generate-token. One live token per
+-- ABHA address per HIP; ABDM documents them as valid for 6 months.
+CREATE TABLE IF NOT EXISTS abdm_link_tokens (
+    abha_address  TEXT NOT NULL,
+    hip_id        TEXT NOT NULL,
+    link_token    TEXT NOT NULL,
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+    expires_at    TIMESTAMPTZ NOT NULL,
+    PRIMARY KEY (abha_address, hip_id)
+);
 """
 
 COLUMNS = (
