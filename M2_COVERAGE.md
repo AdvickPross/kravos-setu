@@ -17,10 +17,18 @@ Status values:
 | **not built** | no implementation |
 | **n/a** | does not apply, or happens entirely on the ABDM / PHR-app side |
 
-**Status after stage 2 (branch `m2/hip-fixes`):** user-initiated linking
-(603–605) is built and tested against a fake gateway. OTP delivery is still
-log-only, and nothing has run against the real sandbox yet. See the
-section 6 table.
+**Status after stage 4 (branch `m2/hip-fixes`): every mandatory test case
+has an implementation, tested end to end against a simulated gateway and HIU.**
+None has run against the real ABDM sandbox yet. That needs a HIP ID, which we've
+requested from NHA (see `M2_SANDBOX_ONBOARDING.local.md`, not in git), and a public
+bridge URL. Open items before certification:
+
+1. **Live sandbox run** of every row below, once the HIP ID and bridge URL exist.
+2. **OTP over SMS.** It's written to the server log today (`ABDM_OTP_DELIVERY=log`).
+   Needs DLT registration plus an SMS provider.
+3. **NRCeS FHIR validator pass** on the generated bundles.
+4. **The `gateway` role check** on callback JWTs, to be confirmed on the first real
+   callback. A refusal logs the token's roles.
 
 **Original summary (at merge): no mandatory test case was met.** Of the 12
 mandatory rows, 5 were partial and 7 were not built. The code from `task/M2_v1` is a skeleton:
@@ -78,7 +86,7 @@ The original findings, for the record:
 
 | Test case | M/O | Requirement | Status | Notes |
 |---|---|---|---|---|
-| Health_RECORD_CREATION_101 | Mandatory | Digital health records in ABDM FHIR format | **not built** | Records exist as `facts` rows in Postgres. Nothing builds ABDM FHIR bundles (OPConsultation, Prescription, DiagnosticReport, etc.). |
+| Health_RECORD_CREATION_101 | Mandatory | Digital health records in ABDM FHIR format | **done (mock)** | `backend/m2_fhir.py`: each encounter becomes an OPConsultRecord document Bundle (NRCeS profiles) holding Condition, MedicationRequest, Procedure, Observation, Immunization, AllergyIntolerance and DocumentReference resources, with the corpus' own SNOMED/LOINC/RxNorm/CVX codes. **Not yet run through the NRCeS validator.** |
 
 ## 2–4 · HIP-initiated linking via Mobile OTP / Aadhaar OTP / Direct Auth
 
@@ -102,9 +110,9 @@ the HIP to check a valid consent before sharing data.
 
 | Test case | Status | Notes |
 |---|---|---|
-| HIP_INIT_GRANT_CONSENT_ | n/a (needed by 8.1 anyway) | No `/api/v3/consent/request/hip/notify` handler, no consent table. |
-| HIP_INIT_REVOKE_CONSENT | n/a | Same handler, status `REVOKED` → delete. |
-| HIP_INIT_EXPIRE_CONSENT | n/a | Same handler, status `EXPIRED` → delete. |
+| HIP_INIT_GRANT_CONSENT_ | **done (mock)** | `/api/v3/consent/request/hip/notify` stores the artefact in `abdm_consents` (ours only) and acknowledges on `consent/v3/request/hip/on-notify`. |
+| HIP_INIT_REVOKE_CONSENT | **done (mock)** | `REVOKED` deletes the artefact, so nothing is shared under it afterwards (tested). |
+| HIP_INIT_EXPIRE_CONSENT | **done (mock)** | `EXPIRED`/`DENIED` delete too, and a consent past `dataEraseAt` is refused at request time. |
 
 ## 8 · HIP-initiated linking via Demographic Auth
 
@@ -118,7 +126,7 @@ V3 APIs: `token/generate-token`, `hip/v3/link/carecontext`,
 | HIP_INTI_LINK_503 | Mandatory | Gateway validates demographics, issues link token | **done (mock)** | The token request is recorded against the patient *before* sending. A pending request isn't repeated for 10 min, to avoid ABDM's `ABDM-1092` duplicate refusal hiding the first refusal's real cause. |
 | HIP_INTI_LINK_504 | Mandatory | New linking token created | **done (mock)** | `on-generate-token` correlates on `response.requestId` and stores the token for 6 months. |
 | HIP_INTI_LINK_505 | Mandatory | Link care contexts with token; **pushed from backend as a batch process** | **done (mock)** | The token callback links that patient immediately, with no click. Unlinked care contexts are sent 50 per call with `X-LINK-TOKEN` and marked `LINK_REQUESTED` before the call. `/api/v3/link/on_carecontext` settles them as `LINKED`/`LINK_FAILED`, and failures are retried by the next batch. |
-| HIP_INTI_LINK_506 | Mandatory | Records pullable in PHR app | **partial** | Linking is done. Pulling needs section 8 (data transfer). `link/context/notify` (+ `/api/v3/links/context/on-notify`) is built: `POST /api/m2/care-contexts/notify`. |
+| HIP_INTI_LINK_506 | Mandatory | Records pullable in PHR app | **done (mock)** | Linking plus section 8 data transfer. `link/context/notify` (+ `/api/v3/links/context/on-notify`) is also built: `POST /api/m2/care-contexts/notify`. |
 
 ## 6 · User-initiated linking
 
@@ -133,7 +141,7 @@ The gateway calls the HIP; the HIP replies. V3 replies: `on-discover`,
 | USER_INIT_LINK_604 | Mandatory | Matched care contexts returned to PHR | **done (mock)** | One care context per encounter, newest first, already-linked ones excluded, all `OPConsultation`. `on-discover` is sent as a background task. The largest corpus patient has 394 care contexts in one reply, which may need capping if the PHR app struggles. |
 | USER_INIT_LINK_605 | Mandatory | OTP to patient's mobile, then link | **partial** | init checks the care contexts were offered, issues a 6-digit OTP (hashed, 10 min, 3 attempts, single use) and replies with `on-init`. confirm verifies the OTP, records `LINKED` and replies with `on-confirm`. **The OTP is written to the server log** (`ABDM_OTP_DELIVERY=log`). A real SMS provider is needed before certification. |
 | USER_INIT_LINK_606 | Mandatory | CM validates request | n/a | Gateway side. |
-| USER_INIT_LINK_607 | Mandatory | Records pullable in PHR app | **partial** | Linking is done. Pulling needs section 8. |
+| USER_INIT_LINK_607 | Mandatory | Records pullable in PHR app | **done (mock)** | Linking plus section 8 data transfer. |
 
 Stage 2 is tested end to end against `kravos_test` with a fake gateway
 (`tests/test_m2_user_linking.py`). It hasn't run against the real sandbox,
@@ -159,7 +167,15 @@ which needs a registered HIP and a bridge URL pointing at this server.
 
 | Test case | M/O | Requirement | Status | Notes |
 |---|---|---|---|---|
-| HIP_INIT_SHARE_CARECONTEXT | Mandatory | Receive HI request, verify consent, build FHIR, encrypt for HIU (ECDH / Fidelius), push to `dataPushUrl`, call `health-information/notify`, all within 2 h | **not built** | No consent store, no `/api/v3/hip/health-information/request` handler, no `on-request`, no FHIR, no encryption, no push, no notify. |
+| HIP_INIT_SHARE_CARECONTEXT | Mandatory | Receive HI request, verify consent, build FHIR, encrypt for HIU (ECDH / Fidelius), push to `dataPushUrl`, call `health-information/notify`, all within 2 h | **done (mock)** | `backend/m2_data_flow.py`. Checks the consent is ours, granted and not erased; clips to the consent's date range and HI types and to linked contexts; acknowledges on `on-request`; one bundle per page with fresh key material, MD5 checksum of the plaintext and our gateway token; reports per care context on `health-information/notify`. Runs immediately as a background task. |
+
+**Encryption** (`abha/fidelius.py`): BouncyCastle's Weierstrass `curve25519`
+ECDH, nonce XOR → HKDF-SHA256 salt and AES-256-GCM IV. Implemented directly,
+because `cryptography`'s X25519 is a different curve form and doesn't
+interoperate. **Proven byte for byte** against the Fidelius reference CLI's
+published key pairs and ciphertext (`tests/test_fidelius.py`). Our public key
+goes back in whichever encoding (raw or X.509) the HIU sent, and off-curve
+keys are refused.
 
 ---
 
@@ -171,3 +187,5 @@ which needs a registered HIP and a bridge URL pointing at this server.
 | `tests/test_m2_routes.py` | Every route: server-side identity, auth on every callback, correlation, status codes |
 | `tests/test_m2_user_linking.py` | Stage 2 end to end on `kravos_test`: matching, OTP rules, linking |
 | `tests/test_m2_hip_linking.py` | Stage 3 on `kravos_test`: token → link, chunking, retry, notify, SMS, batch |
+| `tests/test_fidelius.py` | Encryption against the reference CLI's vectors; round trips; bad keys |
+| `tests/test_m2_data_flow.py` | Stage 4 on `kravos_test`: consent store/revoke; a fake HIU decrypts each pushed page and checks checksum and FHIR; refusal paths |

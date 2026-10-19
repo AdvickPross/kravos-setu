@@ -44,7 +44,13 @@ def m2(monkeypatch):
     monkeypatch.setattr(m2_routes, "update_transaction", Mock(return_value=1))
     monkeypatch.setattr(m2_routes, "save_link_token", Mock())
     monkeypatch.setattr(m2_routes, "get_link_token", Mock(return_value="link-tok"))
-    for handler in ("handle_discovery", "handle_link_init", "handle_link_confirm"):
+    for handler in (
+        "handle_discovery",
+        "handle_link_init",
+        "handle_link_confirm",
+        "handle_consent_notification",
+        "handle_health_information_request",
+    ):
         monkeypatch.setattr(m2_routes, handler, Mock())
     monkeypatch.setattr(m2_routes, "get_transaction", Mock(return_value=None))
     monkeypatch.setattr(m2_routes, "hip_link_patient", Mock(return_value="LINK_REQUESTED"))
@@ -286,6 +292,8 @@ def test_token_callback_error_marks_transaction_failed(api, m2):
         ("/api/v3/link/on_carecontext", {"status": "Successfully Linked care context", "response": {"requestId": OUR_REQUEST_ID}}),
         ("/api/v3/links/context/on-notify", {"acknowledgement": {"status": "SUCCESS"}, "response": {"requestId": OUR_REQUEST_ID}}),
         ("/api/v3/patients/sms/on-notify", {"acknowledgement": {"status": "SUCCESS"}, "response": {"requestId": OUR_REQUEST_ID}}),
+        ("/api/v3/consent/request/hip/notify", {"notification": {"status": "GRANTED", "consentId": "c-1"}}),
+        ("/api/v3/hip/health-information/request", {"transactionId": "t-9", "hiRequest": {"consent": {"id": "c-1"}, "dataPushUrl": "https://x", "keyMaterial": {}}}),
     ],
 )
 def test_callbacks_reject_tokens_the_gateway_did_not_sign(api, m2, path, body):
@@ -302,6 +310,8 @@ def test_callbacks_reject_tokens_the_gateway_did_not_sign(api, m2, path, body):
     m2_routes.handle_link_confirm.assert_not_called()
     m2_routes.settle_link_callback.assert_not_called()
     m2_routes.settle_acknowledgement.assert_not_called()
+    m2_routes.handle_consent_notification.assert_not_called()
+    m2_routes.handle_health_information_request.assert_not_called()
 
 
 def test_callbacks_addressed_to_another_hip_are_refused(api, m2):
@@ -344,6 +354,8 @@ def test_removed_relay_routes_are_gone(api):
             {"confirmation": {"linkRefNumber": "ref-1", "token": "123456"}},
             "handle_link_confirm",
         ),
+        ("/api/v3/consent/request/hip/notify", {"notification": {"status": "GRANTED", "consentId": "c-1"}}, "handle_consent_notification"),
+        ("/api/v3/hip/health-information/request", {"transactionId": "t-9", "hiRequest": {"consent": {"id": "c-1"}, "dataPushUrl": "https://x", "keyMaterial": {}}}, "handle_health_information_request"),
     ],
 )
 def test_callbacks_answer_202_and_hand_off_with_the_gateway_request_id(api, m2, path, body, handler):
@@ -423,6 +435,20 @@ def test_link_result_callback_answers_200(api, m2):
 
     assert response.status_code == 200
     m2_routes.settle_link_callback.assert_called_once_with(body)
+
+
+@pytest.mark.parametrize(
+    "path, body",
+    [
+        ("/api/v3/consent/request/hip/notify", {"notification": {"status": "GRANTED"}}),
+        ("/api/v3/hip/health-information/request", {"hiRequest": {}}),
+    ],
+)
+def test_data_flow_callbacks_need_their_identifiers(api, m2, path, body):
+    response = api.post(path, json=body, headers=_callback_headers())
+    assert response.status_code == 400
+    m2_routes.handle_consent_notification.assert_not_called()
+    m2_routes.handle_health_information_request.assert_not_called()
 
 
 # -- link token store ----------------------------------------------------------

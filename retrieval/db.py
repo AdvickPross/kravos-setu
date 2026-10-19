@@ -197,6 +197,37 @@ CREATE INDEX IF NOT EXISTS abdm_care_contexts_request_idx
 -- Deep-link SMS (HIP_INIT_NOTIFY_HIECM): which care contexts a patient
 -- without an ABHA address has already been told about, so a batch run
 -- does not text them again for the same records.
+-- Consent artefacts granted to this HIP (/api/v3/consent/request/hip/notify).
+-- A revoked, expired or denied consent is deleted, as NHA's
+-- HIP_INIT_REVOKE_CONSENT / HIP_INIT_EXPIRE_CONSENT require; the
+-- transaction log keeps the fact that it existed.
+CREATE TABLE IF NOT EXISTS abdm_consents (
+    consent_id     TEXT PRIMARY KEY,
+    abha_address   TEXT,
+    hip_id         TEXT NOT NULL,
+    hiu_id         TEXT,
+    hi_types       JSONB NOT NULL,
+    care_contexts  JSONB NOT NULL,
+    date_from      TIMESTAMPTZ NOT NULL,
+    date_to        TIMESTAMPTZ NOT NULL,
+    data_erase_at  TIMESTAMPTZ,
+    artefact       JSONB NOT NULL,
+    updated_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- One health-information request and what we did with it.
+CREATE TABLE IF NOT EXISTS abdm_data_transfers (
+    transaction_id  TEXT PRIMARY KEY,
+    consent_id      TEXT NOT NULL,
+    request_id      TEXT NOT NULL,
+    status          TEXT NOT NULL,
+    data_push_url   TEXT,
+    statuses        JSONB,
+    error_message   TEXT,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    completed_at    TIMESTAMPTZ
+);
+
 CREATE TABLE IF NOT EXISTS abdm_sms_notifications (
     patient_id   TEXT PRIMARY KEY,
     mobile       TEXT NOT NULL,

@@ -714,3 +714,196 @@ def set_sms_notification_status(request_id: str, status: str) -> int:
             (status, request_id),
         )
         return cur.rowcount
+
+
+# -- consent artefacts and data transfers -----------------------------------------
+
+
+def save_consent(
+    *,
+    consent_id: str,
+    abha_address: str | None,
+    hip_id: str,
+    hiu_id: str | None,
+    hi_types: list[str],
+    care_contexts: list[dict[str, Any]],
+    date_from: Any,
+    date_to: Any,
+    data_erase_at: Any,
+    artefact: dict[str, Any],
+) -> None:
+    conn = connection()
+
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO abdm_consents (
+                consent_id, abha_address, hip_id, hiu_id, hi_types, care_contexts,
+                date_from, date_to, data_erase_at, artefact
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (consent_id) DO UPDATE SET
+                abha_address = EXCLUDED.abha_address,
+                hip_id = EXCLUDED.hip_id,
+                hiu_id = EXCLUDED.hiu_id,
+                hi_types = EXCLUDED.hi_types,
+                care_contexts = EXCLUDED.care_contexts,
+                date_from = EXCLUDED.date_from,
+                date_to = EXCLUDED.date_to,
+                data_erase_at = EXCLUDED.data_erase_at,
+                artefact = EXCLUDED.artefact,
+                updated_at = now()
+            """,
+            (
+                consent_id,
+                abha_address,
+                hip_id,
+                hiu_id,
+                Jsonb(hi_types),
+                Jsonb(care_contexts),
+                date_from,
+                date_to,
+                data_erase_at,
+                Jsonb(artefact),
+            ),
+        )
+
+
+def delete_consent(consent_id: str) -> int:
+    conn = connection()
+
+    with conn.cursor() as cur:
+        cur.execute("DELETE FROM abdm_consents WHERE consent_id = %s", (consent_id,))
+        return cur.rowcount
+
+
+def get_consent(consent_id: str) -> dict[str, Any] | None:
+    conn = connection()
+
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT consent_id, abha_address, hip_id, hiu_id, hi_types, care_contexts,
+                   date_from, date_to, data_erase_at,
+                   data_erase_at IS NOT NULL AND data_erase_at <= now() AS erased
+            FROM abdm_consents
+            WHERE consent_id = %s
+            """,
+            (consent_id,),
+        )
+        row = cur.fetchone()
+        if row is None:
+            return None
+        columns = [d.name for d in cur.description]
+
+    return dict(zip(columns, row))
+
+
+def record_data_transfer(
+    *,
+    transaction_id: str,
+    consent_id: str,
+    request_id: str,
+    status: str,
+    data_push_url: str | None,
+) -> None:
+    conn = connection()
+
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO abdm_data_transfers
+                (transaction_id, consent_id, request_id, status, data_push_url)
+            VALUES (%s, %s, %s, %s, %s)
+            ON CONFLICT (transaction_id) DO UPDATE SET
+                consent_id = EXCLUDED.consent_id,
+                request_id = EXCLUDED.request_id,
+                status = EXCLUDED.status,
+                data_push_url = EXCLUDED.data_push_url
+            """,
+            (transaction_id, consent_id, request_id, status, data_push_url),
+        )
+
+
+def finish_data_transfer(
+    transaction_id: str,
+    *,
+    status: str,
+    statuses: list[dict[str, Any]] | None = None,
+    error_message: str | None = None,
+) -> None:
+    conn = connection()
+
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            UPDATE abdm_data_transfers
+            SET status = %s, statuses = %s, error_message = %s, completed_at = now()
+            WHERE transaction_id = %s
+            """,
+            (status, Jsonb(statuses) if statuses is not None else None, error_message, transaction_id),
+        )
+
+
+def get_data_transfer(transaction_id: str) -> dict[str, Any] | None:
+    conn = connection()
+
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT transaction_id, consent_id, request_id, status, data_push_url,
+                   statuses, error_message, created_at, completed_at
+            FROM abdm_data_transfers
+            WHERE transaction_id = %s
+            """,
+            (transaction_id,),
+        )
+        row = cur.fetchone()
+        if row is None:
+            return None
+        columns = [d.name for d in cur.description]
+
+    return dict(zip(columns, row))
+
+
+def encounter_facts(
+    *, patient_id: str, encounter_id: str, date_from: Any, date_to: Any
+) -> list[dict[str, Any]]:
+    """One encounter's facts inside a consent's date range."""
+    conn = connection()
+
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT fact_id, category, code_system, code, display, value, unit,
+                   date, status, text
+            FROM facts
+            WHERE patient_id = %s AND encounter_id = %s
+              AND date >= %s AND date <= %s
+            ORDER BY date, fact_id
+            """,
+            (patient_id, encounter_id, date_from, date_to),
+        )
+        columns = [d.name for d in cur.description]
+        return [dict(zip(columns, row)) for row in cur.fetchall()]
+
+
+def patient_allergies(*, patient_id: str, date_from: Any, date_to: Any) -> list[dict[str, Any]]:
+    """Allergies are patient-level (no encounter) but still dated, so they
+    honour the consent's date range like everything else."""
+    conn = connection()
+
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT fact_id, category, code_system, code, display, value, unit,
+                   date, status, text
+            FROM facts
+            WHERE patient_id = %s AND category = 'ALLERGY'
+              AND date >= %s AND date <= %s
+            ORDER BY date, fact_id
+            """,
+            (patient_id, date_from, date_to),
+        )
+        columns = [d.name for d in cur.description]
+        return [dict(zip(columns, row)) for row in cur.fetchall()]

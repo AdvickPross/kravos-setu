@@ -91,6 +91,8 @@ def use_test_db(monkeypatch):
     """
     TRUNCATE TABLE
         abdm_care_contexts,
+        abdm_consents,
+        abdm_data_transfers,
         abdm_discoveries,
         abdm_link_requests,
         abdm_link_tokens,

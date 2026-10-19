@@ -50,6 +50,7 @@ from backend.abdm_store import (
     update_transaction,
 )
 from backend.data_layer import get_patient
+from backend.m2_data_flow import handle_consent_notification, handle_health_information_request
 from backend.m2_hip_linking import (
     hip_link_patient,
     notify_care_context_update,
@@ -527,3 +528,61 @@ def handle_sms_notify_result(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     set_sms_notification_status(payload["response"]["requestId"], result)
     return {"status": result}
+
+
+@gateway_router.post("/consent/request/hip/notify", status_code=200)
+def handle_consent_notify(
+    payload: dict[str, Any],
+    background: BackgroundTasks,
+    x_hip_id: str | None = Header(default=None, alias="X-HIP-ID"),
+    request_id: str | None = Header(default=None, alias="REQUEST-ID"),
+    timestamp: str | None = Header(default=None, alias="TIMESTAMP"),
+) -> dict[str, str]:
+    """A consent covering our records was granted, revoked, denied or expired
+    (HIP_INIT_GRANT/REVOKE/EXPIRE_CONSENT). Stored or deleted, then acknowledged."""
+    validated_request_id = _require_header(request_id, "REQUEST-ID")
+    _require_header(timestamp, "TIMESTAMP")
+    _require_own_hip_id(x_hip_id)
+
+    notification = payload.get("notification") or {}
+    if not notification.get("consentId") and not (notification.get("consentDetail") or {}).get("consentId"):
+        raise HTTPException(status_code=400, detail="notification.consentId is required")
+    start_m2_transaction(
+        patient_id=None,
+        transaction_id=notification.get("consentId"),
+        request_id=validated_request_id,
+        operation=f"CONSENT_{str(notification.get('status') or 'UNKNOWN').upper()}",
+    )
+    background.add_task(
+        handle_consent_notification, _client(), payload, gateway_request_id=validated_request_id
+    )
+    return {"status": "ACCEPTED"}
+
+
+@gateway_router.post("/hip/health-information/request", status_code=200)
+def handle_health_information(
+    payload: dict[str, Any],
+    background: BackgroundTasks,
+    x_hip_id: str | None = Header(default=None, alias="X-HIP-ID"),
+    request_id: str | None = Header(default=None, alias="REQUEST-ID"),
+    timestamp: str | None = Header(default=None, alias="TIMESTAMP"),
+) -> dict[str, str]:
+    """An HIU asked for records under a consent (HIP_INIT_SHARE_CARECONTEXT).
+    Validated, acknowledged, encrypted and pushed in the background."""
+    validated_request_id = _require_header(request_id, "REQUEST-ID")
+    _require_header(timestamp, "TIMESTAMP")
+    _require_own_hip_id(x_hip_id)
+
+    transaction_id = payload.get("transactionId")
+    if not transaction_id or not (payload.get("hiRequest") or {}).get("consent"):
+        raise HTTPException(status_code=400, detail="transactionId and hiRequest.consent are required")
+    start_m2_transaction(
+        patient_id=None,
+        transaction_id=transaction_id,
+        request_id=validated_request_id,
+        operation="HEALTH_INFORMATION_REQUEST",
+    )
+    background.add_task(
+        handle_health_information_request, _client(), payload, gateway_request_id=validated_request_id
+    )
+    return {"status": "ACCEPTED", "transactionId": transaction_id}
