@@ -60,7 +60,8 @@ function describe(
   return status >= 400 ? { message: `HTTP ${status}` } : {};
 }
 
-async function call<T>(
+/** Also used by `lib/m2.ts`: the M2 console shows evidence the same way. */
+export async function call<T>(
   method: string,
   path: string,
   options: { body?: unknown; headers?: Record<string, string> } = {},

@@ -27,6 +27,8 @@ SMS_NOTIFY = "/api/hiecm/hip/v3/link/patient/links/sms/notify2"
 CONSENT_ON_NOTIFY = "/api/hiecm/consent/v3/request/hip/on-notify"
 HI_ON_REQUEST = "/api/hiecm/data-flow/v3/health-information/hip/on-request"
 HI_NOTIFY = "/api/hiecm/data-flow/v3/health-information/notify"
+BRIDGE_SERVICES = "/api/hiecm/gateway/v3/bridge-services"
+BRIDGE_URL = "/api/hiecm/gateway/v3/bridge/url"
 
 
 class AbdmM2Client:
@@ -121,3 +123,20 @@ class AbdmM2Client:
         self, body: dict[str, Any], *, request_id: str
     ) -> dict[str, Any]:
         return self._post(HI_NOTIFY, body, request_id=request_id, with_hip_id=False)
+
+    # -- bridge registration (ABDM sandbox guide 3.2.4, 3.2.7) ------------------
+
+    def bridge_services(self) -> dict[str, Any]:
+        """Our bridge: its callback URL and the HIP/HIU services linked to it.
+        Needs no HIP id, so it works before one is issued."""
+        return self.client.get(
+            BRIDGE_SERVICES, host="gateway", extra_headers={"X-CM-ID": self.client.config.cm_id}
+        )
+
+    def update_bridge_url(self, url: str) -> dict[str, Any]:
+        return self.client.patch(
+            BRIDGE_URL,
+            {"url": url},
+            host="gateway",
+            extra_headers={"X-CM-ID": self.client.config.cm_id},
+        )

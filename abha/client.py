@@ -141,6 +141,7 @@ class AbhaClient:
         t_token: str | None = None,
         benefit_name: str | None = None,
         transaction_id: str | None = None,
+        extra_headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         return self._request(
             "GET",
@@ -151,6 +152,27 @@ class AbhaClient:
             t_token=t_token,
             benefit_name=benefit_name,
             transaction_id=transaction_id,
+            extra_headers=extra_headers,
+        )
+
+    def patch(
+        self,
+        path: str,
+        body: dict[str, Any] | None = None,
+        *,
+        host: str = "abha",
+        extra_headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        return self._request(
+            "PATCH",
+            path,
+            body=body,
+            host=host,
+            x_token=None,
+            t_token=None,
+            benefit_name=None,
+            transaction_id=None,
+            extra_headers=extra_headers,
         )
 
     def get_bytes(

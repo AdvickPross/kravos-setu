@@ -907,3 +907,76 @@ def patient_allergies(*, patient_id: str, date_from: Any, date_to: Any) -> list[
         )
         columns = [d.name for d in cur.description]
         return [dict(zip(columns, row)) for row in cur.fetchall()]
+
+
+# -- console reads (the /m2 testing console) ----------------------------------------
+
+
+def list_transactions(*, patient_id: str | None = None, limit: int = 50) -> list[dict[str, Any]]:
+    conn = connection()
+
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT id, request_id, patient_id, transaction_id, operation, status,
+                   error_code, error_message, created_at, updated_at
+            FROM abdm_transactions
+            WHERE (%s::text IS NULL OR patient_id = %s)
+            ORDER BY id DESC
+            LIMIT %s
+            """,
+            (patient_id, patient_id, limit),
+        )
+        columns = [d.name for d in cur.description]
+        return [dict(zip(columns, row)) for row in cur.fetchall()]
+
+
+def link_token_expiry(*, abha_address: str, hip_id: str) -> Any:
+    """When the stored link token expires, or None. Never returns the token."""
+    conn = connection()
+
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT expires_at FROM abdm_link_tokens
+            WHERE abha_address = %s AND hip_id = %s AND expires_at > now()
+            """,
+            (abha_address, hip_id),
+        )
+        row = cur.fetchone()
+
+    return row[0] if row else None
+
+
+def list_consents() -> list[dict[str, Any]]:
+    conn = connection()
+
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT consent_id, abha_address, hip_id, hiu_id, hi_types, care_contexts,
+                   date_from, date_to, data_erase_at, updated_at
+            FROM abdm_consents
+            ORDER BY updated_at DESC
+            """
+        )
+        columns = [d.name for d in cur.description]
+        return [dict(zip(columns, row)) for row in cur.fetchall()]
+
+
+def list_data_transfers(*, limit: int = 50) -> list[dict[str, Any]]:
+    conn = connection()
+
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT transaction_id, consent_id, status, statuses, error_message,
+                   created_at, completed_at
+            FROM abdm_data_transfers
+            ORDER BY created_at DESC
+            LIMIT %s
+            """,
+            (limit,),
+        )
+        columns = [d.name for d in cur.description]
+        return [dict(zip(columns, row)) for row in cur.fetchall()]

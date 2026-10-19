@@ -179,6 +179,24 @@ keys are refused.
 
 ---
 
+## Testing console (frontend `/m2`)
+
+The NHA rows are executed by a person comparing what happens against the
+sheet's "Expected Result" column, as with M1 (`/m1`). The M2 console groups
+the rows into six screens: setup, records, HIP-initiated linking, PHR
+linking, SMS, and consent and sharing. Each screen names the rows it's
+evidence for, and verdicts are kept per tester in localStorage.
+
+Most of M2 is ABDM calling *us*, so every screen ends with a live **ABDM
+activity** log (`abdm_transactions`, refreshed every 4 s), with a hint
+attached to every known error code. Sections are linkable (`/m2#hip`).
+Read routes: `backend/m2_console_routes.py`. They never return a link
+token, OTP or unmasked ABHA number/mobile.
+
+Works today without a HIP ID: the setup checks (including a live read of
+our bridge registration), the FHIR preview for any visit, the readiness
+checks, and mobile capture.
+
 ## Tests
 
 | File | Covers |
@@ -188,4 +206,5 @@ keys are refused.
 | `tests/test_m2_user_linking.py` | Stage 2 end to end on `kravos_test`: matching, OTP rules, linking |
 | `tests/test_m2_hip_linking.py` | Stage 3 on `kravos_test`: token → link, chunking, retry, notify, SMS, batch |
 | `tests/test_fidelius.py` | Encryption against the reference CLI's vectors; round trips; bad keys |
+| `tests/test_m2_console_routes.py` | Console reads: masking, status merging, FHIR preview, bridge-URL validation |
 | `tests/test_m2_data_flow.py` | Stage 4 on `kravos_test`: consent store/revoke; a fake HIU decrypts each pushed page and checks checksum and FHIR; refusal paths |

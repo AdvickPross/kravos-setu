@@ -207,12 +207,20 @@ function EmptyState({ picker }: { picker?: React.ReactNode }) {
         <span className="md:hidden">Select a patient below.</span>
       </p>
       {picker}
-      <Link
-        href="/m1"
-        className="mt-4 rounded border border-line-strong bg-surface px-3 py-1.5 text-xs font-medium text-ink hover:bg-surface-2"
-      >
-        ABDM M1 test console →
-      </Link>
+      <div className="mt-4 flex flex-wrap justify-center gap-2">
+        <Link
+          href="/m1"
+          className="rounded border border-line-strong bg-surface px-3 py-1.5 text-xs font-medium text-ink hover:bg-surface-2"
+        >
+          ABDM M1 test console →
+        </Link>
+        <Link
+          href="/m2"
+          className="rounded border border-line-strong bg-surface px-3 py-1.5 text-xs font-medium text-ink hover:bg-surface-2"
+        >
+          ABDM M2 test console →
+        </Link>
+      </div>
     </div>
   );
 }

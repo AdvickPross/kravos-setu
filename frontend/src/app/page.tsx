@@ -175,6 +175,12 @@ function SessionBar({
         >
           M1 console
         </Link>
+        <Link
+          href="/m2"
+          className="text-xs font-medium text-ink-muted underline-offset-2 hover:underline"
+        >
+          M2 console
+        </Link>
         <button
           type="button"
           onClick={onSignOut}

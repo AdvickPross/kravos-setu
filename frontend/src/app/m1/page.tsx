@@ -89,12 +89,20 @@ export default function M1Console() {
             that produced it.
           </p>
         </div>
-        <Link
-          href="/"
-          className="rounded border border-line-strong bg-surface px-3 py-1.5 text-sm font-medium text-ink hover:bg-surface-2"
-        >
-          ← Clinical view
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href="/m2"
+            className="rounded border border-line-strong bg-surface px-3 py-1.5 text-sm font-medium text-ink hover:bg-surface-2"
+          >
+            M2 console
+          </Link>
+          <Link
+            href="/"
+            className="rounded border border-line-strong bg-surface px-3 py-1.5 text-sm font-medium text-ink hover:bg-surface-2"
+          >
+            ← Clinical view
+          </Link>
+        </div>
       </header>
 
       {reachable === false && (
