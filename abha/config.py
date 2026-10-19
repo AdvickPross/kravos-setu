@@ -89,6 +89,9 @@ class AbhaConfig:
     # HIP-originated calls. Optional so M1 keeps working without it; the M2
     # client refuses to send without one.
     hip_id: str = ""
+    # M2: the HIP name patients see (sms/notify2 sends it). Should match the
+    # hipName registered against the facility in HFR.
+    hip_name: str = "Kravos Setu"
     # M2: verify the gateway JWT on inbound /api/v3/hip/* callbacks. Only
     # ever switched off for local curl testing.
     verify_gateway_tokens: bool = True
@@ -159,6 +162,7 @@ class AbhaConfig:
             environment=environment,
             timeout_seconds=float(os.getenv("ABDM_TIMEOUT_SECONDS", "30")),
             hip_id=os.getenv("ABDM_HIP_ID", "").strip(),
+            hip_name=os.getenv("ABDM_HIP_NAME", "").strip() or "Kravos Setu",
             verify_gateway_tokens=os.getenv(
                 "ABDM_VERIFY_GATEWAY_TOKENS", "true"
             ).strip().lower() not in ("0", "false", "no"),

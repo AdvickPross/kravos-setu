@@ -187,6 +187,24 @@ CREATE TABLE IF NOT EXISTS patient_mobiles (
 
 CREATE INDEX IF NOT EXISTS patient_mobiles_mobile_idx
     ON patient_mobiles (mobile);
+
+-- HIP-initiated linking: the REQUEST-ID of the link/carecontext call that
+-- asked to link this row, so on_carecontext can settle it.
+ALTER TABLE abdm_care_contexts ADD COLUMN IF NOT EXISTS request_id TEXT;
+CREATE INDEX IF NOT EXISTS abdm_care_contexts_request_idx
+    ON abdm_care_contexts (request_id);
+
+-- Deep-link SMS (HIP_INIT_NOTIFY_HIECM): which care contexts a patient
+-- without an ABHA address has already been told about, so a batch run
+-- does not text them again for the same records.
+CREATE TABLE IF NOT EXISTS abdm_sms_notifications (
+    patient_id   TEXT PRIMARY KEY,
+    mobile       TEXT NOT NULL,
+    notified     JSONB NOT NULL,
+    request_id   TEXT NOT NULL,
+    status       TEXT NOT NULL DEFAULT 'SENT',
+    notified_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 """
 
 COLUMNS = (

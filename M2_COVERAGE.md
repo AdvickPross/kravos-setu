@@ -113,12 +113,12 @@ V3 APIs: `token/generate-token`, `hip/v3/link/carecontext`,
 
 | Test case | M/O | Requirement | Status | Notes |
 |---|---|---|---|---|
-| HIP_INTI_LINK_501 | Mandatory | Provision to link records to ABHA address | **partial** | `POST /api/m2/link-token` → gateway; not yet run against the sandbox (needs `ABDM_HIP_ID` + bridge URL). |
-| HIP_INTI_LINK_502 | Mandatory | HIP holds name, DOB, gender, mobile | **partial** | `patients` table has demographics. Nothing assembles them into a `generate-token` request from a patient ID; the caller supplies them. |
-| HIP_INTI_LINK_503 | Mandatory | Gateway validates demographics, issues link token | **partial** | Callback correlates, stores the token and records failures. Mock-tested only. |
-| HIP_INTI_LINK_504 | Mandatory | New linking token created | **partial** | As 503. |
-| HIP_INTI_LINK_505 | Mandatory | Link care contexts with token; **pushed from backend as a batch process** | **partial** | `POST /api/m2/link-care-contexts` sends the stored token. No care contexts are derived from patient records, no batch job, and no `on-carecontext` callback handler. |
-| HIP_INTI_LINK_506 | Mandatory | Records pullable in PHR app | **not built** | Depends on section 8 (data transfer). `link/context/notify` is not built. |
+| HIP_INTI_LINK_501 | Mandatory | Provision to link records to ABHA address | **done (mock)** | `backend/m2_hip_linking.py`. `POST /api/m2/patients/{id}/link` for one patient, `POST /api/m2/link-batch` or `scripts/m2_link_batch.py` for everyone tagged to an ABHA address. |
+| HIP_INTI_LINK_502 | Mandatory | HIP holds name, DOB, gender, mobile | **done (mock)** | Built from `patients`: Synthea's digits are stripped from the name (the schema allows letters only), gender is mapped to `M/F/O/U`, year of birth comes from `birth_date`, and `abhaNumber` is sent as a 14-digit number. |
+| HIP_INTI_LINK_503 | Mandatory | Gateway validates demographics, issues link token | **done (mock)** | The token request is recorded against the patient *before* sending. A pending request isn't repeated for 10 min, to avoid ABDM's `ABDM-1092` duplicate refusal hiding the first refusal's real cause. |
+| HIP_INTI_LINK_504 | Mandatory | New linking token created | **done (mock)** | `on-generate-token` correlates on `response.requestId` and stores the token for 6 months. |
+| HIP_INTI_LINK_505 | Mandatory | Link care contexts with token; **pushed from backend as a batch process** | **done (mock)** | The token callback links that patient immediately, with no click. Unlinked care contexts are sent 50 per call with `X-LINK-TOKEN` and marked `LINK_REQUESTED` before the call. `/api/v3/link/on_carecontext` settles them as `LINKED`/`LINK_FAILED`, and failures are retried by the next batch. |
+| HIP_INTI_LINK_506 | Mandatory | Records pullable in PHR app | **partial** | Linking is done. Pulling needs section 8 (data transfer). `link/context/notify` (+ `/api/v3/links/context/on-notify`) is built: `POST /api/m2/care-contexts/notify`. |
 
 ## 6 · User-initiated linking
 
@@ -132,21 +132,28 @@ The gateway calls the HIP; the HIP replies. V3 replies: `on-discover`,
 | USER_INIT_LINK_603 | Mandatory | HIP matches patient: ABHA address first, then mobile + fuzzy demographic match | **done (mock)** | `m2_service.match_patient`: ABHA address, then ABHA number (M1 link store), then verified mobile (`patient_mobiles`, set via `PUT /api/m2/patients/{id}/mobile`) plus exact gender and year of birth and name similarity ≥ 0.8. Exactly one patient must match. |
 | USER_INIT_LINK_604 | Mandatory | Matched care contexts returned to PHR | **done (mock)** | One care context per encounter, newest first, already-linked ones excluded, all `OPConsultation`. `on-discover` is sent as a background task. The largest corpus patient has 394 care contexts in one reply, which may need capping if the PHR app struggles. |
 | USER_INIT_LINK_605 | Mandatory | OTP to patient's mobile, then link | **partial** | init checks the care contexts were offered, issues a 6-digit OTP (hashed, 10 min, 3 attempts, single use) and replies with `on-init`. confirm verifies the OTP, records `LINKED` and replies with `on-confirm`. **The OTP is written to the server log** (`ABDM_OTP_DELIVERY=log`). A real SMS provider is needed before certification. |
+| USER_INIT_LINK_606 | Mandatory | CM validates request | n/a | Gateway side. |
+| USER_INIT_LINK_607 | Mandatory | Records pullable in PHR app | **partial** | Linking is done. Pulling needs section 8. |
 
 Stage 2 is tested end to end against `kravos_test` with a fake gateway
 (`tests/test_m2_user_linking.py`). It hasn't run against the real sandbox,
-which needs a registered HIP and a bridge URL pointing at this server. Error
-codes sent to the gateway are descriptive strings (`PATIENT_NOT_FOUND`,
-`OTP_INVALID`, …) because ABDM's v3 code catalogue isn't published. They are
-all defined in one place in `m2_service.py`.
-| USER_INIT_LINK_606 | Mandatory | CM validates request | n/a | Gateway side. |
-| USER_INIT_LINK_607 | Mandatory | Records pullable in PHR app | **not built** | Depends on section 8. |
+which needs a registered HIP and a bridge URL pointing at this server.
+
+**Checked against NHA's own M2 OpenAPI spec and catalogue**
+([nha-in/docs](https://github.com/nha-in/docs), `catalogue/hiecm/openapi/v3/hiecm-m2.yaml`):
+- A refusal goes to the gateway as `ABDM-9999` with a readable message. NHA publishes no
+  code for "no match" or "wrong OTP", and the sandbox accepts 9999. The specific reason
+  (`PATIENT_NOT_FOUND`, `OTP_INVALID`, …) stays on our transaction log.
+- `on-discover` carries `X-HIU-ID` (our facility id), as the spec requires.
+- confirm sends the OTP as a JSON *number*, so it's read as text and zero-padded back to 6
+  digits (an OTP of `012345` arrives as `12345`).
+- Callbacks answer 202 (discover) or 200 (everything else), per the spec.
 
 ## 7 · Deep-link SMS notification
 
 | Test case | M/O | Requirement | Status | Notes |
 |---|---|---|---|---|
-| HIP_INIT_NOTIFY_HIECM | Mandatory | On a new record for a patient with mobile but no ABHA address, call `sms/notify2` | **not built** | No client method, no trigger. Also needs the `on-notify` callback. |
+| HIP_INIT_NOTIFY_HIECM | Mandatory | On a new record for a patient with mobile but no ABHA address, call `sms/notify2` | **done (mock)** | The batch texts every patient with a mobile (`patient_mobiles`) and no ABHA tag, once per new set of care contexts (`abdm_sms_notifications`). A failed send is retried. `/api/v3/patients/sms/on-notify` records ABDM's acceptance, which means accepted, not delivered. |
 
 ## 8 · Data transfer & share
 
@@ -156,9 +163,11 @@ all defined in one place in `m2_service.py`.
 
 ---
 
-## What exists and is tested
+## Tests
 
-`tests/test_m2_discovery_response.py` (8 tests, mocked client) covers the
-`on-discover` proxy's header checks, error mapping and payload forwarding.
-`abdm_transactions` and `abdm_care_contexts` tables plus `backend/abdm_store.py`
-give a usable transaction log and care-context store.
+| File | Covers |
+|---|---|
+| `tests/test_gateway_auth.py` | Callback JWT: RS256/RS512, alg bound to key, issuer, `gateway` role, expiry |
+| `tests/test_m2_routes.py` | Every route: server-side identity, auth on every callback, correlation, status codes |
+| `tests/test_m2_user_linking.py` | Stage 2 end to end on `kravos_test`: matching, OTP rules, linking |
+| `tests/test_m2_hip_linking.py` | Stage 3 on `kravos_test`: token → link, chunking, retry, notify, SMS, batch |

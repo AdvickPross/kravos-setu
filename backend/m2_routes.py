@@ -9,7 +9,8 @@ trust models:
   server config, so nobody calling this server can act as the HIP.
 * ``gateway_router`` (``/api/v3``) is called by **the ABDM gateway**. Every
   route requires a gateway-signed JWT (``require_gateway``). These paths are
-  fixed by ABDM, relative to the bridge URL registered for the HIP.
+  fixed by ABDM, relative to the bridge URL registered for the HIP. Status
+  codes follow NHA's M2 spec: 202 for discover, 200 for every other callback.
 
 ABDM is asynchronous. An outbound call returns 202, and the answer arrives
 later on a callback whose body carries ``response.requestId``, which is the
@@ -42,11 +43,20 @@ from abha.m2_models import (
 from abha.transport import base_headers, new_request_id
 from backend.abdm_store import (
     get_link_token,
+    get_transaction,
+    set_sms_notification_status,
     save_link_token,
     set_patient_mobile,
     update_transaction,
 )
 from backend.data_layer import get_patient
+from backend.m2_hip_linking import (
+    hip_link_patient,
+    notify_care_context_update,
+    run_linking_batch,
+    settle_acknowledgement,
+    settle_link_callback,
+)
 from backend.m2_service import (
     handle_discovery,
     handle_link_confirm,
@@ -264,12 +274,64 @@ def put_patient_mobile(patient_id: str, payload: PatientMobile) -> dict[str, str
     return {"patientId": patient_id, "mobile": f"******{mobile[-4:]}"}
 
 
+@m2_router.post("/patients/{patient_id}/link")
+def link_patient(patient_id: str) -> dict[str, str]:
+    """HIP-initiated linking for one patient (HIP_INTI_LINK_501-505).
+
+    Requests a link token if none is stored, otherwise links every unlinked
+    care context. The batch does the same for everyone; this is the
+    one-patient version for the desk and for testing.
+    """
+    try:
+        get_patient(patient_id)
+    except KeyError:
+        raise HTTPException(status_code=404, detail=f"unknown patient_id: {patient_id}") from None
+    try:
+        outcome = hip_link_patient(_client(), patient_id)
+    except AbhaConfigError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return {"patientId": patient_id, "outcome": outcome}
+
+
+@m2_router.post("/link-batch", status_code=202)
+def start_link_batch(background: BackgroundTasks) -> dict[str, str]:
+    """Run the linking batch (HIP_INTI_LINK_505, HIP_INIT_NOTIFY_HIECM) in the
+    background. Outcomes are logged and recorded per transaction."""
+    client = _client()
+    _hip_id()
+    background.add_task(run_linking_batch, client)
+    return {"status": "STARTED"}
+
+
+class CareContextUpdate(BaseModel):
+    patient_id: str = Field(..., alias="patientId", min_length=1)
+    care_context_reference: str = Field(..., alias="careContextReference", min_length=1)
+    hi_types: list[str] = Field(default_factory=lambda: ["OPConsultation"], alias="hiTypes", min_length=1)
+
+
+@m2_router.post("/care-contexts/notify", status_code=202)
+def notify_care_context(payload: CareContextUpdate) -> dict[str, str]:
+    """A linked care context gained new records: tell ABDM (link/context/notify)."""
+    try:
+        request_id = notify_care_context_update(
+            _client(), payload.patient_id, payload.care_context_reference, payload.hi_types
+        )
+    except LookupError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except AbhaConfigError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except (AbhaApiError, AbhaTransportError) as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    return {"status": "PENDING", "requestId": request_id}
+
+
 # -- gateway callbacks ---------------------------------------------------------
 
 
-@gateway_router.post("/hip/token/on-generate-token", status_code=202)
+@gateway_router.post("/hip/token/on-generate-token", status_code=200)
 def handle_link_token_callback(
     payload: TokenResponse,
+    background: BackgroundTasks,
     x_hip_id: str | None = Header(default=None, alias="X-HIP-ID"),
     request_id: str | None = Header(default=None, alias="REQUEST-ID"),
     timestamp: str | None = Header(default=None, alias="TIMESTAMP"),
@@ -320,7 +382,19 @@ def handle_link_token_callback(
         hip_id=_hip_id(),
         link_token=payload.link_token,
     )
+    # HIP_INTI_LINK_505: linking continues from the backend, with no click.
+    # A token requested for a patient links that patient's records now.
+    transaction = get_transaction(original_request_id)
+    if transaction and transaction.get("patient_id"):
+        background.add_task(_link_in_background, _client(), transaction["patient_id"])
     return {"status": "SUCCESS", "requestId": original_request_id}
+
+
+def _link_in_background(client: AbdmM2Client, patient_id: str) -> None:
+    try:
+        hip_link_patient(client, patient_id)
+    except Exception:  # noqa: BLE001 -- background: log, never raise
+        log.exception("M2: linking after token callback failed")
 
 
 @gateway_router.post("/hip/patient/care-context/discover", status_code=202)
@@ -348,7 +422,7 @@ def handle_hip_care_context_discovery(
     return {"status": "ACCEPTED", "transactionId": payload.transaction_id}
 
 
-@gateway_router.post("/hip/link/care-context/init", status_code=202)
+@gateway_router.post("/hip/link/care-context/init", status_code=200)
 def handle_link_care_context_init(
     payload: LinkInitRequest,
     background: BackgroundTasks,
@@ -373,7 +447,7 @@ def handle_link_care_context_init(
     return {"status": "ACCEPTED", "transactionId": payload.transaction_id}
 
 
-@gateway_router.post("/hip/link/care-context/confirm", status_code=202)
+@gateway_router.post("/hip/link/care-context/confirm", status_code=200)
 def handle_link_care_context_confirm(
     payload: LinkConfirmRequest,
     background: BackgroundTasks,
@@ -396,3 +470,60 @@ def handle_link_care_context_confirm(
         handle_link_confirm, _client(), payload, gateway_request_id=validated_request_id
     )
     return {"status": "ACCEPTED"}
+
+
+@gateway_router.post("/link/on_carecontext", status_code=200)
+def handle_link_care_context_result(
+    payload: dict[str, Any],
+    x_hip_id: str | None = Header(default=None, alias="X-HIP-ID"),
+    request_id: str | None = Header(default=None, alias="REQUEST-ID"),
+    timestamp: str | None = Header(default=None, alias="TIMESTAMP"),
+) -> dict[str, str]:
+    """Outcome of our link/carecontext call (HIP_INTI_LINK_505). Only this
+    callback, not the 202 on the call, means the records are linked."""
+    _require_header(request_id, "REQUEST-ID")
+    _require_header(timestamp, "TIMESTAMP")
+    _require_own_hip_id(x_hip_id)
+    try:
+        original_request_id, rows = settle_link_callback(payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {"requestId": original_request_id, "settled": str(rows)}
+
+
+@gateway_router.post("/links/context/on-notify", status_code=200)
+def handle_context_notify_result(
+    payload: dict[str, Any],
+    x_hip_id: str | None = Header(default=None, alias="X-HIP-ID"),
+    request_id: str | None = Header(default=None, alias="REQUEST-ID"),
+    timestamp: str | None = Header(default=None, alias="TIMESTAMP"),
+) -> dict[str, str]:
+    """Outcome of our link/context/notify call."""
+    _require_header(request_id, "REQUEST-ID")
+    _require_header(timestamp, "TIMESTAMP")
+    _require_own_hip_id(x_hip_id)
+    try:
+        result = settle_acknowledgement(payload, ok_status="CONTEXT_NOTIFIED")
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {"status": result}
+
+
+@gateway_router.post("/patients/sms/on-notify", status_code=200)
+def handle_sms_notify_result(
+    payload: dict[str, Any],
+    x_hip_id: str | None = Header(default=None, alias="X-HIP-ID"),
+    request_id: str | None = Header(default=None, alias="REQUEST-ID"),
+    timestamp: str | None = Header(default=None, alias="TIMESTAMP"),
+) -> dict[str, str]:
+    """Outcome of our sms/notify2 call (HIP_INIT_NOTIFY_HIECM). SUCCESS means
+    ABDM accepted the SMS for sending, not that it was delivered."""
+    _require_header(request_id, "REQUEST-ID")
+    _require_header(timestamp, "TIMESTAMP")
+    _require_own_hip_id(x_hip_id)
+    try:
+        result = settle_acknowledgement(payload, ok_status="SMS_ACCEPTED")
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    set_sms_notification_status(payload["response"]["requestId"], result)
+    return {"status": result}

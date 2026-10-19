@@ -46,6 +46,11 @@ def m2(monkeypatch):
     monkeypatch.setattr(m2_routes, "get_link_token", Mock(return_value="link-tok"))
     for handler in ("handle_discovery", "handle_link_init", "handle_link_confirm"):
         monkeypatch.setattr(m2_routes, handler, Mock())
+    monkeypatch.setattr(m2_routes, "get_transaction", Mock(return_value=None))
+    monkeypatch.setattr(m2_routes, "hip_link_patient", Mock(return_value="LINK_REQUESTED"))
+    monkeypatch.setattr(m2_routes, "settle_link_callback", Mock(return_value=(OUR_REQUEST_ID, 2)))
+    monkeypatch.setattr(m2_routes, "settle_acknowledgement", Mock(return_value="ACCEPTED"))
+    monkeypatch.setattr(m2_routes, "set_sms_notification_status", Mock())
     verifier = Mock()
     verifier.verify.return_value = {"iss": "gateway"}
     monkeypatch.setattr(m2_routes, "_gateway_verifier", lambda: verifier)
@@ -211,7 +216,7 @@ def test_token_callback_correlates_by_response_request_id_and_stores_token(api, 
         headers=_callback_headers(),
     )
 
-    assert response.status_code == 202
+    assert response.status_code == 200
     # Correlated by the id WE sent, not the gateway's REQUEST-ID header.
     m2_routes.update_transaction.assert_called_once_with(
         request_id=OUR_REQUEST_ID, status="TOKEN_GENERATED"
@@ -244,7 +249,7 @@ def test_token_callback_error_marks_transaction_failed(api, m2):
         headers=_callback_headers(),
     )
 
-    assert response.status_code == 202
+    assert response.status_code == 200
     assert response.json()["status"] == "ERROR"
     m2_routes.update_transaction.assert_called_once_with(
         request_id=OUR_REQUEST_ID,
@@ -278,6 +283,9 @@ def test_token_callback_error_marks_transaction_failed(api, m2):
             "/api/v3/hip/link/care-context/confirm",
             {"confirmation": {"linkRefNumber": "ref-1", "token": "123456"}},
         ),
+        ("/api/v3/link/on_carecontext", {"status": "Successfully Linked care context", "response": {"requestId": OUR_REQUEST_ID}}),
+        ("/api/v3/links/context/on-notify", {"acknowledgement": {"status": "SUCCESS"}, "response": {"requestId": OUR_REQUEST_ID}}),
+        ("/api/v3/patients/sms/on-notify", {"acknowledgement": {"status": "SUCCESS"}, "response": {"requestId": OUR_REQUEST_ID}}),
     ],
 )
 def test_callbacks_reject_tokens_the_gateway_did_not_sign(api, m2, path, body):
@@ -292,6 +300,8 @@ def test_callbacks_reject_tokens_the_gateway_did_not_sign(api, m2, path, body):
     m2_routes.handle_discovery.assert_not_called()
     m2_routes.handle_link_init.assert_not_called()
     m2_routes.handle_link_confirm.assert_not_called()
+    m2_routes.settle_link_callback.assert_not_called()
+    m2_routes.settle_acknowledgement.assert_not_called()
 
 
 def test_callbacks_addressed_to_another_hip_are_refused(api, m2):
@@ -339,7 +349,8 @@ def test_removed_relay_routes_are_gone(api):
 def test_callbacks_answer_202_and_hand_off_with_the_gateway_request_id(api, m2, path, body, handler):
     response = api.post(path, json=body, headers=_callback_headers())
 
-    assert response.status_code == 202
+    # NHA M2 spec: discover answers 202, every other callback 200.
+    assert response.status_code == (202 if path.endswith("/discover") else 200)
     mock = getattr(m2_routes, handler)
     mock.assert_called_once()
     assert mock.call_args.args[0] is m2
@@ -367,6 +378,51 @@ def test_patient_mobile_for_unknown_patient_is_404(api, monkeypatch):
 
     assert response.status_code == 404
     m2_routes.set_patient_mobile.assert_not_called()
+
+
+def test_token_callback_links_the_patient_it_was_requested_for(api, m2):
+    m2_routes.get_transaction.return_value = {"patient_id": "patient-1"}
+
+    response = api.post(
+        "/api/v3/hip/token/on-generate-token",
+        json=_token_callback(),
+        headers=_callback_headers(),
+    )
+
+    assert response.status_code == 200
+    # HIP_INTI_LINK_505: no click needed; linking follows the token.
+    m2_routes.hip_link_patient.assert_called_once_with(m2, "patient-1")
+
+
+@pytest.mark.parametrize(
+    "path, settle, ok_status",
+    [
+        ("/api/v3/links/context/on-notify", "settle_acknowledgement", "CONTEXT_NOTIFIED"),
+        ("/api/v3/patients/sms/on-notify", "settle_acknowledgement", "SMS_ACCEPTED"),
+    ],
+)
+def test_acknowledgement_callbacks_answer_200(api, m2, path, settle, ok_status):
+    body = {"acknowledgement": {"status": "SUCCESS"}, "response": {"requestId": OUR_REQUEST_ID}}
+
+    response = api.post(path, json=body, headers=_callback_headers())
+
+    assert response.status_code == 200
+    getattr(m2_routes, settle).assert_called_once_with(body, ok_status=ok_status)
+
+
+def test_sms_result_updates_the_notification(api, m2):
+    body = {"acknowledgement": {"status": "SUCCESS"}, "response": {"requestId": OUR_REQUEST_ID}}
+    api.post("/api/v3/patients/sms/on-notify", json=body, headers=_callback_headers())
+    m2_routes.set_sms_notification_status.assert_called_once_with(OUR_REQUEST_ID, "ACCEPTED")
+
+
+def test_link_result_callback_answers_200(api, m2):
+    body = {"status": "Successfully Linked care context", "response": {"requestId": OUR_REQUEST_ID}}
+
+    response = api.post("/api/v3/link/on_carecontext", json=body, headers=_callback_headers())
+
+    assert response.status_code == 200
+    m2_routes.settle_link_callback.assert_called_once_with(body)
 
 
 # -- link token store ----------------------------------------------------------

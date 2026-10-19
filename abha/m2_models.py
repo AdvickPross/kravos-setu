@@ -2,7 +2,21 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+import re
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+
+def abha_number_as_int(value: Any) -> int | None:
+    """The v3 HIE-CM schema types ``abhaNumber`` as a 14-digit *number*.
+    M1 hands it around as ``91-1234-5678-9012``, so normalise either form."""
+    if value is None or value == "":
+        return None
+    digits = re.sub(r"\D", "", str(value))
+    if len(digits) != 14:
+        raise ValueError("abhaNumber must have 14 digits")
+    return int(digits)
+
 
 
 class CareContext(BaseModel):
@@ -91,9 +105,13 @@ class TokenRequest(BaseModel):
         alias="abhaAddress",
     )
 
-    abha_number: str | None = Field(
+    abha_number: int | None = Field(
         default=None,
         alias="abhaNumber",
+    )
+
+    _normalise_abha_number = field_validator("abha_number", mode="before")(
+        lambda cls, v: abha_number_as_int(v)
     )
 
     name: str = Field(
@@ -139,9 +157,13 @@ class LinkCareContextRequest(BaseModel):
         min_length=1,
     )
 
-    abha_number: str | None = Field(
+    abha_number: int | None = Field(
         default=None,
         alias="abhaNumber",
+    )
+
+    _normalise_abha_number = field_validator("abha_number", mode="before")(
+        lambda cls, v: abha_number_as_int(v)
     )
 
     patient: list[DiscoveredPatient] = Field(
@@ -292,6 +314,15 @@ class LinkConfirmation(BaseModel):
     token: str = Field(..., min_length=1)
 
     model_config = ConfigDict(populate_by_name=True)
+
+    @field_validator("token", mode="before")
+    @classmethod
+    def _token_as_text(cls, value: Any) -> str:
+        # The spec example sends the OTP as a JSON number (123456), which
+        # turns an OTP like 012345 into 12345. Numeric codes are padded back
+        # to the six digits we issue.
+        text = str(value).strip()
+        return text.zfill(6) if text.isdigit() else text
 
 
 class LinkConfirmRequest(BaseModel):

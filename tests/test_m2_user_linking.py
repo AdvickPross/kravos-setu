@@ -137,6 +137,16 @@ def _status(request_id):
         return cur.fetchone()
 
 
+def _refusal(gateway, name):
+    """The specific refusal behind the last error reply. The gateway itself
+    always receives ABDM-9999 plus a readable message."""
+    error = gateway.last(name)["error"]
+    assert error["code"] == "ABDM-9999" and error["message"]
+    with connection().cursor() as cur:
+        cur.execute("SELECT error_code FROM abdm_transactions ORDER BY updated_at DESC, id DESC LIMIT 1")
+        return cur.fetchone()[0]
+
+
 def _offered(body):
     return [cc["referenceNumber"] for group in body["patient"] for cc in group["careContexts"]]
 
@@ -182,7 +192,7 @@ def test_mobile_match_needs_every_demographic(world, overrides):
     _run(svc.handle_discovery, gw, _discover("unknown@sbx", **overrides), "req-d3")
 
     body = gw.last("on_discover")
-    assert body["error"]["code"] == "PATIENT_NOT_FOUND"
+    assert body["error"] == {"code": "ABDM-9999", "message": "No patient matched the details provided"}
     assert "patient" not in body
     assert _status("req-d3") == ("DISCOVERY_ERROR_SENT", "PATIENT_NOT_FOUND")
 
@@ -196,7 +206,7 @@ def test_two_patients_on_one_mobile_matching_is_ambiguous(world):
     gw = world["gateway"]
     _run(svc.handle_discovery, gw, _discover("unknown@sbx"), "req-d4")
 
-    assert gw.last("on_discover")["error"]["code"] == "MULTIPLE_PATIENTS_FOUND"
+    assert _refusal(gw, "on_discover") == "MULTIPLE_PATIENTS_FOUND"
 
 
 # -- the full linking flow ---------------------------------------------------------
@@ -229,7 +239,7 @@ def test_wrong_otp_is_refused_then_right_otp_links(world):
     wrong = "000000" if otp != "000000" else "111111"
 
     _run(svc.handle_link_confirm, gw, _confirm(link_ref, wrong), "req-c1")
-    assert gw.last("on_confirm")["error"]["code"] == "OTP_INVALID"
+    assert _refusal(gw, "on_confirm") == "OTP_INVALID"
 
     _run(svc.handle_link_confirm, gw, _confirm(link_ref, otp), "req-c2")
     body = gw.last("on_confirm")
@@ -261,7 +271,7 @@ def test_otp_cannot_be_reused(world):
     _run(svc.handle_link_confirm, gw, _confirm(link_ref, otp), "req-c1")
     _run(svc.handle_link_confirm, gw, _confirm(link_ref, otp), "req-c2")
 
-    assert gw.last("on_confirm")["error"]["code"] == "LINK_REFERENCE_UNKNOWN"
+    assert _refusal(gw, "on_confirm") == "LINK_REFERENCE_UNKNOWN"
     assert len(list_care_contexts(patient_id=JANE)) == 1
 
 
@@ -274,11 +284,11 @@ def test_three_wrong_otps_lock_the_request(world):
     codes = []
     for i in range(3):
         _run(svc.handle_link_confirm, gw, _confirm(link_ref, wrong), f"req-w{i}")
-        codes.append(gw.last("on_confirm")["error"]["code"])
+        codes.append(_refusal(gw, "on_confirm"))
     _run(svc.handle_link_confirm, gw, _confirm(link_ref, otp), "req-right")
 
     assert codes == ["OTP_INVALID", "OTP_INVALID", "OTP_ATTEMPTS_EXCEEDED"]
-    assert gw.last("on_confirm")["error"]["code"] in ("OTP_ATTEMPTS_EXCEEDED", "LINK_REFERENCE_UNKNOWN")
+    assert _refusal(gw, "on_confirm") in ("OTP_ATTEMPTS_EXCEEDED", "LINK_REFERENCE_UNKNOWN")
     assert list_care_contexts(patient_id=JANE) == []
 
 
@@ -289,7 +299,7 @@ def test_expired_otp_is_refused(world, monkeypatch):
 
     _run(svc.handle_link_confirm, gw, _confirm(link_ref, world["otps"][0]), "req-c")
 
-    assert gw.last("on_confirm")["error"]["code"] == "OTP_EXPIRED"
+    assert _refusal(gw, "on_confirm") == "OTP_EXPIRED"
     assert list_care_contexts(patient_id=JANE) == []
 
 
@@ -298,10 +308,10 @@ def test_init_refuses_care_contexts_that_were_not_offered(world):
     _run(svc.handle_discovery, gw, _discover(), "req-d")
 
     _run(svc.handle_link_init, gw, _init(["enc-of-someone-else"]), "req-i1")
-    assert gw.last("on_init")["error"]["code"] == "CARE_CONTEXT_NOT_OFFERED"
+    assert _refusal(gw, "on_init") == "CARE_CONTEXT_NOT_OFFERED"
 
     _run(svc.handle_link_init, gw, _init(["enc-new"], patient_ref=TWIN), "req-i2")
-    assert gw.last("on_init")["error"]["code"] == "CARE_CONTEXT_NOT_OFFERED"
+    assert _refusal(gw, "on_init") == "CARE_CONTEXT_NOT_OFFERED"
     assert world["otps"] == []
 
 
@@ -309,7 +319,7 @@ def test_init_for_unknown_transaction_is_refused(world):
     gw = world["gateway"]
     _run(svc.handle_link_init, gw, _init(["enc-new"], txn="never-discovered"), "req-i")
 
-    assert gw.last("on_init")["error"]["code"] == "UNKNOWN_TRANSACTION"
+    assert _refusal(gw, "on_init") == "UNKNOWN_TRANSACTION"
 
 
 def test_reply_failure_is_recorded_not_raised(world):

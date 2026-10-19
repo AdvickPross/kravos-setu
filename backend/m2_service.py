@@ -64,9 +64,12 @@ OTP_MAX_ATTEMPTS = 3
 # never enough: gender and year of birth must match exactly as well.
 NAME_MATCH_THRESHOLD = 0.8
 
-# Error codes sent back to the gateway. ABDM's v3 catalogue isn't published
-# alongside the API spec, so these are descriptive rather than numeric. If
-# the sandbox rejects them, this is the one place to change.
+# Why a patient was refused. The gateway gets GATEWAY_ERROR_CODE with the
+# readable message, because NHA publishes no code for "no match" or "wrong
+# OTP" and the sandbox accepts ABDM-9999 with a message (NHA M2 catalogue,
+# on-discover / on-confirm). The specific reason is kept on our transaction
+# log, where it's actually useful.
+GATEWAY_ERROR_CODE = "ABDM-9999"
 ERR_PATIENT_NOT_FOUND = ("PATIENT_NOT_FOUND", "No patient matched the details provided")
 ERR_MULTIPLE_PATIENTS = ("MULTIPLE_PATIENTS_FOUND", "More than one patient matched; visit the facility")
 ERR_NO_CARE_CONTEXTS = ("NO_CARE_CONTEXTS", "No unlinked records available at this facility")
@@ -97,7 +100,7 @@ def start_m2_transaction(
 
 
 def _error(pair: tuple[str, str]) -> dict[str, str]:
-    return {"code": pair[0], "message": pair[1]}
+    return {"code": GATEWAY_ERROR_CODE, "message": pair[1]}
 
 
 # -- care contexts -------------------------------------------------------------
@@ -253,14 +256,21 @@ def match_patient(
 
 
 def _reply(
-    send, body: dict[str, Any], *, request_id: str, transaction_request_id: str, ok_status: str
+    send,
+    body: dict[str, Any],
+    *,
+    request_id: str,
+    transaction_request_id: str,
+    ok_status: str,
+    reason: tuple[str, str] | None = None,
 ) -> None:
     """Send one reply to the gateway, recording the outcome.
 
-    An error reply keeps its code on the transaction, so the log shows *why*
-    the patient was refused and not only that a reply went out.
+    For an error reply, ``reason`` is our specific refusal code. It goes on
+    the transaction, so the log shows *why* the patient was refused, not just
+    the generic code the gateway received.
     """
-    error = body.get("error") or {}
+    error = {"code": reason[0], "message": reason[1]} if reason else {}
     try:
         send(body, request_id=request_id)
     except Exception as exc:  # noqa: BLE001 -- background task: log, never raise
@@ -315,6 +325,7 @@ def handle_discovery(
             request_id=reply_id,
             transaction_request_id=gateway_request_id,
             ok_status="DISCOVERY_ERROR_SENT",
+            reason=error,
         )
         return
 
@@ -376,6 +387,7 @@ def handle_link_init(
             request_id=reply_id,
             transaction_request_id=gateway_request_id,
             ok_status="LINK_INIT_ERROR_SENT",
+            reason=error,
         )
 
     discovery = get_discovery(request.transaction_id)
@@ -459,6 +471,7 @@ def handle_link_confirm(
             request_id=reply_id,
             transaction_request_id=gateway_request_id,
             ok_status="LINK_CONFIRM_ERROR_SENT",
+            reason=error,
         )
 
     link = claim_link_attempt(link_ref_number, max_attempts=OTP_MAX_ATTEMPTS)

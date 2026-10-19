@@ -12,6 +12,9 @@ synthea-with-dependencies.jar
 data/abha_links.json
 
 # Secrets -- never commit real credentials, only the .example templates.
+# *.local.md: private handoff notes (e.g. M2 sandbox onboarding) -- shared
+# person to person, never through the repo.
+*.local.md
 .env
 .env.local
 frontend/.env.local

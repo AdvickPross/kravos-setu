@@ -94,6 +94,7 @@ def use_test_db(monkeypatch):
         abdm_discoveries,
         abdm_link_requests,
         abdm_link_tokens,
+        abdm_sms_notifications,
         abdm_transactions,
         patient_mobiles,
         conversation_turns,

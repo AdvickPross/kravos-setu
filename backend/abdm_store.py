@@ -525,3 +525,192 @@ def patients_with_mobile(mobile: str) -> list[dict[str, Any]]:
         )
         columns = [d.name for d in cur.description]
         return [dict(zip(columns, row)) for row in cur.fetchall()]
+
+
+# -- HIP-initiated linking ------------------------------------------------------
+
+
+def get_transaction(request_id: str) -> dict[str, Any] | None:
+    conn = connection()
+
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT request_id, patient_id, transaction_id, operation, status,
+                   error_code, error_message, created_at, updated_at
+            FROM abdm_transactions
+            WHERE request_id = %s
+            ORDER BY id DESC
+            LIMIT 1
+            """,
+            (request_id,),
+        )
+        row = cur.fetchone()
+        if row is None:
+            return None
+        columns = [d.name for d in cur.description]
+
+    return dict(zip(columns, row))
+
+
+def token_request_in_flight(patient_id: str, *, within_seconds: int) -> bool:
+    """A generate-token call for this patient still awaiting its callback.
+
+    ABDM deduplicates identical token requests (ABDM-1092) for at least ~70s,
+    so a second request in that window can only fail, and it would hide the
+    first refusal's real cause.
+    """
+    conn = connection()
+
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT 1
+            FROM abdm_transactions
+            WHERE patient_id = %s
+              AND operation = 'LINK_TOKEN_GENERATION'
+              AND status = 'INITIATED'
+              AND created_at > now() - make_interval(secs => %s)
+            LIMIT 1
+            """,
+            (patient_id, within_seconds),
+        )
+        return cur.fetchone() is not None
+
+
+def care_context_refs(
+    *, patient_id: str, hip_id: str, statuses: tuple[str, ...]
+) -> set[str]:
+    conn = connection()
+
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT reference_number
+            FROM abdm_care_contexts
+            WHERE patient_id = %s AND hip_id = %s AND status = ANY(%s)
+            """,
+            (patient_id, hip_id, list(statuses)),
+        )
+        return {row[0] for row in cur.fetchall()}
+
+
+def mark_care_contexts_requested(
+    *,
+    patient_id: str,
+    hip_id: str,
+    request_id: str,
+    contexts: list[dict[str, Any]],
+) -> None:
+    """Record care contexts sent in one link/carecontext call, pending its
+    on_carecontext callback. Replaces any earlier failed attempt's row."""
+    conn = connection()
+
+    with conn.cursor() as cur:
+        for context in contexts:
+            cur.execute(
+                """
+                DELETE FROM abdm_care_contexts
+                WHERE patient_id = %s AND hip_id = %s AND reference_number = %s
+                  AND status = 'LINK_FAILED'
+                """,
+                (patient_id, hip_id, context["referenceNumber"]),
+            )
+            cur.execute(
+                """
+                INSERT INTO abdm_care_contexts (
+                    patient_id, transaction_id, reference_number, display,
+                    hi_type, hip_id, status, request_id
+                )
+                VALUES (%s, NULL, %s, %s, %s, %s, 'LINK_REQUESTED', %s)
+                """,
+                (
+                    patient_id,
+                    context["referenceNumber"],
+                    context.get("display"),
+                    context.get("hiType"),
+                    hip_id,
+                    request_id,
+                ),
+            )
+
+
+def settle_care_context_request(request_id: str, *, linked: bool) -> int:
+    """Apply an on_carecontext outcome to the rows that call requested."""
+    conn = connection()
+
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            UPDATE abdm_care_contexts
+            SET status = %s,
+                linked_at = CASE WHEN %s THEN COALESCE(linked_at, now()) ELSE linked_at END
+            WHERE request_id = %s AND status = 'LINK_REQUESTED'
+            """,
+            ("LINKED" if linked else "LINK_FAILED", linked, request_id),
+        )
+        return cur.rowcount
+
+
+
+# -- deep-link SMS ------------------------------------------------------------------
+
+
+def patients_with_mobiles() -> list[dict[str, Any]]:
+    conn = connection()
+
+    with conn.cursor() as cur:
+        cur.execute("SELECT patient_id, mobile FROM patient_mobiles ORDER BY patient_id")
+        return [{"patient_id": r[0], "mobile": r[1]} for r in cur.fetchall()]
+
+
+def get_sms_notification(patient_id: str) -> dict[str, Any] | None:
+    conn = connection()
+
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT patient_id, mobile, notified, request_id, status, notified_at
+            FROM abdm_sms_notifications
+            WHERE patient_id = %s
+            """,
+            (patient_id,),
+        )
+        row = cur.fetchone()
+        if row is None:
+            return None
+        columns = [d.name for d in cur.description]
+
+    return dict(zip(columns, row))
+
+
+def save_sms_notification(
+    *, patient_id: str, mobile: str, notified: list[str], request_id: str
+) -> None:
+    conn = connection()
+
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO abdm_sms_notifications (patient_id, mobile, notified, request_id)
+            VALUES (%s, %s, %s, %s)
+            ON CONFLICT (patient_id) DO UPDATE SET
+                mobile = EXCLUDED.mobile,
+                notified = EXCLUDED.notified,
+                request_id = EXCLUDED.request_id,
+                status = 'SENT',
+                notified_at = now()
+            """,
+            (patient_id, mobile, Jsonb(notified), request_id),
+        )
+
+
+def set_sms_notification_status(request_id: str, status: str) -> int:
+    conn = connection()
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE abdm_sms_notifications SET status = %s WHERE request_id = %s",
+            (status, request_id),
+        )
+        return cur.rowcount

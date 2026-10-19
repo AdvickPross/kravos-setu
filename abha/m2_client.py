@@ -22,6 +22,11 @@ LINK_CARE_CONTEXT = "/api/hiecm/hip/v3/link/carecontext"
 UIL_ON_DISCOVER = "/api/hiecm/user-initiated-linking/v3/patient/care-context/on-discover"
 UIL_ON_INIT = "/api/hiecm/user-initiated-linking/v3/link/care-context/on-init"
 UIL_ON_CONFIRM = "/api/hiecm/user-initiated-linking/v3/link/care-context/on-confirm"
+CONTEXT_NOTIFY = "/api/hiecm/hip/v3/link/context/notify"
+SMS_NOTIFY = "/api/hiecm/hip/v3/link/patient/links/sms/notify2"
+CONSENT_ON_NOTIFY = "/api/hiecm/consent/v3/request/hip/on-notify"
+HI_ON_REQUEST = "/api/hiecm/data-flow/v3/health-information/hip/on-request"
+HI_NOTIFY = "/api/hiecm/data-flow/v3/health-information/notify"
 
 
 class AbdmM2Client:
@@ -78,10 +83,41 @@ class AbdmM2Client:
     # -- user-initiated linking: the HIP's replies ---------------------------
 
     def on_discover(self, body: dict[str, Any], *, request_id: str) -> dict[str, Any]:
-        return self._post(UIL_ON_DISCOVER, body, request_id=request_id, with_hip_id=False)
+        # The spec requires X-HIU-ID here (and only here). Its example value
+        # is a facility id, so it is ours.
+        return self._post(
+            UIL_ON_DISCOVER,
+            body,
+            request_id=request_id,
+            with_hip_id=False,
+            extra={"X-HIU-ID": self.hip_id},
+        )
 
     def on_init(self, body: dict[str, Any], *, request_id: str) -> dict[str, Any]:
         return self._post(UIL_ON_INIT, body, request_id=request_id, with_hip_id=False)
 
     def on_confirm(self, body: dict[str, Any], *, request_id: str) -> dict[str, Any]:
         return self._post(UIL_ON_CONFIRM, body, request_id=request_id, with_hip_id=False)
+
+    # -- HIP-initiated linking: updates and deep-link SMS ----------------------
+
+    def context_notify(self, body: dict[str, Any], *, request_id: str) -> dict[str, Any]:
+        return self._post(CONTEXT_NOTIFY, body, request_id=request_id, with_hip_id=True)
+
+    def sms_notify(self, body: dict[str, Any], *, request_id: str) -> dict[str, Any]:
+        return self._post(SMS_NOTIFY, body, request_id=request_id, with_hip_id=False)
+
+    # -- consent and data flow ---------------------------------------------------
+
+    def consent_on_notify(self, body: dict[str, Any], *, request_id: str) -> dict[str, Any]:
+        return self._post(CONSENT_ON_NOTIFY, body, request_id=request_id, with_hip_id=False)
+
+    def health_information_on_request(
+        self, body: dict[str, Any], *, request_id: str
+    ) -> dict[str, Any]:
+        return self._post(HI_ON_REQUEST, body, request_id=request_id, with_hip_id=False)
+
+    def health_information_notify(
+        self, body: dict[str, Any], *, request_id: str
+    ) -> dict[str, Any]:
+        return self._post(HI_NOTIFY, body, request_id=request_id, with_hip_id=False)
