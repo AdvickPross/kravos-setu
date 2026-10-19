@@ -6,8 +6,11 @@ which records get discovered and shared. The gateway sends a bearer JWT
 signed by the ``central-registry`` realm. That is the same realm that signs
 our own session token, and its keys are served by ``config.gateway_jwks_url``.
 
-RS256 only. A token with any other ``alg`` is refused before key lookup.
-Accepting ``none`` or HS256 against a public key is the textbook JWT bypass.
+RS256 and RS512 only. The gateway's JWKS holds one key of each (checked
+live), and ABDM's own sample token is RS512. The token's ``alg`` must also
+equal the ``alg`` its key declares. Anything else (``none``, HS256 against
+a public key, an alg swapped onto another key) is the textbook JWT bypass
+and is refused before any signature work.
 
 A valid signature and issuer are not enough on their own. Every integrator's
 *session* token is signed by the same realm (checked live: ours verifies).
@@ -19,7 +22,7 @@ gateway callback. A rejection logs the token's client and roles, so the
 first refused callback shows whether it is right.
 
 The signature check uses ``cryptography``, which M1 already depends on, so
-PyJWT isn't needed for a single algorithm.
+PyJWT isn't needed for two algorithms.
 """
 
 from __future__ import annotations
@@ -40,6 +43,7 @@ from cryptography.hazmat.primitives.asymmetric import padding, rsa
 _REFETCH_INTERVAL_SECONDS = 300.0
 _CLOCK_LEEWAY_SECONDS = 60
 GATEWAY_ROLE = "gateway"
+_HASHES = {"RS256": hashes.SHA256, "RS512": hashes.SHA512}
 
 
 class GatewayAuthError(Exception):
@@ -75,11 +79,11 @@ class GatewayTokenVerifier:
         self._issuer = issuer
         self._fetch = fetch
         self._clock = clock
-        self._keys: dict[str, rsa.RSAPublicKey] = {}
+        self._keys: dict[str, tuple[rsa.RSAPublicKey, str | None]] = {}
         self._fetched_at: float | None = None
         self._lock = threading.Lock()
 
-    def _key(self, kid: str) -> rsa.RSAPublicKey:
+    def _key(self, kid: str) -> tuple[rsa.RSAPublicKey, str | None]:
         with self._lock:
             key = self._keys.get(kid)
             if key is not None:
@@ -91,7 +95,7 @@ class GatewayTokenVerifier:
             ):
                 jwks = self._fetch(self._jwks_url)
                 self._keys = {
-                    k["kid"]: _rsa_key(k)
+                    k["kid"]: (_rsa_key(k), k.get("alg"))
                     for k in jwks.get("keys", [])
                     if k.get("kty") == "RSA" and k.get("kid")
                 }
@@ -119,18 +123,22 @@ class GatewayTokenVerifier:
         except (ValueError, UnicodeDecodeError) as exc:
             raise GatewayAuthError("Authorization is not a JWT") from exc
 
-        if header.get("alg") != "RS256":
-            raise GatewayAuthError(f"unsupported alg {header.get('alg')!r}")
+        alg = header.get("alg")
+        if alg not in _HASHES:
+            raise GatewayAuthError(f"unsupported alg {alg!r}")
         kid = header.get("kid")
         if not kid:
             raise GatewayAuthError("token has no kid")
 
+        key, key_alg = self._key(kid)
+        if key_alg is not None and key_alg != alg:
+            raise GatewayAuthError(f"alg {alg!r} does not match key {kid!r} ({key_alg})")
         try:
-            self._key(kid).verify(
+            key.verify(
                 signature,
                 f"{parts[0]}.{parts[1]}".encode("ascii"),
                 padding.PKCS1v15(),
-                hashes.SHA256(),
+                _HASHES[alg](),
             )
         except InvalidSignature as exc:
             raise GatewayAuthError("token signature is invalid") from exc

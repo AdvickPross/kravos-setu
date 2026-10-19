@@ -117,10 +117,11 @@ class AbhaConfig:
 
     @property
     def gateway_jwks_url(self) -> str:
-        # The v3 certs endpoint answers 401 even with a session token; the
-        # v0.5 one is public and serves the same central-registry keys that
-        # sign both our session token and the gateway's callback tokens.
-        return f"{self._hosts.gateway}/gateway/v0.5/certs"
+        # Documented v3 certs API (ABDM sandbox guide 3.2.3). It needs the
+        # session token plus REQUEST-ID/TIMESTAMP/X-CM-ID like any v3 call.
+        # It serves the central-registry keys that sign both our session
+        # token and the gateway's callback tokens.
+        return f"{self._hosts.gateway}/api/hiecm/gateway/v3/certs"
 
     @property
     def gateway_issuer(self) -> str:

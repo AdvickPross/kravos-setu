@@ -39,7 +39,7 @@ from abha.m2_models import (
     TokenRequest,
     TokenResponse,
 )
-from abha.transport import new_request_id
+from abha.transport import base_headers, new_request_id
 from backend.abdm_store import (
     get_link_token,
     save_link_token,
@@ -91,10 +91,27 @@ def _gateway_verifier() -> GatewayTokenVerifier:
     if _verifier is None:
         with _verifier_lock:
             if _verifier is None:
-                config = _config()
+                from backend.abha_routes import _client as get_abha_client
+
+                abha = get_abha_client()
+                config = abha.config
+
+                def fetch(url: str) -> dict[str, Any]:
+                    return abha.transport.send_json(
+                        "GET",
+                        url,
+                        headers=base_headers(
+                            extra={
+                                "Authorization": abha.session.authorization(),
+                                "X-CM-ID": config.cm_id,
+                            }
+                        ),
+                    )
+
                 _verifier = GatewayTokenVerifier(
                     jwks_url=config.gateway_jwks_url,
                     issuer=config.gateway_issuer,
+                    fetch=fetch,
                 )
     return _verifier
 
