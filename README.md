@@ -13,7 +13,8 @@ surgery.
 
 The full pipeline works end to end and has been verified in a real browser,
 not just by its test suite: `parse_query()` → `retrieve()` → `build_brief()`
-→ FastAPI → Next.js UI. **439 tests passing.** An optional LLM prose-polish
+→ FastAPI → Next.js UI. **684 tests passing** (3 OCR regression tests
+currently fail; they predate the M2 work). An optional LLM prose-polish
 pass and Pinecone vector search over free-text notes are built and wired in
 behind feature flags, both off by default.
 
@@ -40,6 +41,13 @@ reachable and all five scope tables were confirmed against
 [`M1_COVERAGE.md`](M1_COVERAGE.md). Code lives in `abha/`, exposed at
 `/api/abha/*` — see [**ABHA / ABDM (M1)**](#abha--abdm-m1).
 
+**Milestone 2 (Building HIP) is built and tested end to end against a
+simulated gateway and HIU, but not yet against the live sandbox.** It covers
+HIP-initiated and user-initiated linking, the deep-link SMS, consent, FHIR
+records and encrypted data transfer. Live testing is blocked on a HIP ID
+from NHA. Row-by-row status is in [`M2_COVERAGE.md`](M2_COVERAGE.md), and the
+testing console is at `/m2` — see [**ABDM M2 (Building HIP)**](#abdm-m2-building-hip).
+
 A **gold evaluation set** now exists (`data/eval_set.jsonl`, 100 queries
 with gold `fact_id` answers), so precision and recall are quotable for the
 first time — see [**Evaluation**](#evaluation) below.
@@ -52,13 +60,15 @@ paused, not abandoned — see [`PATH_B_STATUS.md`](PATH_B_STATUS.md).
 ## Repo layout
 
 ```
-abha/         ABDM ABHA V3 identity integration (M1): session, crypto, enrolment, login, profile
+abha/         ABDM integration: M1 identity (session, crypto, enrolment, login, profile) and the
+              M2 HIE-CM client, gateway-callback auth and Fidelius encryption
 pipeline/     Modular 5-model medical document intelligence pipeline & edge orchestration
 models/       Base adapter, ModelManager (LRU/dynamic eviction), and 5 model adapters
 config/       Pipeline stage configs (pipeline.json) and Jetson edge policy (policy.json)
 retrieval/    Query-side NER (parse_query() -> ParsedQuery) and the Postgres schema (db.py)
 backend/      FastAPI app: data layer (Postgres), retrieval, missingness, brief templating,
-              LLM polish, vector search, conversational RAG, and document intelligence endpoints
+              LLM polish, vector search, conversational RAG, document intelligence endpoints,
+              and the ABDM M2 HIP (linking, consent, FHIR, data transfer)
 frontend/     Next.js 16 UI
 scripts/      One-off/regenerable data pipeline scripts & ocr_ingest.py CLI
 data/         Lexicon synonyms, query/category cues, the pre-op missingness checklist, gold eval set
@@ -188,8 +198,8 @@ number to quote, and `run_eval.py` prints the warning into the report itself.
 ## ABHA / ABDM (M1)
 
 Milestone 1 of the ABDM integration is **Identities**: creating an ABHA and
-verifying one. (M2 is facility-to-facility record flow, M3 is consent; both
-sit on top of this and are not built.) Implemented from the *ABHA V3 APIs
+verifying one. (M2, the HIP side of record linking and sharing, sits on top of
+this — see the next section. M3, the HIU side, is not built.) Implemented from the *ABHA V3 APIs
 Integrator Guide v1.4* against the sandbox.
 
 ```
@@ -313,6 +323,106 @@ the wrong cause, and each has a test pinning it:
   follow from the credential. ABHA-number login uses the UIDAI OTP system.
 - **Two time formats in one request**: ISO-8601 with `Z` in the header,
   `YYYY-MM-DD HH:MM:SS` inside the OTP auth block.
+
+## ABDM M2 (Building HIP)
+
+Milestone 2 makes Kravos Setu a **Health Information Provider**. A patient's
+visits can be linked to their ABHA, by us or by the patient from ABDM's PHR
+app, and then shared with a requester under a consent the patient granted.
+The spec is NHA's *Building HIP* checklist
+(`M2_BUILDING_HIP_WITH_APIS_UPDATED_22_Aug`). Paths, bodies and status codes
+were checked against NHA's own M2 OpenAPI spec and catalogue
+([nha-in/docs](https://github.com/nha-in/docs)).
+
+```
+abha/m2_client.py             every HIP -> gateway call; identity from server config only
+abha/m2_models.py             request/callback models (abhaNumber as a 14-digit number, OTP as text)
+abha/gateway_auth.py          verifies the gateway JWT on every callback (RS256/RS512, `gateway` role)
+abha/fidelius.py              ABDM's ECDH on BouncyCastle's Weierstrass curve25519 + HKDF + AES-GCM
+backend/m2_service.py         user-initiated linking: patient matching, OTP, on-discover/init/confirm
+backend/m2_hip_linking.py     HIP-initiated linking, the linking batch, context notify, deep-link SMS
+backend/m2_fhir.py            one OPConsultRecord FHIR document bundle per visit (NRCeS profiles)
+backend/m2_data_flow.py       consent store/delete; health-information request -> encrypt -> push -> notify
+backend/m2_routes.py          /api/m2/* (our app) and /api/v3/* (ABDM's callbacks)
+backend/m2_console_routes.py  read routes for the /m2 console (no secrets returned)
+backend/abdm_store.py         transactions, care contexts, link tokens, consents, transfers
+```
+
+**Two kinds of route.** `/api/m2/*` is called by our own app, and every ABDM
+header (session token, `X-HIP-ID`, `X-CM-ID`, `REQUEST-ID`) comes from server
+config, so a caller can never act as the HIP. `/api/v3/hip/*` and the other
+callback paths are called by ABDM, relative to the bridge URL. Each one
+requires a JWT signed by the gateway, addressed to our HIP ID. ABDM is
+asynchronous: a call returns 202 and the answer arrives on a callback
+carrying our `REQUEST-ID` as `response.requestId`, which keys
+`abdm_transactions`.
+
+**A care context is a visit** (an `encounter_id`), shared as `OPConsultation`.
+
+### The M2 test console
+
+`http://localhost:3000/m2` follows the shape of the M1 console. It has six
+screens mapped to NHA's rows: sandbox setup, health records, HIP-initiated
+linking, PHR linking, deep-link SMS, and consent and data transfer. Each
+step names its test-case IDs and keeps a pass/fail verdict. Most of M2 is
+ABDM calling *us*, so every screen ends with a **live ABDM activity log**
+that gives a hint for each known error code. That log is the evidence for
+most rows. Sections are linkable (`/m2#hip`).
+
+These work today without a HIP ID: the setup checks (including a live read
+of our bridge registration), the FHIR preview of any visit, mobile capture,
+and the readiness checks.
+
+### Running it
+
+Sandbox setup needs three things beyond the M1 credentials: a **HIP ID**
+linked to our bridge (`ABDM_HIP_ID`), a **public URL** for the bridge
+(e.g. an ngrok static domain to port 8000, set from the console's setup
+screen), and, for certification, a **DLT-registered SMS sender** for the
+linking OTP. Until then `ABDM_OTP_DELIVERY=log` writes the OTP to the API
+console. See `.env.example` for `ABDM_HIP_ID`, `ABDM_HIP_NAME`,
+`ABDM_VERIFY_GATEWAY_TOKENS` and `ABDM_OTP_DELIVERY`.
+
+```pwsh
+python scripts/m2_link_batch.py   # link every ABHA-tagged patient's visits; deep-link SMS the rest
+```
+
+The batch is what HIP_INTI_LINK_505 means by "pushed from the backend". It
+requests a link token where none is stored, and the token callback then
+links that patient with no further action. Schedule it to run unattended.
+
+On test day, the console's activity log (or `abdm_transactions`) shows each
+exchange. Expect `DISCOVERY_REQUEST → DISCOVERY_RESPONSE_SENT`,
+`LINK_TOKEN_GENERATION → TOKEN_GENERATED`, `LINK_CARE_CONTEXT → LINKED`,
+`CONSENT_GRANTED → CONSENT_STORED`, `HEALTH_INFORMATION_REQUEST → TRANSFERRED`.
+If nothing arrives at all, ABDM can't reach the bridge URL.
+
+### What the tests do and don't prove
+
+The M2 suites (`tests/test_m2_*.py`, `tests/test_gateway_auth.py`,
+`tests/test_fidelius.py`) run every flow end to end against Postgres with a
+fake gateway, and in the data-transfer tests a fake HIU decrypts every
+pushed page. Encryption matches the Fidelius reference CLI's published
+keys and ciphertext **byte for byte**. They don't prove ABDM accepts the
+calls. That needs the live run, and `M2_COVERAGE.md` lists what is still
+open: the live run, SMS delivery, an NRCeS validator pass on the FHIR, and
+confirming the gateway-role check on a real callback.
+
+### Traps this implementation handles
+
+- **Callback tokens are RS512 as well as RS256**, and any integrator's own
+  session token verifies against the same realm. Signature and issuer
+  aren't enough; the `gateway` role is required.
+- **ABDM's "curve25519" is BouncyCastle's Weierstrass form**, not X25519.
+  Python's X25519 produces keys and secrets ABDM can't use.
+- **The confirm OTP arrives as a JSON number**, so `012345` becomes `12345`.
+- **`abhaNumber` is a number and `name` is letters only** in generate-token.
+  Synthea's digit-suffixed names are refused, so they are stripped.
+- **A refused token request is remembered.** An identical retry within
+  roughly 70 s gets `ABDM-1092` "duplicate", which hides the real cause, so
+  token requests aren't repeated while one is pending.
+- **No published error code for "no match" or "wrong OTP".** The gateway
+  gets `ABDM-9999` plus a message, and the specific reason stays in our log.
 
 ## Conversational RAG (`/api/chat`)
 
@@ -549,10 +659,12 @@ querying the corpus, documented in [`demo/queries.md`](demo/queries.md):
 
 ## What's deliberately not built yet
 
-- **M2 and M3** (facility-to-facility record flow, and the consent layer
-  on top of it). Both route through the same Gateway pattern and will
-  reuse the bottom half of `abha/` — config, session, transport, crypto —
-  which is why those are separated from the flow modules.
+- **M3 (the HIU side)**: requesting consent and receiving records from
+  other facilities. M2's gateway client, callback auth and
+  `abha/fidelius.py` (which already decrypts) are the parts it would reuse.
+- **M2's optional HIP-initiated linking methods** (Mobile OTP, Aadhaar OTP,
+  Direct Auth). NHA's sheet needs one method, and Demographic Auth, the
+  mandatory one, is built.
 - **The remaining ABHA V3 sections.** M1 covers enrolment, login, profile,
   QR and card. Driving-licence and demographic enrolment, fingerprint/iris
   capture, re-KYC, delete/deactivate/reactivate, Forgot ABHA and the
