@@ -2,6 +2,7 @@ import { Fragment, type ReactNode } from "react";
 
 import type { MatchQuality, ParsedQuery, ResolvedEntity } from "@/lib/api";
 import { categoryNoun } from "@/lib/format";
+import { SearchIcon } from "./icons";
 import { Eyebrow, Panel, Tag } from "./ui";
 
 /**
@@ -87,7 +88,7 @@ export function ParsedQueryView({ parsed }: { parsed: ParsedQuery }) {
       <mark
         key={`e-${index}`}
         title={group.entities.map(describe).join("\n")}
-        className={`rounded px-1 py-0.5 ring-1 ${QUALITY_STYLES[quality]} ${
+        className={`rounded-md px-1.5 py-0.5 font-medium ring-1 ${QUALITY_STYLES[quality]} ${
           negated ? "line-through decoration-2" : ""
         }`}
       >
@@ -107,18 +108,23 @@ export function ParsedQueryView({ parsed }: { parsed: ParsedQuery }) {
       : null;
 
   return (
-    <Panel className="px-4 py-3">
-      <Eyebrow>Understood as</Eyebrow>
+    <Panel className="px-5 py-4">
+      <div className="flex items-center gap-2">
+        <span className="inline-flex size-6 items-center justify-center rounded-md bg-accent-bg text-accent">
+          <SearchIcon size={13} />
+        </span>
+        <Eyebrow>Understood as</Eyebrow>
+      </div>
 
-      <p className="mt-1.5 text-base leading-relaxed text-ink">{nodes}</p>
+      <p className="mt-2.5 text-lg leading-loose text-ink">{nodes}</p>
 
-      <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+      <div className="mt-3 flex flex-wrap items-center gap-1.5">
         {(Object.keys(QUALITY_LABELS) as MatchQuality[])
           .filter((q) => entities.some((e) => e.quality === q))
           .map((q) => (
             <span
               key={q}
-              className={`rounded px-1.5 py-px text-[10px] font-medium ring-1 ${QUALITY_STYLES[q]}`}
+              className={`rounded-full px-2 py-px text-[10px] font-semibold ring-1 ${QUALITY_STYLES[q]}`}
             >
               {QUALITY_LABELS[q]}
             </span>
@@ -128,7 +134,7 @@ export function ParsedQueryView({ parsed }: { parsed: ParsedQuery }) {
 
       {/* Each note below states a consequence, not a status. The parse view is
           only useful if it explains what the result will look like. */}
-      <div className="mt-2 space-y-1 text-[11px] leading-relaxed">
+      <div className="mt-2.5 space-y-1 text-xs leading-relaxed">
         {categoryEntities.length > 0 && (
           <p className="text-ink-muted">
             Asked for a whole list, so{" "}

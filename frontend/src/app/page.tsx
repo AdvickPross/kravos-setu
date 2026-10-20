@@ -7,6 +7,7 @@ import { AuthScreen } from "@/components/auth/AuthScreen";
 import { ProfileGate } from "@/components/auth/ProfileGate";
 import { DemoGate } from "@/components/records/DemoGate";
 import { RecordsGate } from "@/components/records/RecordsGate";
+import { Brand } from "@/components/ui";
 import { Workspace } from "@/components/Workspace";
 import { getPatient, type PatientSummary } from "@/lib/api";
 import { setLiveToken, useAbhaSession, type AbhaSession } from "@/lib/session";
@@ -138,65 +139,73 @@ function SessionBar({
   const number = session.account.abha_number ?? session.account.abha_address;
 
   return (
-    <header className="flex flex-wrap items-center gap-3 border-b border-line px-4 py-2 sm:px-5">
-      <span className="text-sm font-semibold tracking-tight text-ink">Kravos Setu</span>
+    <header className="sticky top-0 z-20 border-b border-line bg-surface/75 backdrop-blur-xl">
+      <div className="mx-auto flex w-full max-w-[90rem] flex-wrap items-center gap-3 px-4 py-2.5 sm:px-6">
+        <Brand />
 
-      {session.demo ? (
-        <span className="rounded border border-warn-line bg-warn-bg px-1.5 py-px text-[10px] font-medium text-warn">
-          demo — no ABHA verified
-        </span>
-      ) : (
-        <span className="flex min-w-0 items-center gap-1.5">
-          <span className="rounded border border-active-line bg-active-bg px-1.5 py-px text-[10px] font-medium text-active">
-            ABHA verified
+        <span aria-hidden className="hidden h-5 w-px bg-line sm:block" />
+
+        {session.demo ? (
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-warn-line bg-warn-bg px-2.5 py-0.5 text-[11px] font-medium text-warn">
+            <span aria-hidden className="size-1.5 rounded-full bg-warn" />
+            <span>demo — no ABHA verified</span>
           </span>
-          {name && <span className="truncate text-xs text-ink-muted">{name}</span>}
-          {number && (
-            <span className="hidden truncate font-mono text-[11px] text-ink-faint sm:inline">
-              {number}
+        ) : (
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span className="rounded-full border border-active-line bg-active-bg px-2.5 py-0.5 text-[11px] font-medium text-active">
+              ABHA verified
             </span>
-          )}
-        </span>
-      )}
+            {name && <span className="truncate text-xs text-ink-muted">{name}</span>}
+            {number && (
+              <span className="hidden truncate font-mono text-[11px] text-ink-faint sm:inline">
+                {number}
+              </span>
+            )}
+          </span>
+        )}
 
-      <nav className="ml-auto flex items-center gap-2">
-        {onBackToPatients && (
+        <nav className="ml-auto flex items-center gap-1">
+          {onBackToPatients && (
+            <button
+              type="button"
+              onClick={onBackToPatients}
+              className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-ink-muted transition hover:bg-surface-2 hover:text-ink"
+            >
+              ← Choose patient
+            </button>
+          )}
+          <Link
+            href="/m1"
+            className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-ink-muted transition hover:bg-surface-2 hover:text-ink"
+          >
+            M1 console
+          </Link>
+          <Link
+            href="/m2"
+            className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-ink-muted transition hover:bg-surface-2 hover:text-ink"
+          >
+            M2 console
+          </Link>
           <button
             type="button"
-            onClick={onBackToPatients}
-            className="text-xs font-medium text-ink-muted underline-offset-2 hover:underline"
+            onClick={onSignOut}
+            className="ml-1 rounded-lg border border-line bg-surface px-3 py-1.5 text-xs font-medium text-ink transition hover:border-line-strong hover:bg-surface-2"
           >
-            ← Choose patient
+            {session.demo ? "Exit demo" : "Sign out"}
           </button>
-        )}
-        <Link
-          href="/m1"
-          className="text-xs font-medium text-ink-muted underline-offset-2 hover:underline"
-        >
-          M1 console
-        </Link>
-        <Link
-          href="/m2"
-          className="text-xs font-medium text-ink-muted underline-offset-2 hover:underline"
-        >
-          M2 console
-        </Link>
-        <button
-          type="button"
-          onClick={onSignOut}
-          className="rounded border border-line bg-surface px-2 py-1 text-xs font-medium text-ink-muted hover:bg-surface-2"
-        >
-          {session.demo ? "Exit demo" : "Sign out"}
-        </button>
-      </nav>
+        </nav>
+      </div>
     </header>
   );
 }
 
 function Splash() {
   return (
-    <div className="flex min-h-dvh items-center justify-center">
-      <span className="h-5 w-5 animate-spin rounded-full border-2 border-line-strong border-t-transparent" />
+    <div className="flex min-h-dvh flex-col items-center justify-center gap-4">
+      <span className="brand-mark flex size-11 animate-pulse items-center justify-center rounded-2xl text-base font-bold">
+        K
+      </span>
+      <span className="h-4 w-4 animate-spin rounded-full border-2 border-line-strong border-t-transparent" />
     </div>
   );
 }

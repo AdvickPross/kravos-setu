@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 
 import { ApiError, postChat, type ChatResponse, type PatientSummary } from "@/lib/api";
-import { Eyebrow, Panel, Skeleton, Tag } from "./ui";
+import { ChatIcon, LinkIcon, PlusIcon, SendIcon } from "./icons";
+import { Eyebrow, Panel, Tag } from "./ui";
 
 type Turn = {
   role: "user" | "assistant";
@@ -81,8 +82,11 @@ export function ChatPanel({ patient }: { patient: PatientSummary }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <Panel className="flex min-h-0 flex-1 flex-col">
-        <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
+        <div className="flex items-center justify-between border-b border-line px-5 py-3">
           <div className="flex items-center gap-2">
+            <span className="inline-flex size-6 items-center justify-center rounded-md bg-accent-bg text-accent">
+              <ChatIcon size={13} />
+            </span>
             <Eyebrow>Conversation</Eyebrow>
             <Tag tone="accent" title="Persists to Postgres; carries context turn to turn">
               multi-turn
@@ -96,14 +100,15 @@ export function ChatPanel({ patient }: { patient: PatientSummary }) {
                 setConversationId(null);
                 setError(null);
               }}
-              className="text-[11px] font-medium text-ink-faint hover:text-ink-muted"
+              className="inline-flex items-center gap-1 rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-muted transition hover:border-line-strong hover:text-ink"
             >
+              <PlusIcon size={12} />
               New conversation
             </button>
           )}
         </div>
 
-        <div ref={scrollRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3">
+        <div ref={scrollRef} className="scroll-quiet min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-5">
           {turns.length === 0 && !loading ? (
             <EmptyState onExample={(example) => send(example)} />
           ) : (
@@ -113,7 +118,7 @@ export function ChatPanel({ patient }: { patient: PatientSummary }) {
         </div>
 
         {error && (
-          <div className="border-t border-danger-line bg-danger-bg px-4 py-2">
+          <div className="border-t border-danger-line bg-danger-bg px-5 py-2.5">
             <p className="text-xs text-danger">{error}</p>
           </div>
         )}
@@ -123,7 +128,7 @@ export function ChatPanel({ patient }: { patient: PatientSummary }) {
             event.preventDefault();
             send(input);
           }}
-          className="flex gap-2 border-t border-line px-4 py-3"
+          className="flex gap-2 border-t border-line bg-surface-2/40 p-3"
         >
           <input
             type="text"
@@ -134,14 +139,15 @@ export function ChatPanel({ patient }: { patient: PatientSummary }) {
             }
             disabled={loading}
             aria-label="Conversational question"
-            className="w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-faint disabled:opacity-60"
+            className="w-full rounded-xl border border-line bg-surface px-4 py-2.5 text-sm text-ink outline-none transition placeholder:text-ink-faint focus:border-accent-line focus:ring-4 focus:ring-accent-bg disabled:opacity-60"
           />
           <button
             type="submit"
             disabled={loading || !input.trim()}
-            className="shrink-0 rounded-md bg-ink px-4 py-2 text-sm font-medium text-bg transition-opacity disabled:opacity-40"
+            className="btn-primary inline-flex shrink-0 items-center gap-1.5 rounded-xl px-4 text-sm font-semibold"
           >
             Send
+            <SendIcon size={14} />
           </button>
         </form>
       </Panel>
@@ -152,19 +158,25 @@ export function ChatPanel({ patient }: { patient: PatientSummary }) {
 function Bubble({ turn }: { turn: Turn }) {
   const isUser = turn.role === "user";
   return (
-    <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
-      <div className={`max-w-[85%] ${isUser ? "order-2" : ""}`}>
+    <div className={`flex items-end gap-2.5 ${isUser ? "justify-end" : "justify-start"}`}>
+      {!isUser && (
+        <span className="brand-mark mb-5 flex size-7 shrink-0 items-center justify-center rounded-lg text-[11px] font-bold">
+          K
+        </span>
+      )}
+      <div className={`max-w-[80%] ${isUser ? "order-2" : ""}`}>
         <div
-          className={`rounded-lg px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap ${
+          className={`px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
             isUser
-              ? "bg-ink text-bg"
-              : "border border-line bg-surface-2 text-ink"
+              ? "rounded-2xl rounded-br-md bg-accent text-on-accent shadow-card"
+              : "rounded-2xl rounded-bl-md border border-line bg-surface-2 text-ink"
           }`}
         >
           {turn.text}
         </div>
         {!isUser && (turn.citedFactCount ?? 0) > 0 && (
-          <p className="mt-1 px-0.5 text-[10px] text-ink-faint">
+          <p className="mt-1.5 inline-flex items-center gap-1 px-1 text-[10px] font-medium text-ink-faint">
+            <LinkIcon size={10} />
             Grounded in {turn.citedFactCount} fact{turn.citedFactCount === 1 ? "" : "s"}
             {turn.narrativeCount ? `, ${turn.narrativeCount} clinical note${turn.narrativeCount === 1 ? "" : "s"}` : ""}
           </p>
@@ -176,12 +188,19 @@ function Bubble({ turn }: { turn: Turn }) {
 
 function TypingBubble() {
   return (
-    <div className="flex justify-start" aria-busy aria-label="Waiting for a reply">
-      <div className="rounded-lg border border-line bg-surface-2 px-3 py-2.5">
+    <div className="flex items-end gap-2.5" aria-busy aria-label="Waiting for a reply">
+      <span className="brand-mark flex size-7 shrink-0 items-center justify-center rounded-lg text-[11px] font-bold">
+        K
+      </span>
+      <div className="rounded-2xl rounded-bl-md border border-line bg-surface-2 px-4 py-3">
         <div className="flex gap-1">
-          <Skeleton className="h-1.5 w-1.5 rounded-full" />
-          <Skeleton className="h-1.5 w-1.5 rounded-full" />
-          <Skeleton className="h-1.5 w-1.5 rounded-full" />
+          {[0, 1, 2].map((i) => (
+            <span
+              key={i}
+              className="typing-dot size-1.5 rounded-full bg-ink-faint"
+              style={{ animationDelay: `${i * 160}ms` }}
+            />
+          ))}
         </div>
       </div>
     </div>
@@ -190,19 +209,25 @@ function TypingBubble() {
 
 function EmptyState({ onExample }: { onExample: (example: string) => void }) {
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
-      <p className="max-w-xs text-xs leading-relaxed text-ink-faint">
-        Ask a follow-up the way you would over a phone call. Each answer is grounded in
-        this turn&apos;s retrieved facts and notes, and the thread remembers what you
-        already asked.
-      </p>
-      <div className="flex flex-wrap justify-center gap-1.5">
+    <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
+      <span className="inline-flex size-12 items-center justify-center rounded-2xl bg-accent-bg text-accent">
+        <ChatIcon size={22} />
+      </span>
+      <div>
+        <p className="text-base font-semibold text-ink">Start a conversation</p>
+        <p className="mx-auto mt-1 max-w-sm text-xs leading-relaxed text-ink-muted">
+          Ask a follow-up the way you would over a phone call. Each answer is grounded in
+          this turn&apos;s retrieved facts and notes, and the thread remembers what you
+          already asked.
+        </p>
+      </div>
+      <div className="flex max-w-xl flex-wrap justify-center gap-1.5">
         {EXAMPLES.map((example) => (
           <button
             key={example}
             type="button"
             onClick={() => onExample(example)}
-            className="rounded-full border border-line bg-surface px-2.5 py-1 text-[11px] text-ink-muted transition-colors hover:border-line-strong hover:text-ink"
+            className="rounded-full border border-line bg-surface px-3 py-1 text-xs text-ink-muted transition hover:border-accent-line hover:bg-accent-bg hover:text-accent"
           >
             {example}
           </button>

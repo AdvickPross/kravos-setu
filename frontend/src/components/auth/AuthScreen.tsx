@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 
 import { abha } from "@/lib/abha";
 import type { AbhaSession } from "@/lib/session";
+import { AlertIcon, IdCardIcon, LockIcon } from "../icons";
+import { Brand } from "../ui";
 import { Banner } from "./parts";
 import { SignInFlow } from "./SignInFlow";
 import { SignUpFlow } from "./SignUpFlow";
@@ -53,81 +55,78 @@ export function AuthScreen({
 
   return (
     <div className="grid min-h-dvh lg:grid-cols-2">
-      <aside className="relative hidden overflow-hidden border-r border-line bg-bg lg:flex lg:items-center">
-        {/* A single soft wash, off-centre. Enough to stop a very large flat
+      <aside className="dot-grid relative hidden overflow-hidden border-r border-line lg:flex lg:items-center">
+        {/* Two soft washes, off-centre. Enough to stop a very large flat
             panel reading as dead space, not enough to compete with the form. */}
         <div
           aria-hidden
-          className="pointer-events-none absolute -left-32 top-1/4 h-[32rem] w-[32rem] rounded-full opacity-[0.07] blur-3xl"
+          className="pointer-events-none absolute -left-40 top-[10%] h-[36rem] w-[36rem] rounded-full opacity-[0.16] blur-3xl"
           style={{ background: "var(--accent)" }}
         />
-        <div className="relative z-10 mx-auto flex max-w-md flex-col gap-8 px-12 py-16">
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-sm font-bold text-[#0b0d11]">
-              K
-            </span>
-            <span>
-              <span className="block text-sm font-semibold leading-tight tracking-tight text-ink">
-                Kravos Setu
-              </span>
-              <span className="block text-[11px] leading-tight text-ink-faint">
-                Clinical context layer · ABDM
-              </span>
-            </span>
-          </div>
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -bottom-40 right-[-10rem] h-[30rem] w-[30rem] rounded-full opacity-[0.08] blur-3xl"
+          style={{ background: "#0ea5e9" }}
+        />
+        <div className="relative z-10 mx-auto flex max-w-lg flex-col gap-10 px-12 py-16">
+          <Brand subtitle="Clinical context layer · ABDM" />
 
           <div>
-            <h1 className="text-[1.75rem] font-semibold leading-[1.2] tracking-tight text-ink">
+            <h1 className="text-[2.6rem] font-semibold leading-[1.08] tracking-[-0.02em] text-ink">
               The record is only
               <br />
-              half the answer.
+              <span className="bg-linear-to-r from-accent to-sky-500 bg-clip-text text-transparent">
+                half the answer.
+              </span>
             </h1>
-            <p className="mt-4 text-sm leading-relaxed text-ink-muted">
+            <p className="mt-5 max-w-md text-[15px] leading-relaxed text-ink-muted">
               Sign in with ABHA to pull a patient&apos;s history across every
               facility they have visited — and to see what a pre-operative
               assessment expects to find and cannot.
             </p>
           </div>
 
-          <ul className="space-y-3.5 border-t border-line pt-7">
-            {[
-              ["Portable identity", "One ABHA works at any ABDM facility in India."],
-              ["Consent-bound", "Records move only with the patient's explicit consent."],
-              ["Absence is a finding", "The brief names what is missing, not just what is there."],
-            ].map(([title, body]) => (
-              <li key={title} className="flex gap-3">
-                <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
+          <ul className="grid gap-3">
+            {(
+              [
+                [IdCardIcon, "Portable identity", "One ABHA works at any ABDM facility in India."],
+                [LockIcon, "Consent-bound", "Records move only with the patient's explicit consent."],
+                [AlertIcon, "Absence is a finding", "The brief names what is missing, not just what is there."],
+              ] as const
+            ).map(([Icon, title, body]) => (
+              <li key={title} className="card flex items-start gap-3.5 bg-surface/70 px-4 py-3.5 backdrop-blur">
+                <span className="mt-0.5 inline-flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent-bg text-accent">
+                  <Icon size={16} />
+                </span>
                 <p className="text-sm leading-snug text-ink-muted">
-                  <span className="font-medium text-ink">{title}.</span> {body}
+                  <span className="block font-semibold text-ink">{title}.</span> {body}
                 </p>
               </li>
             ))}
           </ul>
 
-          <p className="border-t border-line pt-6 text-[11px] leading-relaxed text-ink-faint">
+          <p className="flex items-start gap-2 text-[11px] leading-relaxed text-ink-faint">
+            <LockIcon size={13} className="mt-px shrink-0" />
             Aadhaar numbers, mobile numbers and OTPs are RSA-encrypted before
             they leave this machine, and are never written to disk or logs.
           </p>
         </div>
       </aside>
 
-      <main className="flex items-center justify-center bg-surface-2/40 px-5 py-10 sm:px-8">
+      <main className="flex items-center justify-center px-5 py-10 sm:px-8">
         <div className="w-full max-w-[26rem]">
-          <div className="mb-6 flex items-center gap-2.5 lg:hidden">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-sm font-bold text-[#0b0d11]">
-              K
-            </span>
-            <span className="text-sm font-semibold tracking-tight text-ink">Kravos Setu</span>
+          <div className="mb-6 lg:hidden">
+            <Brand subtitle="Clinical context layer · ABDM" />
           </div>
 
-          <div className="rounded-2xl border border-line bg-surface p-6 shadow-xl shadow-black/20 sm:p-7">
+          <div className="rounded-2xl border border-line bg-surface p-6 shadow-raised sm:p-7">
             <div className="mb-5">
               <div className="flex items-center justify-between gap-2">
-                <h2 className="text-lg font-semibold tracking-tight text-ink">
+                <h2 className="text-xl font-semibold tracking-tight text-ink">
                   {mode === "signin" ? "Sign in with ABHA" : "Create your ABHA"}
                 </h2>
                 {environment && (
-                  <span className="shrink-0 rounded border border-line bg-bg px-1.5 py-px text-[10px] font-medium text-ink-faint">
+                  <span className="shrink-0 rounded-full border border-line bg-surface-2 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-ink-faint">
                     {environment}
                   </span>
                 )}
@@ -172,11 +171,11 @@ export function AuthScreen({
             )}
           </div>
 
-          <div className="mt-4 rounded-2xl border border-line bg-surface/60 p-4">
+          <div className="mt-4 rounded-2xl border border-dashed border-line-strong bg-surface/50 p-4">
             <button
               type="button"
               onClick={onSkip}
-              className="w-full rounded-lg border border-line bg-bg px-3 py-2 text-sm font-medium text-ink-muted transition hover:border-line-strong hover:text-ink"
+              className="w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-sm font-semibold text-ink shadow-card transition hover:border-accent-line hover:text-accent"
             >
               Explore the clinical demo without ABHA
             </button>

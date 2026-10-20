@@ -220,7 +220,7 @@ export function UploadFlow({
           <button
             type="button"
             onClick={onFinished}
-            className="rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-[#0b0d11] transition hover:brightness-110"
+            className="rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-on-accent transition hover:brightness-110"
           >
             Open the clinical view →
           </button>
@@ -402,7 +402,7 @@ export function UploadFlow({
           type="button"
           onClick={save}
           disabled={approved.size === 0 || saving}
-          className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-[#0b0d11] transition hover:brightness-110 disabled:cursor-not-allowed disabled:bg-surface-2 disabled:text-ink-faint"
+          className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-on-accent transition hover:brightness-110 disabled:cursor-not-allowed disabled:bg-surface-2 disabled:text-ink-faint"
         >
           {saving && (
             <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />

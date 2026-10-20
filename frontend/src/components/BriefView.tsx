@@ -5,6 +5,7 @@ import { useState } from "react";
 import type { Brief, BriefLine, BriefSection, Fact } from "@/lib/api";
 import { criticalityTone, formatDate, relativeAge, statusTone } from "@/lib/format";
 import { Sparkline } from "./Sparkline";
+import { LinkIcon, SectionIcon } from "./icons";
 import { Eyebrow, Panel, StatusPill, Tag } from "./ui";
 
 /** Allergies first, always. The rest follow clinical reading order. The
@@ -22,13 +23,13 @@ export function BriefView({
   const sections = brief.sections ?? [];
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {brief.prose && <ProsePanel prose={brief.prose} />}
 
       {sections.length === 0 ? (
-        <Panel className="px-4 py-3">
+        <Panel className="px-5 py-4">
           <Eyebrow>Result</Eyebrow>
-          <p className="mt-1 text-sm text-ink-muted">
+          <p className="mt-1.5 text-sm leading-relaxed text-ink-muted">
             Nothing in the question resolved to a coded concept, so no records were
             retrieved. That is different from the patient having no such records —
             nothing was looked up.
@@ -48,7 +49,7 @@ export function BriefView({
  *  cited source of truth. */
 function ProsePanel({ prose }: { prose: string }) {
   return (
-    <Panel className="px-4 py-3">
+    <Panel className="px-5 py-4">
       <div className="flex items-center gap-2">
         <Eyebrow>Summary</Eyebrow>
         <Tag tone="accent" title="Rewritten by a language model from the cited facts below">
@@ -76,19 +77,38 @@ function SectionPanel({
 
   return (
     <Panel tone={danger && lines.length > 0 ? "danger" : "plain"}>
-      <div className="flex items-baseline justify-between gap-3 border-b border-line/70 px-4 py-2">
-        <Eyebrow tone={danger ? "danger" : "muted"}>{section.title}</Eyebrow>
+      <div
+        className={`flex items-center justify-between gap-3 px-5 py-3 ${
+          lines.length > 0 ? "border-b border-line" : ""
+        } ${danger && lines.length > 0 ? "bg-danger-bg/60" : ""}`}
+      >
+        <div className="flex items-center gap-2">
+          <span
+            className={`inline-flex size-6 items-center justify-center rounded-md ${
+              danger ? "bg-danger-bg text-danger" : "bg-surface-2 text-ink-muted"
+            }`}
+          >
+            <SectionIcon title={section.title} size={13} />
+          </span>
+          <Eyebrow tone={danger ? "danger" : "muted"}>{section.title}</Eyebrow>
+        </div>
         {lines.length > 0 && (
-          <span className="tnum text-[11px] text-ink-faint">
+          <span
+            className={`tnum rounded-full border px-2 py-px text-[11px] font-semibold ${
+              danger
+                ? "border-danger-line bg-danger-bg text-danger"
+                : "border-line bg-surface-2 text-ink-muted"
+            }`}
+          >
             {lines.length} {lines.length === 1 ? "record" : "records"}
           </span>
         )}
       </div>
 
       {lines.length === 0 ? (
-        <p className="px-4 py-3 text-sm text-ink-muted">{section.empty_note}</p>
+        <p className="px-5 pb-4 text-sm text-ink-muted">{section.empty_note}</p>
       ) : (
-        <ul className="divide-y divide-line/70">
+        <ul className="divide-y divide-line">
           {groupLines(lines, factsById).map((group, index) =>
             group.lines.length === 1 ? (
               <LineRow key={`${group.label}-${index}`} line={group.lines[0]} factsById={factsById} />
@@ -100,7 +120,7 @@ function SectionPanel({
       )}
 
       {section.coverage_note && (
-        <p className="border-t border-line/70 px-4 py-2 text-[11px] text-ink-faint">
+        <p className="border-t border-line px-5 py-2.5 text-[11px] text-ink-faint">
           {section.coverage_note}
         </p>
       )}
@@ -163,7 +183,7 @@ function RepeatedGroup({
 
   return (
     <li>
-      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 bg-surface-2/60 px-4 py-1.5">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 bg-surface-2/60 px-5 py-2">
         <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink">{group.label}</span>
         {points.length > 1 && <Sparkline points={points} label={group.label} />}
         {statuses.length > 1 && (
@@ -175,7 +195,7 @@ function RepeatedGroup({
           {group.lines.length} records{unit ? ` · ${unit}` : ""}
         </span>
       </div>
-      <ul className="divide-y divide-line/50">
+      <ul className="divide-y divide-line/60">
         {group.lines.map((line, index) => (
           <LineRow
             key={`${line.text}-${index}`}
@@ -218,7 +238,9 @@ function LineRow({
   return (
     <li>
       <div
-        className={`flex flex-wrap items-baseline gap-x-2 gap-y-1 py-2 ${hideLabel ? "pl-8 pr-4" : "px-4"}`}
+        className={`group flex flex-wrap items-center gap-x-2.5 gap-y-1 py-2.5 transition-colors hover:bg-surface-2/50 ${
+          hideLabel ? "pl-10 pr-5" : "px-5"
+        }`}
       >
         {!hideLabel && <span className="min-w-0 flex-1 text-sm text-ink">{label}</span>}
 
@@ -251,8 +273,13 @@ function LineRow({
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
-          className="text-[11px] text-ink-faint underline decoration-dotted underline-offset-2 hover:text-accent"
+          className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] font-medium transition ${
+            open
+              ? "border-accent-line bg-accent-bg text-accent"
+              : "border-transparent text-ink-faint hover:border-line hover:text-accent"
+          }`}
         >
+          <LinkIcon size={11} />
           {open ? "hide source" : "source"}
         </button>
       </div>
@@ -273,14 +300,14 @@ function Provenance({
 }) {
   if (factIds.length === 0) {
     return (
-      <div className="border-t border-line/70 bg-surface-2 px-4 py-2 text-xs text-ink-muted">
+      <div className="border-t border-line bg-surface-2 px-5 py-2.5 text-xs text-ink-muted">
         No source facts recorded for this line.
       </div>
     );
   }
 
   return (
-    <div className="space-y-2 border-t border-line/70 bg-surface-2 px-4 py-2.5">
+    <div className="space-y-2 border-t border-line bg-surface-2/70 px-5 py-3">
       {factIds.map((factId) => {
         const fact = factsById.get(factId);
         const rows: [string, string | null | undefined][] = [
@@ -291,7 +318,10 @@ function Provenance({
           ["recorded", formatDate(fact?.date)],
         ];
         return (
-          <dl key={factId} className="grid grid-cols-[5.5rem_1fr] gap-x-3 gap-y-0.5 text-xs">
+          <dl
+            key={factId}
+            className="grid grid-cols-[5.5rem_1fr] gap-x-3 gap-y-1 rounded-lg border border-line bg-surface px-3 py-2.5 text-xs"
+          >
             {rows.map(([term, detail]) => (
               <div key={term} className="contents">
                 <dt className="text-ink-faint">{term}</dt>

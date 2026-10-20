@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { SearchIcon } from "./icons";
+
 /** Deliberately spans the behaviours worth demonstrating: a whole-list
  *  request, a specific drug allergy, a multi-code lab, and a question whose
  *  honest answer is "nothing resolved". */
@@ -43,7 +45,7 @@ export function QueryBox({
   }
 
   return (
-    <div className="space-y-2">
+    <div className="card space-y-3 p-3 sm:p-4">
       <form
         onSubmit={(event) => {
           event.preventDefault();
@@ -51,7 +53,11 @@ export function QueryBox({
         }}
         className="flex gap-2"
       >
-        <div className="relative flex-1">
+        <div className="group relative flex-1">
+          <SearchIcon
+            size={18}
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-faint transition-colors group-focus-within:text-accent"
+          />
           <input
             ref={inputRef}
             type="text"
@@ -60,10 +66,10 @@ export function QueryBox({
             placeholder="Ask about this patient…"
             disabled={disabled}
             aria-label="Clinical question"
-            className="w-full rounded-md border border-line bg-surface px-3 py-2 pr-8 text-sm text-ink placeholder:text-ink-faint disabled:opacity-60"
+            className="w-full rounded-xl border border-line bg-bg py-3 pl-11 pr-10 text-[15px] text-ink outline-none transition placeholder:text-ink-faint focus:border-accent-line focus:ring-4 focus:ring-accent-bg disabled:opacity-60"
           />
           {!value && (
-            <kbd className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 rounded border border-line px-1 text-[10px] text-ink-faint">
+            <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded-md border border-line bg-surface px-1.5 py-px font-mono text-[10px] text-ink-faint">
               /
             </kbd>
           )}
@@ -71,13 +77,14 @@ export function QueryBox({
         <button
           type="submit"
           disabled={disabled || !value.trim()}
-          className="rounded-md bg-ink px-4 py-2 text-sm font-medium text-bg transition-opacity disabled:opacity-40"
+          className="btn-primary inline-flex items-center gap-1.5 rounded-xl px-5 text-sm font-semibold"
         >
           Ask
         </button>
       </form>
 
-      <div className="flex flex-wrap gap-1.5">
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="mr-1 text-[10px] font-semibold uppercase tracking-[0.09em] text-ink-faint">Try</span>
         {EXAMPLES.map((example) => (
           <button
             key={example}
@@ -87,7 +94,7 @@ export function QueryBox({
               setValue(example);
               submit(example);
             }}
-            className="rounded-full border border-line bg-surface px-2.5 py-1 text-[11px] text-ink-muted transition-colors hover:border-line-strong hover:text-ink disabled:opacity-50"
+            className="rounded-full border border-line bg-surface-2/70 px-3 py-1 text-xs text-ink-muted transition hover:border-accent-line hover:bg-accent-bg hover:text-accent disabled:opacity-50"
           >
             {example}
           </button>

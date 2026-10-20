@@ -1,6 +1,6 @@
 import type { PatientSummary } from "@/lib/api";
 import { displayAge, formatDate } from "@/lib/format";
-import { Tag } from "./ui";
+import { Avatar, Tag } from "./ui";
 
 /**
  * Identity bar. Deliberately states death before anything else it might
@@ -19,22 +19,35 @@ export function PatientHeader({ patient }: { patient: PatientSummary }) {
   if (patient.birth_date) facts.push(`b. ${formatDate(patient.birth_date)}`);
 
   return (
-    <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1.5 border-b border-line pb-3">
-      <h2 className="text-xl font-semibold tracking-tight text-ink">
-        {patient.name ?? patient.patient_id}
-      </h2>
+    <header className="card flex flex-wrap items-center gap-x-5 gap-y-3 px-5 py-4">
+      <Avatar name={patient.name} seed={patient.patient_id} size="lg" />
 
-      {patient.deceased && (
-        <Tag tone="danger" title={`Deceased ${deceasedOn}`}>
-          Deceased {deceasedOn}
-        </Tag>
-      )}
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+          <h2 className="min-w-0 break-words text-xl font-semibold tracking-tight text-ink">
+            {patient.name ?? patient.patient_id}
+          </h2>
+          {patient.deceased && (
+            <Tag tone="danger" title={`Deceased ${deceasedOn}`}>
+              Deceased {deceasedOn}
+            </Tag>
+          )}
+          {patient._source_file === "manual" && <Tag tone="accent">added here</Tag>}
+        </div>
+        <p className="tnum mt-0.5 flex flex-wrap items-center gap-x-2 text-sm text-ink-muted">
+          <span>{facts.join(" · ")}</span>
+          <span className="font-mono text-[11px] text-ink-faint">{patient.patient_id.slice(0, 8)}</span>
+        </p>
+      </div>
 
-      <p className="tnum text-sm text-ink-muted">{facts.join(" · ")}</p>
-
-      <p className="tnum ml-auto text-xs text-ink-faint">
-        {patient._n_facts.toLocaleString()} facts on file
-      </p>
+      <dl className="w-full rounded-xl border border-line bg-surface-2/60 sm:w-auto">
+        <div className="px-4 py-2">
+          <dt className="text-[10px] font-semibold uppercase tracking-[0.08em] text-ink-faint">Records</dt>
+          <dd className="tnum mt-0.5 text-sm font-semibold text-ink">
+            {patient._n_facts.toLocaleString()} facts on file
+          </dd>
+        </div>
+      </dl>
     </header>
   );
 }

@@ -1,5 +1,6 @@
 import type { StageTimings } from "@/lib/api";
 import { formatMs } from "@/lib/format";
+import { ClockIcon } from "./icons";
 
 /**
  * Per-stage latency, shown rather than logged. A stage that did not run reads
@@ -17,16 +18,21 @@ export function LatencyFooter({ timings }: { timings: StageTimings }) {
   ];
 
   return (
-    <footer className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line pt-2.5 text-[11px] text-ink-faint">
+    <footer className="flex flex-wrap items-center gap-1.5 pt-1 text-[11px] text-ink-faint">
+      <ClockIcon size={13} className="mr-0.5" />
       {stages.map((stage) => (
-        <span key={stage.label} className="tnum" title={stage.note}>
+        <span
+          key={stage.label}
+          className="tnum rounded-full border border-line bg-surface px-2 py-0.5"
+          title={stage.note}
+        >
           {stage.label}{" "}
-          <span className={stage.ms == null ? "italic" : "text-ink-muted"}>
+          <span className={stage.ms == null ? "italic" : "font-medium text-ink-muted"}>
             {stage.ms == null ? "not run" : formatMs(stage.ms)}
           </span>
         </span>
       ))}
-      <span className="tnum ml-auto font-medium text-ink-muted">
+      <span className="tnum ml-auto rounded-full border border-accent-line bg-accent-bg px-2.5 py-0.5 font-semibold text-accent">
         total {formatMs(timings.total_ms)}
       </span>
     </footer>

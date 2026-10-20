@@ -115,7 +115,7 @@ export function Primary({
       className={
         off
           ? "w-full cursor-not-allowed rounded-lg border border-line bg-surface-2 px-3 py-2.5 text-sm font-semibold text-ink-faint"
-          : "w-full rounded-lg bg-accent px-3 py-2.5 text-sm font-semibold text-[#0b0d11] shadow-sm transition hover:brightness-110 active:brightness-95"
+          : "w-full rounded-lg bg-accent px-3 py-2.5 text-sm font-semibold text-on-accent shadow-sm transition hover:brightness-110 active:brightness-95"
       }
     >
       <span className="inline-flex items-center justify-center gap-2">

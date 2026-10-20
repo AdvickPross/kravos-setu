@@ -12,7 +12,7 @@ export function NarrativeMatches({ matches }: { matches: NarrativeMatch[] }) {
   if (matches.length === 0) return null;
 
   return (
-    <Panel className="px-4 py-3">
+    <Panel className="px-5 py-4">
       <div className="flex items-center gap-2">
         <Eyebrow>From clinical notes</Eyebrow>
         <Tag tone="accent" title="Similarity search over free-text notes, not coded records">
@@ -26,7 +26,7 @@ export function NarrativeMatches({ matches }: { matches: NarrativeMatch[] }) {
 
       <ul className="mt-2.5 space-y-2.5">
         {matches.map((match) => (
-          <li key={match.fact_id} className="border-l-2 border-line pl-3">
+          <li key={match.fact_id} className="rounded-lg border border-line bg-surface-2/50 px-3.5 py-2.5">
             <div className="tnum flex flex-wrap items-baseline gap-x-2 text-[11px] text-ink-faint">
               <span className="font-medium text-ink-muted">{match.section}</span>
               {match.date && <span>{formatDate(match.date)}</span>}

@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 
 import { listPatients, type PatientSummary } from "@/lib/api";
 import { displayAge } from "@/lib/format";
-import { Skeleton } from "./ui";
+import { SearchIcon } from "./icons";
+import { Avatar, Skeleton } from "./ui";
 
 export function PatientPicker({
   selectedId,
@@ -44,36 +45,49 @@ export function PatientPicker({
   }, [query]);
 
   return (
-    <div className="flex h-full flex-col gap-2">
-      <div className="flex items-baseline justify-between gap-2">
-        <h1 className="text-sm font-semibold tracking-tight text-ink">Kravos Setu</h1>
-        {!loading && (
-          <span className="tnum text-[11px] text-ink-faint">{patients.length} patients</span>
-        )}
+    <div className="card flex h-full flex-col overflow-hidden">
+      <div className="space-y-3 border-b border-line p-3">
+        <div className="flex items-center justify-between gap-2 px-1">
+          <h1 className="text-[11px] font-semibold uppercase tracking-[0.09em] text-ink-faint">Patients</h1>
+          {!loading && (
+            <span className="tnum rounded-full bg-surface-2 px-2 py-px text-[11px] font-medium text-ink-muted">
+              {patients.length} patients
+            </span>
+          )}
+        </div>
+
+        <div className="relative">
+          <SearchIcon
+            size={15}
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint"
+          />
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search by name…"
+            aria-label="Search patients"
+            className="w-full rounded-lg border border-line bg-bg py-2 pl-9 pr-3 text-sm text-ink outline-none transition placeholder:text-ink-faint focus:border-accent-line focus:ring-4 focus:ring-accent-bg"
+          />
+        </div>
       </div>
 
-      <input
-        type="search"
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
-        placeholder="Search by name…"
-        aria-label="Search patients"
-        className="rounded-md border border-line bg-surface px-3 py-1.5 text-sm text-ink placeholder:text-ink-faint"
-      />
-
       {error && (
-        <p className="rounded border border-danger-line bg-danger-bg px-2 py-1.5 text-[11px] text-danger">
+        <p className="m-3 rounded-lg border border-danger-line bg-danger-bg px-2.5 py-2 text-[11px] text-danger">
           {error}
         </p>
       )}
 
-      <ul className="min-h-0 flex-1 divide-y divide-line/70 overflow-y-auto rounded-md border border-line bg-surface">
+      <ul className="scroll-quiet min-h-0 flex-1 space-y-0.5 overflow-y-auto p-1.5">
         {loading && patients.length === 0 && (
-          <li className="space-y-2 p-3">
-            {[0, 1, 2, 3, 4].map((i) => (
-              <div key={i} className="space-y-1">
-                <Skeleton className="h-3 w-32" />
-                <Skeleton className="h-2 w-20" />
+          <li className="space-y-3 p-2">
+            {[0, 1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="flex items-center gap-2.5">
+                <Skeleton className="size-8 rounded-lg" />
+                <div className="flex-1 space-y-1.5">
+                  <Skeleton className="h-3 w-32" />
+                  <Skeleton className="h-2 w-20" />
+                </div>
               </div>
             ))}
           </li>
@@ -92,25 +106,30 @@ export function PatientPicker({
                 type="button"
                 onClick={() => onSelect(patient)}
                 aria-current={selected}
-                className={`block w-full px-3 py-2 text-left transition-colors ${
-                  selected ? "bg-accent-bg" : "hover:bg-surface-2"
+                className={`relative flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left transition-colors ${
+                  selected
+                    ? "bg-accent-bg ring-1 ring-accent-line"
+                    : "hover:bg-surface-2"
                 }`}
               >
-                <div className="flex items-baseline gap-1.5">
-                  <span
-                    className={`truncate text-sm ${selected ? "font-semibold text-accent" : "font-medium text-ink"}`}
-                  >
-                    {patient.name ?? patient.patient_id}
+                <Avatar name={patient.name} seed={patient.patient_id} size="sm" />
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-baseline gap-1.5">
+                    <span
+                      className={`truncate text-[13px] ${selected ? "font-semibold text-accent" : "font-medium text-ink"}`}
+                    >
+                      {patient.name ?? patient.patient_id}
+                    </span>
+                    {patient.deceased && (
+                      <span className="shrink-0 text-[10px] font-medium text-danger" title="Deceased">†</span>
+                    )}
                   </span>
-                  {patient.deceased && (
-                    <span className="shrink-0 text-[10px] font-medium text-danger">†</span>
-                  )}
-                </div>
-                <div className="tnum mt-0.5 text-[11px] text-ink-faint">
-                  {[age != null ? `${age}y` : null, patient.gender, `${patient._n_facts} facts`]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </div>
+                  <span className="tnum mt-0.5 block truncate text-[11px] text-ink-faint">
+                    {[age != null ? `${age}y` : null, patient.gender, `${patient._n_facts.toLocaleString()} facts`]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </span>
+                </span>
               </button>
             </li>
           );
